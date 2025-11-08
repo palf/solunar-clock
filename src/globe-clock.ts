@@ -59,7 +59,7 @@ import { ClockFace } from './clock-face';
     state.centerY,
     state.centerLat,
     state.centerLon,
-    state.scale
+    state.scale  // This will use the getter which computes from scalingFactor
   );
   
   const timeSim = new TimeSimulation(state.startTime, state.timeSpeedMultiplier);
@@ -178,6 +178,19 @@ import { ClockFace } from './clock-face';
   }
   
   /**
+   * Update zoom scale
+   */
+  async function updateZoomScale(): Promise<void> {
+    const zoomInput = document.getElementById('zoomScale') as HTMLInputElement;
+    if (zoomInput) {
+      state.scalingFactor = parseFloat(zoomInput.value) || CONFIG.DEFAULT_SCALING_FACTOR;
+      projection.updateScale(state.scale);
+      await mapRenderer.render(state.mapData);
+      updateHands();
+    }
+  }
+  
+  /**
    * Get user's current location via geolocation API
    * Updates center position and input fields, but does not render map
    */
@@ -275,6 +288,12 @@ import { ClockFace } from './clock-face';
   if (speedInput) {
     speedInput.addEventListener('input', updateTimeSpeed);
     speedInput.addEventListener('change', updateTimeSpeed);
+  }
+  
+  const zoomInput = document.getElementById('zoomScale');
+  if (zoomInput) {
+    zoomInput.addEventListener('input', updateZoomScale);
+    zoomInput.addEventListener('change', updateZoomScale);
   }
   
   // Start animation loop

@@ -12,7 +12,14 @@ export class AppState {
   readonly centerX = CONFIG.WIDTH / 2;
   readonly centerY = CONFIG.HEIGHT / 2;
   readonly radius = Math.min(CONFIG.WIDTH, CONFIG.HEIGHT) * CONFIG.RADIUS_FACTOR;
-  readonly scale = (this.radius / Math.PI) * CONFIG.SCALING_FACTOR;
+  
+  // Zoom scale (configurable)
+  scalingFactor: number = CONFIG.DEFAULT_SCALING_FACTOR;
+  
+  // Computed scale for projection
+  get scale(): number {
+    return (this.radius / Math.PI) * this.scalingFactor;
+  }
   
   // Map center position
   centerLat: number = 0;

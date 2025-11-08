@@ -68,6 +68,13 @@ export class Projection {
   }
   
   /**
+   * Update the scale for the projection
+   */
+  updateScale(scale: number): void {
+    this.scale = scale;
+  }
+  
+  /**
    * Convert a ring of coordinates to an SVG path string
    */
   geoPathFromCoords(coords: GeoRing[]): string {
