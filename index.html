@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Antarctic-centered Globe Clock (double-ended hand) — Fixed map</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; display:flex; height:100vh; align-items:center; justify-content:center; background:#f5f7fb; }
+  #container { width: 880px; max-width:95vw; }
+  svg { width:100%; height:auto; display:block; background: #fff; border-radius:12px; box-shadow: 0 6px 20px rgba(20,20,40,0.08); }
+  .slice { fill: rgba(30,60,120,0.06); stroke: #000; stroke-opacity:0.06; }
+  .slice.alt { fill: rgba(30,60,120,0.12); }
+  .land { fill:#e6f0dd; stroke:#2b3b2b; stroke-width:0.25px; }
+  .coast { stroke:#2b3b2b; stroke-width:0.35px; fill:none; opacity:0.9 }
+  .hand-sun { stroke: orange; stroke-width:6; stroke-linecap: round; }
+  .hand-moon { stroke: blue; stroke-width:6; stroke-linecap: round; }
+  .label { font-weight:600; font-size:14px; fill:#222; }
+  .tz-label { font-size:12px; fill:#222; font-weight:700; }
+  .caption { font-size:13px; fill:#444; }
+  .error { fill: #a33; font-weight:700; font-size:13px; }
+  #controls { text-align: center; margin-bottom: 20px; }
+  .toggle-btn { 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; 
+    border: none; 
+    padding: 12px 24px; 
+    border-radius: 25px; 
+    font-size: 14px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+  }
+  .toggle-btn:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+  .toggle-btn:active { 
+    transform: translateY(0); 
+  }
+</style>
+</head>
+<body>
+  <div id="container">
+    <div id="controls">
+      <div style="display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+          Latitude:
+          <input type="number" id="latitude" value="0" min="-90" max="90" step="0.1" 
+                 style="width: 80px; padding: 8px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;">
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+          Longitude:
+          <input type="number" id="longitude" value="0" min="-180" max="180" step="0.1"
+                 style="width: 80px; padding: 8px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;">
+        </label>
+        <button id="getLocation" class="toggle-btn" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+          Use My Location
+        </button>
+      </div>
+      <div style="display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+          Time Speed:
+          <input type="number" id="timeSpeed" value="1" min="0" max="1000" step="0.1"
+                 style="width: 80px; padding: 8px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;">
+          <span style="font-size: 12px; color: #666;">x</span>
+        </label>
+      </div>
+    </div>
+    <svg id="svg"></svg>
+  </div>
+
+  <!-- libs: d3 then topojson-client -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+  
+  <!-- main application script -->
+  <script type="module" src="src/globe-clock.ts"></script>
+</body>
+</html>

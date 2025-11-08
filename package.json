@@ -1,0 +1,51 @@
+{
+  "name": "antarctic-globe-clock",
+  "version": "1.0.0",
+  "description": "An Antarctic-centered globe clock with double-ended hour hand showing London time",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start": "vite",
+    "type-check": "tsc --noEmit",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format .",
+    "format:fix": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "keywords": [
+    "globe",
+    "clock",
+    "antarctic",
+    "d3",
+    "topojson",
+    "visualization",
+    "timezone"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@tsconfig/node22": "^22.0.2",
+    "@tsconfig/recommended": "^1.0.10",
+    "@tsconfig/strictest": "^2.0.5",
+    "@types/node": "^24.5.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.6",
+    "vitest": "^3.2.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "volta": {
+    "node": "22.19.0"
+  }
+}
