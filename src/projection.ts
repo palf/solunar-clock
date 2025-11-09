@@ -4,7 +4,7 @@
 
 /// <reference path="./types.ts" />
 
-import { GeoCoordinates, GeoRing } from './types';
+import type { GeoCoordinates, GeoRing } from './types';
 
 export class Projection {
   constructor(
@@ -14,7 +14,7 @@ export class Projection {
     private centerLon: number,
     private scale: number
   ) {}
-  
+
   /**
    * Project geographic coordinates to screen coordinates using
    * azimuthal equidistant projection centered on the map center.
@@ -23,42 +23,42 @@ export class Projection {
     if (!isFinite(lat) || !isFinite(lon)) {
       return [this.centerX, this.centerY];
     }
-    
+
     // Convert to radians
-    const lat1 = this.centerLat * Math.PI / 180;
-    const lon1 = this.centerLon * Math.PI / 180;
-    const lat2 = lat * Math.PI / 180;
-    const lon2 = lon * Math.PI / 180;
-    
+    const lat1 = (this.centerLat * Math.PI) / 180;
+    const lon1 = (this.centerLon * Math.PI) / 180;
+    const lat2 = (lat * Math.PI) / 180;
+    const lon2 = (lon * Math.PI) / 180;
+
     // Calculate distance using haversine formula
     const dLat = lat2 - lat1;
     const dLon = lon2 - lon1;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1) * Math.cos(lat2) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
     const aClamped = Math.min(a, 1.0);
     const c = 2 * Math.atan2(Math.sqrt(aClamped), Math.sqrt(1 - aClamped));
     const distance = c; // in radians
-    
+
     // Calculate bearing (azimuth)
     const bearingY = Math.sin(dLon) * Math.cos(lat2);
-    const bearingX = Math.cos(lat1) * Math.sin(lat2) - 
-                     Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+    const bearingX =
+      Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
     const bearing = Math.atan2(bearingY, bearingX);
-    
+
     // Convert to screen coordinates
     const r = distance * this.scale;
     const screenX = this.centerX + r * Math.sin(bearing);
     const screenY = this.centerY - r * Math.cos(bearing);
-    
+
     if (!isFinite(screenX) || !isFinite(screenY)) {
       return [this.centerX, this.centerY];
     }
-    
+
     return [screenX, screenY];
   }
-  
+
   /**
    * Update the center point for the projection
    */
@@ -66,14 +66,14 @@ export class Projection {
     this.centerLat = lat;
     this.centerLon = lon;
   }
-  
+
   /**
    * Update the scale for the projection
    */
   updateScale(scale: number): void {
     this.scale = scale;
   }
-  
+
   /**
    * Convert a ring of coordinates to an SVG path string
    */
@@ -93,4 +93,3 @@ export class Projection {
     return path.toString();
   }
 }
-

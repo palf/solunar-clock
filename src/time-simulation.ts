@@ -7,7 +7,7 @@ export class TimeSimulation {
     private startTime: Date,
     private speedMultiplier: number
   ) {}
-  
+
   /**
    * Get the simulated current time based on real elapsed time and speed multiplier
    */
@@ -17,7 +17,7 @@ export class TimeSimulation {
     const simulatedElapsedTime = elapsedRealTime * this.speedMultiplier;
     return new Date(this.startTime.getTime() + simulatedElapsedTime);
   }
-  
+
   /**
    * Update the speed multiplier
    */
@@ -25,4 +25,3 @@ export class TimeSimulation {
     this.speedMultiplier = multiplier;
   }
 }
-
