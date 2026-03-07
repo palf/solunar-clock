@@ -1,10 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Projection } from './projection';
 
 describe('Projection', () => {
   const centerX = 300;
   const centerY = 300;
   const scale = 100;
+
+  beforeEach(() => {
+    // Mock d3.path
+    vi.stubGlobal('d3', {
+      path: () => ({
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        closePath: vi.fn(),
+        toString: () => 'M0,0L1,1Z'
+      })
+    });
+  });
 
   it('projects center coordinate to center screen coordinate', () => {
     const lat = 51.5074;
@@ -56,5 +68,31 @@ describe('Projection', () => {
     const [x, y] = projection.project([NaN, Infinity]);
     expect(x).toBe(centerX);
     expect(y).toBe(centerY);
+  });
+
+  it('provides access to current center and scale', () => {
+    const projection = new Projection(centerX, centerY, 10, 20, 150);
+    expect(projection.getCenter()).toEqual({ lat: 10, lon: 20 });
+    expect(projection.getScale()).toBe(150);
+  });
+
+  it('updates center and scale', () => {
+    const projection = new Projection(centerX, centerY, 0, 0, 100);
+    projection.updateCenter(45, 45);
+    projection.updateScale(200);
+    expect(projection.getCenter()).toEqual({ lat: 45, lon: 45 });
+    expect(projection.getScale()).toBe(200);
+  });
+
+  it('generates an SVG path from coordinates', () => {
+    const projection = new Projection(centerX, centerY, 0, 0, 100);
+    const rings = [
+      [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]] as any
+    ];
+    // We mock d3.path in types or just rely on it being available if we were in browser
+    // But since it's a global, we might need to mock it if vitest environment isn't enough
+    const path = projection.geoPathFromCoords(rings);
+    expect(typeof path).toBe('string');
+    expect(path.length).toBeGreaterThan(0);
   });
 });
