@@ -3,7 +3,6 @@
  */
 
 import type { AppState } from './app-state';
-import { GeolocationService } from './geolocation-service';
 import type { UIController } from './ui-controller';
 
 export class KeyboardController {

@@ -7,9 +7,9 @@
 declare const d3: any;
 
 import { AppState } from './app-state';
-import { Astronomy } from './astronomy';
+import { calculateMoonPosition, calculateSunPosition } from './astronomy';
 import { ClockFace } from './clock-face';
-import { GeolocationService } from './geolocation-service';
+import { getCurrentPosition } from './geolocation-service';
 import { KeyboardController } from './keyboard-controller';
 import { MapRenderer } from './map-renderer';
 import { Projection } from './projection';
@@ -83,8 +83,8 @@ import { UIController } from './ui-controller';
   };
 
   const updateHands = (now: Date) => {
-    const sunPos = Astronomy.calculateSunPosition(now);
-    const moonPos = Astronomy.calculateMoonPosition(now);
+    const sunPos = calculateSunPosition(now);
+    const moonPos = calculateMoonPosition(now);
     const [sunX, sunY] = projection.project(sunPos);
     const [moonX, moonY] = projection.project(moonPos);
 
@@ -139,7 +139,7 @@ import { UIController } from './ui-controller';
   userHasInteracted = false; // Reset after initial draw
 
   // Try to upgrade to user's real location
-  GeolocationService.getCurrentPosition().then(async ([userLon, userLat]) => {
+  getCurrentPosition().then(async ([userLon, userLat]) => {
     // Only apply if user hasn't moved the map themselves
     if (!userHasInteracted) {
       state.centerLat = userLat;

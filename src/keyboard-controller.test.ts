@@ -23,7 +23,7 @@ describe('KeyboardController', () => {
   });
 
   it('zooms in when + is pressed', async () => {
-    const controller = new KeyboardController(state, ui, onRedraw);
+    const _controller = new KeyboardController(state, ui, onRedraw);
     const initialScale = state.scalingFactor;
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: '+' }));
