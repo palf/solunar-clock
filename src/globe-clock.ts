@@ -1,10 +1,6 @@
 /**
- * Solunar Clock - Main Application
- *
- * A globe clock showing sun and moon positions with:
- * - Azimuthal equidistant projection centered on user location
- * - Real-time or time-accelerated sun and moon position tracking
- * - Interactive controls for location and time speed
+ * Solunar Clock - Reimagined HUD Version
+ * Fully Centered | Premium Aesthetic | Ready for Layering
  */
 
 /// <reference path="./types.ts" />
@@ -20,316 +16,190 @@ import { Projection } from './projection';
 import { TimeSimulation } from './time-simulation';
 
 (async (): Promise<void> => {
-  // Initialize state
   const state = new AppState();
+  const svg = d3.select('#svg');
 
-  // Initialize SVG
-  const svg = d3
-    .select('#svg')
-    .attr('viewBox', `0 0 ${state.width} ${state.height}`)
-    .attr('width', state.width)
-    .attr('height', state.height);
+  const bgG = svg.append('g');
+  const rotatableG = svg.append('g').attr('transform', `translate(${state.centerX}, ${state.centerY}) rotate(${state.rotation}) translate(${-state.centerX}, ${-state.centerY})`);
+  const mapG = rotatableG.append('g');
+  const slicesG = rotatableG.append('g');
+  const labelsG = rotatableG.append('g');
+  const handG = rotatableG.append('g');
 
-  // Create clip path for the map (to clip it to the circle)
-  const defs = svg.append('defs');
-  const clipPath = defs.append('clipPath').attr('id', 'map-clip');
-  clipPath
-    .append('circle')
-    .attr('cx', state.centerX)
-    .attr('cy', state.centerY)
-    .attr('r', state.radius);
-
-  // Create SVG groups in rendering order (bottom to top)
-  // Background layer (outer rim) - not rotated
-  const bgG = svg.append('g').attr('id', 'background');
-
-  // Rotatable container group (everything inside rotates)
-  const rotatableG = svg
-    .append('g')
-    .attr('id', 'rotatable')
-    .attr(
-      'transform',
-      `translate(${state.centerX}, ${state.centerY}) rotate(${state.rotation}) translate(${-state.centerX}, ${-state.centerY})`
-    );
-
-  // Map layer (should be visible, clipped to circle)
-  const mapG = rotatableG.append('g').attr('id', 'map').attr('clip-path', 'url(#map-clip)');
-  // Slices layer (overlay on map)
-  const slicesG = rotatableG.append('g').attr('id', 'slices');
-  // Labels layer
-  const labelsG = rotatableG.append('g').attr('id', 'labels');
-  // Center mark layer
-  const centerG = rotatableG.append('g').attr('id', 'center');
-  // Hands layer (top - most visible)
-  const handG = rotatableG.append('g').attr('id', 'hand');
-
-  // Initialize components
-  const projection = new Projection(
-    state.centerX,
-    state.centerY,
-    state.centerLat,
-    state.centerLon,
-    state.scale // This will use the getter which computes from scalingFactor
-  );
-
+  const projection = new Projection(state.centerX, state.centerY, state.centerLat, state.centerLon, state.scale);
   const timeSim = new TimeSimulation(state.startTime, state.timeSpeedMultiplier);
   const mapRenderer = new MapRenderer(mapG, projection);
   const clockFace = new ClockFace(svg as any, state.centerX, state.centerY, state.radius);
 
-  // Draw clock face elements in correct order
-  // 1. Background (white circles with rim)
   clockFace.drawBackground(bgG);
-  // 2. Slices will be drawn after map loads
-  // 3. Labels
   clockFace.drawHourLabels(labelsG);
-  // 4. Center mark
-  clockFace.drawCenterMark(centerG);
+  clockFace.drawCenterMark(rotatableG.append('g'));
 
-  // Create sun and moon hands (will be updated by updateHands)
-  // Hands should NOT be clipped - they extend beyond the circle
-  const sunHand = handG
-    .append('line')
-    .attr('class', 'hand-sun')
-    .attr('x1', state.centerX)
-    .attr('y1', state.centerY)
-    .attr('x2', state.centerX)
-    .attr('y2', state.centerY)
-    .attr('stroke', 'orange')
-    .attr('stroke-width', 6)
-    .attr('stroke-linecap', 'round');
-  const moonHand = handG
-    .append('line')
-    .attr('class', 'hand-moon')
-    .attr('x1', state.centerX)
-    .attr('y1', state.centerY)
-    .attr('x2', state.centerX)
-    .attr('y2', state.centerY)
-    .attr('stroke', 'blue')
-    .attr('stroke-width', 6)
-    .attr('stroke-linecap', 'round');
+  const sunHand = handG.append('line').attr('stroke', 'orange').attr('stroke-width', 3).attr('stroke-linecap', 'round');
+  const moonHand = handG.append('line').attr('stroke', '#38bdf8').attr('stroke-width', 3).attr('stroke-linecap', 'round');
 
-  // ========================================================================
-  // UI EVENT HANDLERS
-  // ========================================================================
-
-  /**
-   * Update the clock hands and display
-   */
-  function updateHands(): void {
+  function updateHUD(): void {
     const now = timeSim.getSimulatedTime();
+    
+    const timeEl = document.getElementById('display-time');
+    if (timeEl) timeEl.textContent = now.toISOString().substring(11, 19);
+    
+    const posEl = document.getElementById('display-pos');
+    if (posEl) posEl.textContent = `${Math.abs(state.centerLat).toFixed(2)}° ${state.centerLat >= 0 ? 'N' : 'S'}, ${Math.abs(state.centerLon).toFixed(2)}° ${state.centerLon >= 0 ? 'E' : 'W'}`;
+    
+    const zoomEl = document.getElementById('display-zoom');
+    if (zoomEl) zoomEl.textContent = `${(state.scalingFactor / 10).toFixed(1)}x`;
 
-    // Calculate sun and moon positions
+    const layerEl = document.getElementById('display-layer');
+    if (layerEl) layerEl.textContent = state.mapLayer;
+
+    // Update hands
     const sunPos = Astronomy.calculateSunPosition(now);
     const moonPos = Astronomy.calculateMoonPosition(now);
-
-    // Project to screen coordinates
     const [sunX, sunY] = projection.project(sunPos);
     const [moonX, moonY] = projection.project(moonPos);
-
-    // Calculate angles from center
+    const handLen = state.radius * 0.9;
+    
     const sunAngle = Math.atan2(sunX - state.centerX, state.centerY - sunY);
+    sunHand.attr('x1', state.centerX).attr('y1', state.centerY)
+           .attr('x2', state.centerX + handLen * Math.sin(sunAngle))
+           .attr('y2', state.centerY - handLen * Math.cos(sunAngle));
+
     const moonAngle = Math.atan2(moonX - state.centerX, state.centerY - moonY);
-
-    // Draw hands
-    const handLen = state.radius * CONFIG.HAND_LENGTH_FACTOR;
-    const sunX2 = state.centerX + handLen * Math.sin(sunAngle);
-    const sunY2 = state.centerY - handLen * Math.cos(sunAngle);
-    const moonX2 = state.centerX + handLen * Math.sin(moonAngle);
-    const moonY2 = state.centerY - handLen * Math.cos(moonAngle);
-
-    // Update hand positions
-    sunHand.attr('x1', state.centerX).attr('y1', state.centerY).attr('x2', sunX2).attr('y2', sunY2);
-    moonHand
-      .attr('x1', state.centerX)
-      .attr('y1', state.centerY)
-      .attr('x2', moonX2)
-      .attr('y2', moonY2);
-
-    // Update caption
-    const timeStr = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-    const existing = svg.selectAll('.captionText').data([1]);
-    existing
-      .enter()
-      .append('text')
-      .attr('class', 'captionText caption')
-      .attr('x', state.centerX)
-      .attr('y', state.centerY + state.radius + 60)
-      .attr('text-anchor', 'middle')
-      .merge(existing as any)
-      .text(
-        `Time: ${timeStr} (${state.timeSpeedMultiplier.toFixed(2)}x speed) | Center: ${state.centerLat.toFixed(1)}°, ${state.centerLon.toFixed(1)}°`
-      );
+    moonHand.attr('x1', state.centerX).attr('y1', state.centerY)
+            .attr('x2', state.centerX + handLen * Math.sin(moonAngle))
+            .attr('y2', state.centerY - handLen * Math.cos(moonAngle));
   }
 
-  /**
-   * Update center position from input fields
-   */
-  async function updateCenterPosition(): Promise<void> {
-    const latInput = document.getElementById('latitude') as HTMLInputElement;
-    const lonInput = document.getElementById('longitude') as HTMLInputElement;
-
-    if (latInput && lonInput) {
-      state.centerLat = parseFloat(latInput.value) || 0;
-      state.centerLon = parseFloat(lonInput.value) || 0;
-      projection.updateCenter(state.centerLat, state.centerLon);
-      await mapRenderer.render(state.mapData);
-      updateHands();
-    }
+  async function redraw(): Promise<void> {
+    // Synchronize projection state with current app state
+    projection.updateCenter(state.centerLat, state.centerLon);
+    projection.updateScale(state.scale);
+    
+    // Perform full map render
+    await mapRenderer.render(state.mapData);
+    
+    // Update HUD display
+    updateHUD();
   }
 
-  /**
-   * Update time speed multiplier
-   */
-  function updateTimeSpeed(): void {
-    const speedInput = document.getElementById('timeSpeed') as HTMLInputElement;
-    if (speedInput) {
-      state.timeSpeedMultiplier = parseFloat(speedInput.value) || CONFIG.DEFAULT_TIME_SPEED;
-      timeSim.setSpeedMultiplier(state.timeSpeedMultiplier);
-      updateHands();
-    }
-  }
-
-  /**
-   * Update zoom scale
-   */
-  async function updateZoomScale(): Promise<void> {
-    const zoomInput = document.getElementById('zoomScale') as HTMLInputElement;
-    if (zoomInput) {
-      state.scalingFactor = parseFloat(zoomInput.value) || CONFIG.DEFAULT_SCALING_FACTOR;
-      projection.updateScale(state.scale);
-      await mapRenderer.render(state.mapData);
-      updateHands();
-    }
-  }
-
-  /**
-   * Update rotation
-   */
-  function updateRotation(): void {
-    const rotationInput = document.getElementById('rotation') as HTMLInputElement;
-    if (rotationInput) {
-      state.rotation = parseFloat(rotationInput.value) || 0;
-      rotatableG.attr(
-        'transform',
-        `translate(${state.centerX}, ${state.centerY}) rotate(${state.rotation}) translate(${-state.centerX}, ${-state.centerY})`
-      );
-      updateHands();
-    }
-  }
-
-  /**
-   * Get user's current location via geolocation API
-   * Updates center position and input fields, but does not render map
-   */
   async function getUserLocation(): Promise<void> {
-    if (!navigator.geolocation) {
-      console.warn('Geolocation is not supported by this browser');
-      return;
-    }
-
-    return new Promise<void>((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-
-          state.centerLat = lat;
-          state.centerLon = lon;
-          projection.updateCenter(lat, lon);
-
-          // Update input fields
-          const latInput = document.getElementById('latitude') as HTMLInputElement;
-          const lonInput = document.getElementById('longitude') as HTMLInputElement;
-          if (latInput) latInput.value = lat.toFixed(6);
-          if (lonInput) lonInput.value = lon.toFixed(6);
-
-          updateHands();
-          resolve();
-        },
-        (error) => {
-          console.warn('Geolocation error:', error);
-          resolve();
-        }
-      );
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      state.centerLat = pos.coords.latitude;
+      state.centerLon = pos.coords.longitude;
+      await redraw();
+    }, (err) => {
+      console.warn('Geolocation failed:', err);
     });
   }
 
-  // ========================================================================
-  // INITIALIZATION
-  // ========================================================================
+  // Keyboard Navigation
+  window.addEventListener('keydown', (e) => {
+    if (e.target instanceof HTMLInputElement) return;
+    
+    // Zoom Constraints (0.1x to 100x)
+    // scalingFactor 10 = 1.0x, so range is 1 to 1000
+    const minScale = 1;
+    const maxScale = 1000;
+    
+    // Normalize panning step based on zoom
+    // At 1.0x (scalingFactor 10), move by 1 degree.
+    // At 10.0x (scalingFactor 100), move by 0.1 degree.
+    const baseStep = e.shiftKey ? 10 : 1;
+    const normalizedStep = baseStep / (state.scalingFactor / 10);
 
-  // Initialize center position from inputs
-  const latInput = document.getElementById('latitude');
-  const lonInput = document.getElementById('longitude');
-
-  if (latInput) {
-    state.centerLat = parseFloat((latInput as HTMLInputElement).value) || 0;
-  }
-  if (lonInput) {
-    state.centerLon = parseFloat((lonInput as HTMLInputElement).value) || 0;
-  }
-
-  projection.updateCenter(state.centerLat, state.centerLon);
-
-  // Load map data first
-  const mapData = await mapRenderer.loadMapData();
-  state.mapData = mapData;
-
-  // Try to get user's current location (updates center but doesn't render)
-  // We'll render after this completes
-  const getUserLocationPromise = getUserLocation().catch(() => {
-    // If geolocation fails, continue with default center (0,0)
+    switch(e.key) {
+      case '+': case '=': 
+        state.scalingFactor = Math.min(maxScale, state.scalingFactor * 1.2); 
+        redraw(); 
+        break;
+      case '-': case '_': 
+        state.scalingFactor = Math.max(minScale, state.scalingFactor / 1.2); 
+        redraw(); 
+        break;
+      case 'ArrowUp': 
+        if (e.shiftKey) { 
+          state.scalingFactor = Math.min(maxScale, state.scalingFactor * 1.2); 
+        } else { 
+          state.centerLat = Math.min(90, state.centerLat + normalizedStep); 
+        }
+        redraw(); 
+        break;
+      case 'ArrowDown': 
+        if (e.shiftKey) { 
+          state.scalingFactor = Math.max(minScale, state.scalingFactor / 1.2); 
+        } else { 
+          state.centerLat = Math.max(-90, state.centerLat - normalizedStep); 
+        }
+        redraw(); 
+        break;
+      case 'ArrowLeft': 
+        state.centerLon = ((state.centerLon - normalizedStep + 180) % 360) - 180; 
+        redraw(); 
+        break;
+      case 'ArrowRight': 
+        state.centerLon = ((state.centerLon + normalizedStep + 180) % 360) - 180; 
+        redraw(); 
+        break;
+      case 'l': // Toggle mock layers
+        const layers: ('TERRAIN' | 'SATELLITE' | 'LOGISTICAL')[] = ['TERRAIN', 'SATELLITE', 'LOGISTICAL'];
+        const idx = layers.indexOf(state.mapLayer);
+        state.mapLayer = layers[(idx + 1) % layers.length];
+        updateHUD();
+        break;
+      case '/': case 's': 
+        e.preventDefault();
+        const box = document.getElementById('search-overlay');
+        if (box) box.style.display = 'block';
+        document.getElementById('locationSearch')?.focus();
+        break;
+    }
   });
 
-  // Wait for geolocation attempt (but don't block if it's taking too long)
-  await Promise.race([
-    getUserLocationPromise,
-    new Promise((resolve) => setTimeout(resolve, 2000)), // 2 second timeout
-  ]);
+  const searchInput = document.getElementById('locationSearch') as HTMLInputElement;
+  const searchResults = document.getElementById('searchResults');
 
-  // Always render map with current center position
-  await mapRenderer.render(mapData);
+  searchInput?.addEventListener('input', async (e) => {
+    const query = (e.target as any).value;
+    if (!searchResults || query.length < 3) return;
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+      const data = await resp.json();
+      searchResults.innerHTML = '';
+      data.forEach((item: any) => {
+        const div = document.createElement('div');
+        div.className = 'search-item';
+        div.textContent = item.display_name;
+        div.onclick = async () => {
+          state.centerLat = parseFloat(item.lat);
+          state.centerLon = parseFloat(item.lon);
+          (document.getElementById('search-overlay') as any).style.display = 'none';
+          searchInput.value = '';
+          await redraw();
+        };
+        searchResults.appendChild(div);
+      });
+    } catch (e) { console.error(e); }
+  });
 
-  // Draw slices after map is rendered (so they overlay on map)
+  searchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      (document.getElementById('search-overlay') as any).style.display = 'none';
+      searchInput.blur();
+    }
+  });
+
+  // Start animation loop (Every 1s for RPi Zero performance)
+  setInterval(updateHUD, 1000);
+
+  // Initialize
+  state.mapData = await mapRenderer.loadMapData();
+  
+  // First render with default (London)
+  await redraw();
   clockFace.drawSlices(slicesG);
 
-  // Set up event listeners
-  if (latInput) {
-    latInput.addEventListener('input', updateCenterPosition);
-    latInput.addEventListener('change', updateCenterPosition);
-  }
-  if (lonInput) {
-    lonInput.addEventListener('input', updateCenterPosition);
-    lonInput.addEventListener('change', updateCenterPosition);
-  }
-
-  const getLocationButton = document.getElementById('getLocation');
-  if (getLocationButton) {
-    getLocationButton.addEventListener('click', async () => {
-      await getUserLocation();
-      await mapRenderer.render(state.mapData);
-    });
-  }
-
-  const speedInput = document.getElementById('timeSpeed');
-  if (speedInput) {
-    speedInput.addEventListener('input', updateTimeSpeed);
-    speedInput.addEventListener('change', updateTimeSpeed);
-  }
-
-  const zoomInput = document.getElementById('zoomScale');
-  if (zoomInput) {
-    zoomInput.addEventListener('input', updateZoomScale);
-    zoomInput.addEventListener('change', updateZoomScale);
-  }
-
-  const rotationInput = document.getElementById('rotation');
-  if (rotationInput) {
-    rotationInput.addEventListener('input', updateRotation);
-    rotationInput.addEventListener('change', updateRotation);
-  }
-
-  // Start animation loop
-  updateHands();
-  setInterval(updateHands, CONFIG.UPDATE_INTERVAL_MS);
+  // Then try to get location and update if possible
+  getUserLocation();
 })();

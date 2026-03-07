@@ -20,7 +20,7 @@ export class Projection {
    * azimuthal equidistant projection centered on the map center.
    */
   project([lon, lat]: GeoCoordinates): [number, number] {
-    if (!isFinite(lat) || !isFinite(lon)) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
       return [this.centerX, this.centerY];
     }
 
@@ -52,7 +52,7 @@ export class Projection {
     const screenX = this.centerX + r * Math.sin(bearing);
     const screenY = this.centerY - r * Math.cos(bearing);
 
-    if (!isFinite(screenX) || !isFinite(screenY)) {
+    if (!Number.isFinite(screenX) || !Number.isFinite(screenY)) {
       return [this.centerX, this.centerY];
     }
 
@@ -72,6 +72,20 @@ export class Projection {
    */
   updateScale(scale: number): void {
     this.scale = scale;
+  }
+
+  /**
+   * Get current center position
+   */
+  getCenter(): { lat: number; lon: number } {
+    return { lat: this.centerLat, lon: this.centerLon };
+  }
+
+  /**
+   * Get current scale
+   */
+  getScale(): number {
+    return this.scale;
   }
 
   /**

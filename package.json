@@ -1,7 +1,7 @@
 {
-  "name": "antarctic-globe-clock",
+  "name": "solunar-clock",
   "version": "1.0.0",
-  "description": "An Antarctic-centered globe clock with double-ended hour hand showing London time",
+  "description": "A globe clock showing sun and moon positions with azimuthal equidistant projection",
   "main": "index.html",
   "scripts": {
     "dev": "vite",
@@ -10,11 +10,8 @@
     "start": "vite",
     "type-check": "tsc --noEmit",
     "lint": "biome lint .",
-    "lint:fix": "biome lint --write .",
     "format": "biome format .",
-    "format:fix": "biome format --write .",
-    "check": "biome check .",
-    "check:fix": "biome check --write ."
+    "check": "biome check ."
   },
   "keywords": [
     "globe",

@@ -4,10 +4,10 @@
 
 export const CONFIG = {
   // Display dimensions
-  WIDTH: 820,
-  HEIGHT: 820,
+  WIDTH: 600,
+  HEIGHT: 600,
   RADIUS_FACTOR: 0.4, // Percentage of width/height for globe radius
-  DEFAULT_SCALING_FACTOR: 40, // Default zoom level multiplier
+  DEFAULT_SCALING_FACTOR: 10, // Default zoom level multiplier
 
   // Clock face
   SLICES: 24, // Number of hour slices

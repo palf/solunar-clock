@@ -8,7 +8,7 @@ import { CONFIG } from './config';
 
 export class ClockFace {
   constructor(
-    private svg: d3.Selection<SVGSVGElement, unknown, any, any>,
+    _svg: d3.Selection<SVGSVGElement, unknown, any, any>,
     private centerX: number,
     private centerY: number,
     private radius: number
