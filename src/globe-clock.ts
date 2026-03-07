@@ -154,6 +154,12 @@ import { TimeSimulation } from './time-simulation';
         if (box) box.style.display = 'block';
         document.getElementById('locationSearch')?.focus();
         break;
+      case '0':
+        state.centerLat = 51.5074;
+        state.centerLon = -0.1278;
+        state.scalingFactor = 10;
+        redraw();
+        break;
     }
   });
 
