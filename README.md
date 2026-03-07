@@ -14,12 +14,13 @@ A high-performance, minimalist globe clock showing real-time sun and moon positi
 
 - **`+` / `=`**: Zoom In
 - **`-` / `_`**: Zoom Out
-- **Arrow Keys**: Pan Map (Up/Down for Latitude, Left/Right for Longitude)
+- **`Arrow Keys`**: Pan Map (Up/Down for Latitude, Left/Right for Longitude)
 - **`Shift + Up/Down`**: Zoom In/Out
 - **`0`**: Reset to London (Default Location)
 - **`/` or `s`**: Open Location Search
-- **`l`**: Toggle Map Layers (Mock)
+- **`l`**: Toggle Map Layers (TOPOGRAPHIC, IMAGERY, STREETS)
 - **`Escape`**: Close Search or Blur Input
+
 
 ## Development
 

@@ -7,7 +7,7 @@
 <style>
   :root {
     --bg: #020617;
-    --panel: rgba(15, 23, 42, 0.9);
+    --panel: rgba(15, 23, 42, 0.85);
     --border: rgba(56, 189, 248, 0.2);
     --accent: #38bdf8;
     --text: #f1f5f9;
@@ -25,29 +25,29 @@
     color: var(--text);
     overflow: hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-
-  /* Perfect Centering */
-  body {
-    display: grid;
-    place-items: center;
-  }
-
-  /* Clock Container - Constrained to 5" portrait bounds */
-  #stage {
-    position: relative;
-    width: 480px;
-    height: 800px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255,255,255,0.03); /* Subtle guide */
   }
 
-  /* The SVG Clock - Perfectly Centered square */
+  @supports (height: 100dvh) {
+    html, body { height: 100dvh; }
+  }
+
+  #stage {
+    position: relative;
+    width: 100vw;
+    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   svg {
-    width: 460px; /* Slight margin for labels */
-    height: 460px;
+    width: 100%;
+    height: 100%;
+    max-width: 95vmin;
+    max-height: 95vmin;
     background: transparent;
     z-index: 1;
   }
@@ -58,21 +58,81 @@
     background: var(--panel);
     backdrop-filter: blur(12px);
     border: 1px solid var(--border);
-    padding: 10px 14px;
-    border-radius: 12px;
-    pointer-events: none;
+    padding: 8px 12px;
+    border-radius: 10px;
     z-index: 10;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
   }
 
-  #hud-top { top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
-  #hud-bottom { bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+  #hud-top { top: env(safe-area-inset-top, 10px); left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  #hud-bottom { bottom: env(safe-area-inset-bottom, 10px); left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none; }
 
-  .hud-group { display: flex; flex-direction: column; gap: 2px; }
-  .hud-label { color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
-  .hud-value { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .hud-group { display: flex; flex-direction: column; gap: 1px; }
+  .hud-label { color: var(--accent); font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+  .hud-value { font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
   
-  #display-time { font-size: 18px; font-weight: 700; color: #fff; }
+  #display-time { font-size: 14px; font-weight: 700; color: #fff; }
+
+  /* Interactive HUD Triggers */
+  .hud-btn {
+    pointer-events: auto;
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--accent);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+  .hud-btn:hover { background: rgba(255,255,255,0.1); }
+
+  #layer-trigger {
+    pointer-events: auto;
+    cursor: pointer;
+    padding: 0 12px;
+    border-radius: 8px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  #layer-trigger:hover { background: rgba(255,255,255,0.1); }
+
+  /* Layer Dropdown */
+  #layer-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: #1e293b;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    display: none;
+    flex-direction: column;
+    min-width: 120px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    pointer-events: auto;
+  }
+  .layer-option {
+    padding: 10px 15px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .layer-option:last-child { border-bottom: none; }
+  .layer-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .layer-option.active { color: var(--accent); }
 
   /* Search Modal */
   #search-overlay {
@@ -80,11 +140,12 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 320px;
+    width: 90%;
+    max-width: 320px;
     background: #1e293b;
     border: 1px solid var(--accent);
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 15px;
     z-index: 100;
     display: none;
     box-shadow: 0 0 100px rgba(0,0,0,0.9);
@@ -95,16 +156,14 @@
     background: #0f172a;
     border: 1px solid #334155;
     color: white;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 16px;
     outline: none;
   }
-  input:focus { border-color: var(--accent); }
 
-  #searchResults { margin-top: 12px; max-height: 200px; overflow-y: auto; font-size: 12px; }
-  .search-item { padding: 10px; border-bottom: 1px solid #334155; cursor: pointer; }
-  .search-item:hover { background: #334155; }
+  #searchResults { margin-top: 10px; max-height: 150px; overflow-y: auto; font-size: 12px; }
+  .search-item { padding: 8px; border-bottom: 1px solid #334155; cursor: pointer; }
 
   /* Map Visuals */
   .slice { fill: rgba(56, 189, 248, 0.03); stroke: rgba(255,255,255,0.05); }
@@ -116,28 +175,42 @@
 </head>
 <body>
   <div id="stage">
-    <!-- Top HUD: Time & Layer Status -->
+    <!-- Top HUD -->
     <div id="hud-top" class="hud">
-      <div class="hud-group">
+      <!-- Left side: Clock -->
+      <div class="hud-group" style="text-align: left;">
         <span class="hud-label">SOLUNAR UTC</span>
         <span id="display-time">00:00:00</span>
       </div>
-      <div class="hud-group" style="text-align: right;">
-        <span class="hud-label">LAYER</span>
-        <span id="display-layer" style="color: #4ade80;">TERRAIN</span>
+
+      <!-- Right side: Controls -->
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <button id="btn-warp" class="hud-btn" title="Toggle Mesh Warping" type="button" style="font-size: 10px; font-weight: 900;">OFF</button>
+        <button id="btn-gps" class="hud-btn" title="Current Location" type="button">🎯</button>
+        <button id="btn-home" class="hud-btn" title="Home" type="button">🏠</button>
+        
+        <div style="position: relative;">
+          <div id="layer-trigger">
+            <span id="display-layer" style="color: #4ade80; font-size: 13px; font-weight: 700;">TOPOGRAPHIC</span>
+          </div>
+          <div id="layer-dropdown">
+            <div class="layer-option active" data-layer="TOPOGRAPHIC">TOPOGRAPHIC</div>
+            <div class="layer-option" data-layer="IMAGERY">IMAGERY</div>
+            <div class="layer-option" data-layer="STREETS">STREETS</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- The Clock -->
-    <svg id="svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+    <svg id="svg" preserveAspectRatio="xMidYMid meet">
       <title>Solunar Globe Clock</title>
     </svg>
 
-    <!-- Bottom HUD: Coordinates & Zoom -->
+    <!-- Bottom HUD -->
     <div id="hud-bottom" class="hud">
       <div class="hud-group">
         <span class="hud-label">COORDINATES</span>
-        <span id="display-pos">48.77° N, 8.06° E</span>
+        <span id="display-pos">0.00° N, 0.00° E</span>
       </div>
       <div class="hud-group" style="text-align: right;">
         <span class="hud-label">ZOOM</span>
@@ -145,9 +218,8 @@
       </div>
     </div>
 
-    <!-- Search Modal -->
     <div id="search-overlay">
-      <input type="text" id="locationSearch" placeholder="Enter city name..." autocomplete="off">
+      <input type="text" id="locationSearch" placeholder="Search city..." autocomplete="off">
       <div id="searchResults"></div>
     </div>
   </div>

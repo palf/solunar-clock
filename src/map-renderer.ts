@@ -4,13 +4,15 @@
 
 /// <reference path="./types.ts" />
 
+import * as d3 from 'd3';
+import * as topojson from 'topojson-client';
 import { CONFIG } from './config';
 import type { Projection } from './projection';
 import type { GeoCoordinates, GeoFeature, GeoFeatureCollection, TopoJSONData } from './types';
 
 export class MapRenderer {
   constructor(
-    private mapGroup: d3.Selection<SVGGElement, unknown, any, any>,
+    private mapGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
     private projection: Projection
   ) {}
 
@@ -69,12 +71,16 @@ export class MapRenderer {
     if (!topoData.objects?.countries) return;
 
     try {
-      const mesh = topojson.mesh(topoData, topoData.objects.countries, (a: any, b: any) => a !== b);
+      const mesh = topojson.mesh(
+        topoData,
+        topoData.objects.countries,
+        (a: any, b: any) => a !== b
+      ) as any;
       if (!mesh?.coordinates) return;
 
       const path = d3.path();
-      mesh.coordinates.forEach((line: GeoCoordinates[]) => {
-        line.forEach((pt: GeoCoordinates, idx: number) => {
+      mesh.coordinates.forEach((line: any[]) => {
+        line.forEach((pt: any, idx: number) => {
           const [x, y] = this.projection.project(pt);
           if (idx === 0) {
             path.moveTo(x, y);
@@ -153,7 +159,7 @@ export class MapRenderer {
       // Handle TopoJSON format
       else if (mapData.objects?.land) {
         console.log('Detected TopoJSON format with land object');
-        const land = topojson.feature(mapData, mapData.objects.land) as GeoFeatureCollection;
+        const land = topojson.feature(mapData, mapData.objects.land) as any;
         this.renderGeoJSONFeatures(land.features);
         this.renderCoastlines(mapData);
       }
@@ -167,10 +173,7 @@ export class MapRenderer {
 
         if (geometryKey) {
           console.log(`Using geometry object: ${geometryKey}`);
-          const geometry = topojson.feature(
-            mapData,
-            mapData.objects[geometryKey]!
-          ) as GeoFeatureCollection;
+          const geometry = topojson.feature(mapData, mapData.objects[geometryKey]!) as any;
           this.renderGeoJSONFeatures(geometry.features);
         } else {
           throw new Error('No suitable geometry found');

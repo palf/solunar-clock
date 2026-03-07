@@ -14,7 +14,7 @@ export class TouchController {
   private isPinching = false;
 
   constructor(
-    private element: HTMLElement | SVGElement,
+    private element: HTMLElement | SVGElement | Document,
     private state: AppState,
     private onUpdate: () => Promise<void>
   ) {
@@ -22,26 +22,44 @@ export class TouchController {
   }
 
   private init(): void {
-    this.element.addEventListener('touchstart', (e) => this.handleTouchStart(e), {
+    const el = this.element instanceof Document ? this.element.documentElement : this.element;
+
+    el.addEventListener('touchstart', (e) => this.handleTouchStart(e as TouchEvent), {
       passive: false,
     });
-    this.element.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-    this.element.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
-    this.element.addEventListener('touchcancel', (e) => this.handleTouchEnd(e), { passive: false });
+    el.addEventListener('touchmove', (e) => this.handleTouchMove(e as TouchEvent), {
+      passive: false,
+    });
+    el.addEventListener('touchend', (e) => this.handleTouchEnd(e as TouchEvent), {
+      passive: false,
+    });
+    el.addEventListener('touchcancel', (e) => this.handleTouchEnd(e as TouchEvent), {
+      passive: false,
+    });
+  }
+
+  private isInteractive(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    const interactiveTags = ['BUTTON', 'INPUT', 'SELECT', 'A'];
+    if (interactiveTags.includes(target.tagName)) return true;
+    if (target.closest('.layer-option') || target.closest('#layer-trigger')) return true;
+    return false;
   }
 
   private handleTouchStart(e: TouchEvent): void {
+    // If touching an interactive element, let the browser handle it (buttons, etc.)
+    if (this.isInteractive(e.target)) return;
+
     if (e.touches.length === 1) {
-      // Start Panning
       this.isPinching = false;
       this.resetPanAnchors(e.touches[0]);
     } else if (e.touches.length === 2) {
-      // Start Pinching
       this.isPinching = true;
       this.startDist = this.getDistance(e.touches[0], e.touches[1]);
       this.startScale = this.state.scalingFactor;
     }
-    // Prevent scrolling while interacting with the clock
+
+    // Only prevent default if we are handling the map gesture
     e.preventDefault();
   }
 
@@ -53,10 +71,11 @@ export class TouchController {
   }
 
   private handleTouchMove(e: TouchEvent): void {
+    if (this.isInteractive(e.target)) return;
+
     e.preventDefault();
 
     if (e.touches.length === 1 && !this.isPinching) {
-      // Pan Logic: ONLY if we are in a pure single-touch state
       const dx = e.touches[0].clientX - this.startX;
       const dy = e.touches[0].clientY - this.startY;
 
@@ -71,24 +90,18 @@ export class TouchController {
 
       this.onUpdate();
     } else if (e.touches.length === 2) {
-      // Pinch Logic: ONLY update scalingFactor
       this.isPinching = true;
       const dist = this.getDistance(e.touches[0], e.touches[1]);
+      if (this.startDist === 0) return;
       const ratio = dist / this.startDist;
 
-      const minScale = 1;
-      const maxScale = 1000;
-
-      this.state.scalingFactor = Math.max(minScale, Math.min(maxScale, this.startScale * ratio));
-
+      this.state.scalingFactor = Math.max(1, Math.min(1000000, this.startScale * ratio));
       this.onUpdate();
     }
   }
 
   private handleTouchEnd(e: TouchEvent): void {
     if (e.touches.length === 1) {
-      // If one finger remains, reset anchors to its current position
-      // so that further movement is calculated from this point, not the start of the pinch
       this.resetPanAnchors(e.touches[0]);
     } else if (e.touches.length === 0) {
       this.isPinching = false;

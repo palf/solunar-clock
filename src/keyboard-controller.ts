@@ -3,13 +3,17 @@
  */
 
 import type { AppState } from './app-state';
+import { CONFIG } from './config';
+import { getCurrentPosition } from './geolocation-service';
 import type { UIController } from './ui-controller';
+import type { AnimationController } from './animation-controller';
 
 export class KeyboardController {
   constructor(
     private state: AppState,
     private ui: UIController,
-    private onRedraw: () => Promise<void>
+    private onRedraw: () => Promise<void>,
+    private animationController: AnimationController
   ) {
     this.init();
   }
@@ -70,8 +74,11 @@ export class KeyboardController {
         this.ui.showSearch();
         break;
       case '0':
-        this.state.resetToLondon();
-        await this.onRedraw();
+        await this.animationController.glideTo(
+          CONFIG.DEFAULT_LOCATION.lat,
+          CONFIG.DEFAULT_LOCATION.lon,
+          10
+        );
         break;
       case 'h':
         await this.resetToHome();
@@ -80,9 +87,7 @@ export class KeyboardController {
   }
 
   private async resetToHome(): Promise<void> {
-    const [lon, lat] = await GeolocationService.getCurrentPosition();
-    this.state.setLocation(lat, lon);
-    this.state.scalingFactor = 10;
-    await this.onRedraw();
+    const [lon, lat] = await getCurrentPosition();
+    await this.animationController.glideTo(lat, lon);
   }
 }

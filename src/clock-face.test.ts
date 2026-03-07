@@ -33,6 +33,16 @@ describe('ClockFace', () => {
     });
   });
 
+  it('defines a mask', () => {
+    const clock = new ClockFace(svg, 300, 300, 228);
+    const defs = {
+      append: vi.fn().mockReturnThis(),
+      attr: vi.fn().mockReturnThis(),
+    };
+    clock.drawMask(defs as any);
+    expect(defs.append).toHaveBeenCalledWith('clipPath');
+  });
+
   it('draws background elements', () => {
     const clock = new ClockFace(svg, 240, 240, 200);
     clock.drawBackground(group);

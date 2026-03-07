@@ -2,9 +2,6 @@
  * Type definitions for the Solunar Clock application
  */
 
-declare const topojson: any;
-declare const d3: any;
-
 export type GeoCoordinates = [number, number]; // [longitude, latitude]
 
 export interface GeoRing extends Array<GeoCoordinates> {}
@@ -33,12 +30,4 @@ export interface TopoJSONObject {
   geometries?: any[];
 }
 
-export interface TopoJSONData {
-  type?: string;
-  objects?: {
-    land?: TopoJSONObject;
-    countries?: TopoJSONObject;
-    [key: string]: TopoJSONObject | undefined;
-  };
-  features?: GeoFeature[];
-}
+export type TopoJSONData = any;

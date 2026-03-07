@@ -4,6 +4,7 @@
 
 /// <reference path="./types.ts" />
 
+import * as d3 from 'd3';
 import type { GeoCoordinates, GeoRing } from './types';
 
 export class Projection {
