@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { AppState } from './app-state';
 
 describe('AppState', () => {
@@ -11,7 +11,7 @@ describe('AppState', () => {
   it('calculates scale based on scalingFactor', () => {
     const state = new AppState();
     const initialScale = state.scale;
-    
+
     state.scalingFactor *= 2;
     expect(state.scale).toBe(initialScale * 2);
   });

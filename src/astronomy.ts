@@ -21,33 +21,45 @@ export class Astronomy {
     const n = Astronomy.daysSinceJ2000(date);
 
     // Mean longitude of the sun (degrees)
-    const L = (280.46 + 0.9856474 * n) % 360;
+    const q = (280.459 + 0.98564736 * n) % 360;
 
     // Mean anomaly (degrees)
-    const g = (357.528 + 0.9856003 * n) % 360;
+    const g = (357.529 + 0.98560028 * n) % 360;
     const gRad = (g * Math.PI) / 180;
 
-    // Ecliptic longitude (degrees)
-    const lambda = L + 1.915 * Math.sin(gRad) + 0.02 * Math.sin(2 * gRad);
-    const lambdaRad = (lambda * Math.PI) / 180;
+    // Apparent ecliptic longitude (degrees)
+    const L = q + 1.915 * Math.sin(gRad) + 0.02 * Math.sin(2 * gRad);
+    const LRad = (L * Math.PI) / 180;
 
     // Obliquity of the ecliptic (degrees)
-    const epsilon = 23.439 - 0.0000004 * n;
+    const epsilon = 23.439 - 0.00000036 * n;
     const epsilonRad = (epsilon * Math.PI) / 180;
 
     // Right ascension and declination
-    const alpha = Math.atan2(Math.cos(epsilonRad) * Math.sin(lambdaRad), Math.cos(lambdaRad));
-    const delta = Math.asin(Math.sin(epsilonRad) * Math.sin(lambdaRad));
+    const alpha =
+      (Math.atan2(Math.cos(epsilonRad) * Math.sin(LRad), Math.cos(LRad)) * 180) / Math.PI;
+    const delta = Math.asin(Math.sin(epsilonRad) * Math.sin(LRad));
 
     // Convert to latitude (declination = latitude where sun is overhead)
     const sunLat = (delta * 180) / Math.PI;
 
-    // Calculate Greenwich Hour Angle
+    // Calculate Greenwich Hour Angle (GHA)
     const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
-    const gha = (15 * utcHours - (alpha * 180) / Math.PI) % 360;
-    const sunLon = -gha; // Negative for longitude where sun is overhead
+    const eot = q - alpha;
+    const gha = (15 * (utcHours - 12) + eot) % 360;
+    const sunLon = Astronomy.normalizeLongitude(-gha);
 
     return [sunLon, sunLat];
+  }
+
+  /**
+   * Normalize longitude to [-180, 180] range
+   */
+  private static normalizeLongitude(lon: number): number {
+    let nLon = lon % 360;
+    if (nLon > 180) nLon -= 360;
+    if (nLon < -180) nLon += 360;
+    return nLon;
   }
 
   /**
@@ -97,7 +109,7 @@ export class Astronomy {
     // Calculate Greenwich Hour Angle
     const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
     const gha = (15 * utcHours - (alphaM * 180) / Math.PI) % 360;
-    const moonLon = -gha;
+    const moonLon = Astronomy.normalizeLongitude(-gha);
 
     return [moonLon, moonLat];
   }
