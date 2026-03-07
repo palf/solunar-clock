@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Projection } from './projection';
 
 describe('Projection', () => {
@@ -13,8 +13,8 @@ describe('Projection', () => {
         moveTo: vi.fn(),
         lineTo: vi.fn(),
         closePath: vi.fn(),
-        toString: () => 'M0,0L1,1Z'
-      })
+        toString: () => 'M0,0L1,1Z',
+      }),
     });
   });
 
@@ -63,6 +63,30 @@ describe('Projection', () => {
     expect(actualDist).toBeCloseTo(expectedDist, 1);
   });
 
+  it('remains stable when zooming on a coordinate near the center', () => {
+    const lat = 10;
+    const lon = 10;
+    const targetLat = 10.1;
+    const targetLon = 10.1;
+
+    const p1 = new Projection(centerX, centerY, lat, lon, 100);
+    const [x1, y1] = p1.project([targetLon, targetLat]);
+
+    const p2 = new Projection(centerX, centerY, lat, lon, 200); // Zoom in 2x
+    const [x2, y2] = p2.project([targetLon, targetLat]);
+
+    // Relative distance from center should double
+    const dist1 = Math.sqrt((x1 - centerX) ** 2 + (y1 - centerY) ** 2);
+    const dist2 = Math.sqrt((x2 - centerX) ** 2 + (y2 - centerY) ** 2);
+
+    expect(dist2).toBeCloseTo(dist1 * 2, 1);
+
+    // Bearing should remain almost identical
+    const angle1 = Math.atan2(x1 - centerX, centerY - y1);
+    const angle2 = Math.atan2(x2 - centerX, centerY - y2);
+    expect(angle1).toBeCloseTo(angle2, 3);
+  });
+
   it('returns center for invalid coordinates', () => {
     const projection = new Projection(centerX, centerY, 0, 0, scale);
     const [x, y] = projection.project([NaN, Infinity]);
@@ -87,7 +111,13 @@ describe('Projection', () => {
   it('generates an SVG path from coordinates', () => {
     const projection = new Projection(centerX, centerY, 0, 0, 100);
     const rings = [
-      [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]] as any
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+        [0, 0],
+      ] as any,
     ];
     // We mock d3.path in types or just rely on it being available if we were in browser
     // But since it's a global, we might need to mock it if vitest environment isn't enough

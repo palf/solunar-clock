@@ -57,4 +57,34 @@ describe('TouchController', () => {
     expect(state.scalingFactor).toBeGreaterThan(initialScale);
     expect(onUpdate).toHaveBeenCalled();
   });
+
+  it('resets pan anchors when transitioning from 2 fingers to 1 finger', async () => {
+    new TouchController(element, state, onUpdate);
+
+    // 1. Start with 2 fingers
+    const startEvent = new TouchEvent('touchstart', {
+      touches: [{ clientX: 100, clientY: 100 } as any, { clientX: 200, clientY: 200 } as any],
+    });
+    element.dispatchEvent(startEvent);
+
+    // 2. Remove one finger (touchend)
+    // In a real browser, the remaining finger is still in the 'touches' list of the end event
+    const endEvent = new TouchEvent('touchend', {
+      touches: [{ clientX: 100, clientY: 100 } as any],
+    });
+    element.dispatchEvent(endEvent);
+
+    // 3. Move the remaining finger
+    const initialLat = state.centerLat;
+    const moveEvent = new TouchEvent('touchmove', {
+      touches: [{ clientX: 110, clientY: 110 } as any],
+    });
+    element.dispatchEvent(moveEvent);
+
+    // If anchors were NOT reset, dx/dy would be (110-startX).
+    // If they WERE reset, dx/dy is (110-100) = 10px.
+    // At 1x zoom (sens 0.1), 10px move should change lat by ~1.0 degree.
+    // A jump (if startX was 0) would be 110px (~11 degrees).
+    expect(Math.abs(state.centerLat - initialLat)).toBeLessThan(5);
+  });
 });

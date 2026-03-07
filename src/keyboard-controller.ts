@@ -23,48 +23,47 @@ export class KeyboardController {
     // Ignore if typing in search
     if (e.target instanceof HTMLInputElement) return;
 
-    const minScale = 1;
-    const maxScale = 1000;
     const baseStep = e.shiftKey ? 10 : 1;
     const normalizedStep = baseStep / (this.state.scalingFactor / 10);
 
     switch (e.key) {
       case '+':
       case '=':
-        this.state.scalingFactor = Math.min(maxScale, this.state.scalingFactor * 1.2);
+        this.state.adjustZoom(1.1);
         await this.onRedraw();
         break;
       case '-':
       case '_':
-        this.state.scalingFactor = Math.max(minScale, this.state.scalingFactor / 1.2);
+        this.state.adjustZoom(1 / 1.1);
         await this.onRedraw();
         break;
       case 'ArrowUp':
         if (e.shiftKey) {
-          this.state.scalingFactor = Math.min(maxScale, this.state.scalingFactor * 1.2);
+          this.state.adjustZoom(1.1);
         } else {
-          this.state.centerLat = Math.min(90, this.state.centerLat + normalizedStep);
+          this.state.pan(normalizedStep, 0);
         }
         await this.onRedraw();
         break;
       case 'ArrowDown':
         if (e.shiftKey) {
-          this.state.scalingFactor = Math.max(minScale, this.state.scalingFactor / 1.2);
+          this.state.adjustZoom(1 / 1.1);
         } else {
-          this.state.centerLat = Math.max(-90, this.state.centerLat - normalizedStep);
+          this.state.pan(-normalizedStep, 0);
         }
         await this.onRedraw();
         break;
       case 'ArrowLeft':
-        this.state.centerLon = ((this.state.centerLon - normalizedStep + 180) % 360) - 180;
+        this.state.pan(0, -normalizedStep);
         await this.onRedraw();
         break;
       case 'ArrowRight':
-        this.state.centerLon = ((this.state.centerLon + normalizedStep + 180) % 360) - 180;
+        this.state.pan(0, normalizedStep);
         await this.onRedraw();
         break;
       case 'l':
-        this.toggleLayer();
+        this.state.cycleLayer();
+        this.ui.updateHUD(new Date()); // Immediate HUD refresh for layer
         break;
       case '/':
       case 's':
@@ -72,7 +71,8 @@ export class KeyboardController {
         this.ui.showSearch();
         break;
       case '0':
-        await this.resetToLondon();
+        this.state.resetToLondon();
+        await this.onRedraw();
         break;
       case 'h':
         await this.resetToHome();
@@ -80,27 +80,10 @@ export class KeyboardController {
     }
   }
 
-  private toggleLayer(): void {
-    const layers: ('TERRAIN' | 'SATELLITE' | 'LOGISTICAL')[] = [
-      'TERRAIN',
-      'SATELLITE',
-      'LOGISTICAL',
-    ];
-    const idx = layers.indexOf(this.state.mapLayer);
-    this.state.mapLayer = layers[(idx + 1) % layers.length];
-  }
-
-  private async resetToLondon(): Promise<void> {
-    this.state.centerLat = 51.5074;
-    this.state.centerLon = -0.1278;
-    this.state.scalingFactor = 10;
-    await this.onRedraw();
-  }
-
   private async resetToHome(): Promise<void> {
     const [lon, lat] = await GeolocationService.getCurrentPosition();
-    this.state.centerLat = lat;
-    this.state.centerLon = lon;
+    this.state.setLocation(lat, lon);
+    this.state.scalingFactor = 10;
     await this.onRedraw();
   }
 }

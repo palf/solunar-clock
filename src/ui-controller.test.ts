@@ -1,9 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UIController } from './ui-controller';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
+import { UIController } from './ui-controller';
 
 describe('UIController', () => {
   let state: AppState;
@@ -26,9 +26,9 @@ describe('UIController', () => {
   it('updates HUD elements', () => {
     const ui = new UIController(state, onLocationSelected);
     const now = new Date('2024-03-07T12:00:00Z');
-    
+
     ui.updateHUD(now);
-    
+
     expect(document.getElementById('display-time')?.textContent).toBe('12:00:00');
     expect(document.getElementById('display-pos')?.textContent).toContain('51.51° N');
   });
@@ -36,10 +36,10 @@ describe('UIController', () => {
   it('shows and hides search', () => {
     const ui = new UIController(state, onLocationSelected);
     const overlay = document.getElementById('search-overlay');
-    
+
     ui.showSearch();
     expect(overlay?.style.display).toBe('block');
-    
+
     ui.hideSearch();
     expect(overlay?.style.display).toBe('none');
   });

@@ -26,17 +26,15 @@ export class TouchController {
       passive: false,
     });
     this.element.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-    this.element.addEventListener('touchend', () => this.handleTouchEnd(), { passive: false });
+    this.element.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
+    this.element.addEventListener('touchcancel', (e) => this.handleTouchEnd(e), { passive: false });
   }
 
   private handleTouchStart(e: TouchEvent): void {
     if (e.touches.length === 1) {
       // Start Panning
       this.isPinching = false;
-      this.startX = e.touches[0].clientX;
-      this.startY = e.touches[0].clientY;
-      this.startLat = this.state.centerLat;
-      this.startLon = this.state.centerLon;
+      this.resetPanAnchors(e.touches[0]);
     } else if (e.touches.length === 2) {
       // Start Pinching
       this.isPinching = true;
@@ -47,26 +45,34 @@ export class TouchController {
     e.preventDefault();
   }
 
+  private resetPanAnchors(touch: Touch): void {
+    this.startX = touch.clientX;
+    this.startY = touch.clientY;
+    this.startLat = this.state.centerLat;
+    this.startLon = this.state.centerLon;
+  }
+
   private handleTouchMove(e: TouchEvent): void {
     e.preventDefault();
 
     if (e.touches.length === 1 && !this.isPinching) {
-      // Pan Logic
+      // Pan Logic: ONLY if we are in a pure single-touch state
       const dx = e.touches[0].clientX - this.startX;
       const dy = e.touches[0].clientY - this.startY;
 
-      // Sensitivity: 1 degree per ~100 pixels at 1x zoom (scalingFactor 10)
       const sensitivity = 0.1 / (this.state.scalingFactor / 10);
+      const dLon = -dx * sensitivity;
+      const dLat = dy * sensitivity;
 
-      this.state.centerLon = this.startLon - dx * sensitivity;
-      this.state.centerLat = Math.max(-90, Math.min(90, this.startLat + dy * sensitivity));
-
-      // Normalize longitude
-      this.state.centerLon = ((((this.state.centerLon + 180) % 360) + 360) % 360) - 180;
+      this.state.setLocation(
+        Math.max(-90, Math.min(90, this.startLat + dLat)),
+        ((((this.startLon + dLon + 180) % 360) + 360) % 360) - 180
+      );
 
       this.onUpdate();
     } else if (e.touches.length === 2) {
-      // Pinch Logic
+      // Pinch Logic: ONLY update scalingFactor
+      this.isPinching = true;
       const dist = this.getDistance(e.touches[0], e.touches[1]);
       const ratio = dist / this.startDist;
 
@@ -74,12 +80,19 @@ export class TouchController {
       const maxScale = 1000;
 
       this.state.scalingFactor = Math.max(minScale, Math.min(maxScale, this.startScale * ratio));
+
       this.onUpdate();
     }
   }
 
-  private handleTouchEnd(): void {
-    this.isPinching = false;
+  private handleTouchEnd(e: TouchEvent): void {
+    if (e.touches.length === 1) {
+      // If one finger remains, reset anchors to its current position
+      // so that further movement is calculated from this point, not the start of the pinch
+      this.resetPanAnchors(e.touches[0]);
+    } else if (e.touches.length === 0) {
+      this.isPinching = false;
+    }
   }
 
   private getDistance(t1: Touch, t2: Touch): number {

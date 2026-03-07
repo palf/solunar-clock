@@ -50,12 +50,30 @@ import { UIController } from './ui-controller';
   const mapRenderer = new MapRenderer(mapG, projection);
   const clockFace = new ClockFace(svg as any, state.centerX, state.centerY, state.radius);
 
-  // 3. Define Main Actions
+  // 3. Rendering Lifecycle Management
+  let isRendering = false;
+  let needsRedraw = false;
+  let userHasInteracted = false;
+
   const redrawMap = async () => {
+    userHasInteracted = true;
+    if (isRendering) {
+      needsRedraw = true;
+      return;
+    }
+
+    isRendering = true;
     projection.updateCenter(state.centerLat, state.centerLon);
     projection.updateScale(state.scale);
+
     await mapRenderer.render(state.mapData);
     updateDynamicElements();
+
+    isRendering = false;
+    if (needsRedraw) {
+      needsRedraw = false;
+      requestAnimationFrame(redrawMap);
+    }
   };
 
   const updateDynamicElements = () => {
@@ -118,14 +136,18 @@ import { UIController } from './ui-controller';
 
   // Initial draw with default location
   await redrawMap();
+  userHasInteracted = false; // Reset after initial draw
 
   // Try to upgrade to user's real location
-  const [userLon, userLat] = await GeolocationService.getCurrentPosition();
-  if (userLat !== 51.5074 || userLon !== -0.1278) {
-    state.centerLat = userLat;
-    state.centerLon = userLon;
-    await redrawMap();
-  }
+  GeolocationService.getCurrentPosition().then(async ([userLon, userLat]) => {
+    // Only apply if user hasn't moved the map themselves
+    if (!userHasInteracted) {
+      state.centerLat = userLat;
+      state.centerLon = userLon;
+      await redrawMap();
+      userHasInteracted = false; // Reset again
+    }
+  });
 
   // 7. Start Tick Loop (1Hz for RPi Zero)
   setInterval(updateDynamicElements, 1000);
