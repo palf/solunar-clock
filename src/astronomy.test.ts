@@ -101,4 +101,32 @@ describe('Astronomy Calculations', () => {
     expect(Math.abs(pSpr[1])).toBeLessThan(1.0);
     expect(Math.abs(pAut[1])).toBeLessThan(1.0);
   });
+
+  it('sun position is always within 5 degrees of 24-hour clock time', () => {
+    // Check 100 random points over 10 years
+    for (let i = 0; i < 100; i++) {
+      const timestamp = Date.now() + (Math.random() - 0.5) * 10 * 365 * 24 * 60 * 60 * 1000;
+      const date = new Date(timestamp);
+      
+      const pos = calculateSunPosition(date);
+      const sunLon = pos[0];
+
+      // Ideal 24h clock: 12:00 UTC = 0 degrees
+      // 1 hour = 15 degrees. 
+      // 00:00 UTC should be 180 degrees.
+      const hoursSinceNoon = (date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600) - 12;
+      let clockLon = -hoursSinceNoon * 15;
+      
+      // Normalize clockLon to [-180, 180]
+      if (clockLon > 180) clockLon -= 360;
+      if (clockLon < -180) clockLon += 360;
+
+      let diff = Math.abs(sunLon - clockLon);
+      if (diff > 180) diff = 360 - diff;
+
+      // The Equation of Time maxes at ~16 minutes, which is ~4 degrees.
+      // So 5 degrees is a safe and rigorous bound.
+      expect(diff).toBeLessThan(5);
+    }
+  });
 });
