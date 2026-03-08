@@ -28,7 +28,9 @@ import { UIController } from './ui-controller';
 
   // 1. Initialize State & Core Components
   const state = new AppState();
-  const svg = d3.select<SVGSVGElement, unknown>('#svg').attr('viewBox', `0 0 ${CONFIG.WIDTH} ${CONFIG.HEIGHT}`);
+  const svg = d3
+    .select<SVGSVGElement, unknown>('#svg')
+    .attr('viewBox', `0 0 ${CONFIG.WIDTH} ${CONFIG.HEIGHT}`);
 
   const projection = new Projection(
     state.centerX,
@@ -42,9 +44,7 @@ import { UIController } from './ui-controller';
 
   // 2. Initialize Rendering Layers
   const bgG = svg.append<SVGGElement>('g').attr('id', 'layer-bg');
-  const rotatableG = svg
-    .append<SVGGElement>('g')
-    .attr('id', 'layer-rotatable');
+  const rotatableG = svg.append<SVGGElement>('g').attr('id', 'layer-rotatable');
 
   const mapG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-map');
   const staticG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-static');
@@ -54,12 +54,7 @@ import { UIController } from './ui-controller';
   const webglCanvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
   const mapRenderer = new MapRenderer(mapG, projection);
   const tileRenderer = new TileRenderer(canvas, webglCanvas, projection);
-  const clockFace = new ClockFace(
-    svg,
-    state.centerX,
-    state.centerY,
-    state.radius
-  );
+  const clockFace = new ClockFace(svg, state.centerX, state.centerY, state.radius);
 
   const defs = svg.append<SVGDefsElement>('defs');
   clockFace.drawMask(defs);
@@ -78,11 +73,11 @@ import { UIController } from './ui-controller';
   let lastMode = '';
 
   const redrawMap = async () => {
-    const isDirty = 
+    const isDirty =
       isInitialRender ||
-      state.centerLat !== lastLat || 
-      state.centerLon !== lastLon || 
-      state.scale !== lastScale || 
+      state.centerLat !== lastLat ||
+      state.centerLon !== lastLon ||
+      state.scale !== lastScale ||
       state.mapLayer !== lastLayer ||
       state.renderMode !== lastMode;
 
@@ -95,7 +90,7 @@ import { UIController } from './ui-controller';
 
     isRendering = true;
     isInitialRender = false;
-    
+
     lastLat = state.centerLat;
     lastLon = state.centerLon;
     lastScale = state.scale;
@@ -145,39 +140,66 @@ import { UIController } from './ui-controller';
     const sunAngle = Math.atan2(sunX - state.centerX, state.centerY - sunY) * (180 / Math.PI);
     const moonAngle = Math.atan2(moonX - state.centerX, state.centerY - moonY) * (180 / Math.PI);
 
-    sunHandGroup.attr('transform', `translate(${state.centerX}, ${state.centerY}) rotate(${sunAngle})`);
-    moonHandGroup.attr('transform', `translate(${state.centerX}, ${state.centerY}) rotate(${moonAngle})`);
+    sunHandGroup.attr(
+      'transform',
+      `translate(${state.centerX}, ${state.centerY}) rotate(${sunAngle})`
+    );
+    moonHandGroup.attr(
+      'transform',
+      `translate(${state.centerX}, ${state.centerY}) rotate(${moonAngle})`
+    );
   };
 
   // Create Sun Icon
   const sunHandGroup = handG.append('g').attr('class', 'hand-sun-group');
-  
+
   // Thin arm
-  sunHandGroup.append('line')
-    .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', -state.radius)
-    .attr('stroke', 'rgba(255, 165, 0, 0.3)').attr('stroke-width', 1);
+  sunHandGroup
+    .append('line')
+    .attr('x1', 0)
+    .attr('y1', 0)
+    .attr('x2', 0)
+    .attr('y2', -state.radius)
+    .attr('stroke', 'rgba(255, 165, 0, 0.3)')
+    .attr('stroke-width', 1);
 
   const sunIcon = sunHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
-  sunIcon.append('circle').attr('r', 10).attr('fill', '#fbbf24').attr('stroke', '#f59e0b').attr('stroke-width', 2);
+  sunIcon
+    .append('circle')
+    .attr('r', 10)
+    .attr('fill', '#fbbf24')
+    .attr('stroke', '#f59e0b')
+    .attr('stroke-width', 2);
   // Sun rays
   for (let i = 0; i < 8; i++) {
-    sunIcon.append('line')
-      .attr('x1', 0).attr('y1', -12).attr('x2', 0).attr('y2', -16)
-      .attr('stroke', '#fbbf24').attr('stroke-width', 2)
+    sunIcon
+      .append('line')
+      .attr('x1', 0)
+      .attr('y1', -12)
+      .attr('x2', 0)
+      .attr('y2', -16)
+      .attr('stroke', '#fbbf24')
+      .attr('stroke-width', 2)
       .attr('transform', `rotate(${i * 45})`);
   }
 
   // Create Moon Icon
   const moonHandGroup = handG.append('g').attr('class', 'hand-moon-group');
-  
+
   // Thin arm
-  moonHandGroup.append('line')
-    .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', -state.radius)
-    .attr('stroke', 'rgba(56, 189, 248, 0.3)').attr('stroke-width', 1);
+  moonHandGroup
+    .append('line')
+    .attr('x1', 0)
+    .attr('y1', 0)
+    .attr('x2', 0)
+    .attr('y2', -state.radius)
+    .attr('stroke', 'rgba(56, 189, 248, 0.3)')
+    .attr('stroke-width', 1);
 
   const moonIcon = moonHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
   // Crescent moon
-  moonIcon.append('path')
+  moonIcon
+    .append('path')
     .attr('d', 'M -6 -8 A 10 10 0 1 1 -6 8 A 8 8 0 1 0 -6 -8')
     .attr('fill', '#f1f5f9')
     .attr('stroke', '#38bdf8')

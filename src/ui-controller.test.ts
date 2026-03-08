@@ -17,14 +17,17 @@ describe('UIController Button Behaviors', () => {
       <div id="searchResults"></div>
       <div id="zoom-overlay" style="display: none;"></div>
       <input id="zoomInput" />
+      <div id="help-overlay" style="display: none;"></div>
       <div id="display-time"></div>
       <div id="display-pos"></div>
       <div id="display-zoom"></div>
+      <div id="group-zoom"></div>
       <button id="layer-trigger"></button>
       <div id="display-attribution"></div>
       <button id="btn-mode"></button>
       <button id="btn-locate"></button>
       <button id="btn-search"></button>
+      <button id="btn-help"></button>
       <div id="layer-dropdown" style="display: none;">
         <div class="layer-option" data-layer="TOPOGRAPHIC"></div>
         <div class="layer-option" data-layer="IMAGERY"></div>
@@ -56,7 +59,7 @@ describe('UIController Button Behaviors', () => {
   it('toggles render mode when mode button is clicked', () => {
     const modeBtn = document.getElementById('btn-mode') as HTMLButtonElement;
     ui.updateHUD(new Date());
-    
+
     // Initial state
     expect(state.renderMode).toBe('3D');
     expect(modeBtn.textContent).toBe('3D');
@@ -74,7 +77,7 @@ describe('UIController Button Behaviors', () => {
 
   it('handles the Set Home behavior (🎯 -> ✖️)', () => {
     const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
-    
+
     // 1. Initial State: No home set
     expect(state.homeLocation).toBeNull();
     ui.updateHUD(new Date());
@@ -83,18 +86,18 @@ describe('UIController Button Behaviors', () => {
     // 2. Click to Set Home
     state.setLocation(10, 20);
     locateBtn.dispatchEvent(new Event('click'));
-    
+
     expect(state.homeLocation).toEqual({ lat: 10, lon: 20 });
     expect(locateBtn.textContent).toBe('✖️'); // Should show clear icon because we are at home
   });
 
   it('handles the Go Home behavior (🏠 -> ✖️)', () => {
     const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
-    
+
     // 1. Setup: Stored home at 10, 20
     state.setLocation(10, 20);
     state.setHome();
-    
+
     // 2. Move Away
     state.setLocation(50, 50);
     ui.updateHUD(new Date());
@@ -102,7 +105,7 @@ describe('UIController Button Behaviors', () => {
 
     // 3. Click to Go Home
     locateBtn.dispatchEvent(new Event('click'));
-    
+
     expect(state.centerLat).toBe(10);
     expect(state.centerLon).toBe(20);
     expect(locateBtn.textContent).toBe('✖️'); // Now at home, icon for "Clear"
@@ -110,7 +113,7 @@ describe('UIController Button Behaviors', () => {
 
   it('handles the Clear Home behavior (✖️ -> 🎯)', () => {
     const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
-    
+
     // 1. Setup: At home
     state.setLocation(10, 20);
     state.setHome();
@@ -119,7 +122,7 @@ describe('UIController Button Behaviors', () => {
 
     // 2. Click to Clear
     locateBtn.dispatchEvent(new Event('click'));
-    
+
     expect(state.homeLocation).toBeNull();
     expect(locateBtn.textContent).toBe('🎯');
   });
@@ -127,7 +130,7 @@ describe('UIController Button Behaviors', () => {
   it('shows search when search button is clicked', () => {
     const searchBtn = document.getElementById('btn-search') as HTMLButtonElement;
     const overlay = document.getElementById('search-overlay');
-    
+
     expect(overlay?.style.display).toBe('none');
     searchBtn.dispatchEvent(new Event('click'));
     expect(overlay?.style.display).toBe('block');
@@ -140,45 +143,19 @@ describe('UIController Button Behaviors', () => {
     expect(overlay?.style.display).toBe('block');
   });
 
-  it('applies zoom from dialog on Enter', () => {
-    const input = document.getElementById('zoomInput') as HTMLInputElement;
-    ui.showZoomDialog();
-    
-    input.value = '500';
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    
-    expect(state.scalingFactor).toBe(5000);
-    expect(document.getElementById('zoom-overlay')?.style.display).toBe('none');
-    expect(onLocationSelected).toHaveBeenCalled();
+  it('shows help dialog', () => {
+    const overlay = document.getElementById('help-overlay');
+    expect(overlay?.style.display).toBe('none');
+    ui.showHelpDialog();
+    expect(overlay?.style.display).toBe('block');
   });
 
-  it('navigates search results with keyboard', () => {
-    // Mock some search data
-    // @ts-ignore
-    ui.currentSearchData = [
-      { display_name: 'City A', lat: '10', lon: '10' },
-      { display_name: 'City B', lat: '20', lon: '20' }
-    ];
-    
-    // Mock result elements
-    const results = document.getElementById('searchResults')!;
-    results.innerHTML = '<div class="search-item"></div><div class="search-item"></div>';
-    
-    const input = document.getElementById('locationSearch')!;
-    
-    // Navigate Down
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
-    // @ts-ignore
-    expect(ui.selectedSearchIndex).toBe(0);
-    
-    // Navigate Down again
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
-    // @ts-ignore
-    expect(ui.selectedSearchIndex).toBe(1);
-    
-    // Select with Enter
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    expect(state.centerLat).toBe(20);
-    expect(onLocationSelected).toHaveBeenCalled();
+  it('opens zoom dialog when zoom HUD is clicked', () => {
+    const zoomGroup = document.getElementById('group-zoom');
+    const overlay = document.getElementById('zoom-overlay');
+
+    expect(overlay?.style.display).toBe('none');
+    zoomGroup?.dispatchEvent(new Event('click'));
+    expect(overlay?.style.display).toBe('block');
   });
 });

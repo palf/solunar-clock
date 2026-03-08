@@ -24,27 +24,17 @@ export class TouchController {
   }
 
   private init(): void {
-    const el =
-      this.element instanceof Document
-        ? this.element.documentElement
-        : this.element;
+    const el = this.element instanceof Document ? this.element.documentElement : this.element;
 
     // Touch events
-    el.addEventListener(
-      'touchstart',
-      (e) => this.handleTouchStart(e as TouchEvent),
-      { passive: false }
-    );
-    el.addEventListener(
-      'touchmove',
-      (e) => this.handleTouchMove(e as TouchEvent),
-      { passive: false }
-    );
+    el.addEventListener('touchstart', (e) => this.handleTouchStart(e as TouchEvent), {
+      passive: false,
+    });
+    el.addEventListener('touchmove', (e) => this.handleTouchMove(e as TouchEvent), {
+      passive: false,
+    });
     el.addEventListener('touchend', (e) => this.handleTouchEnd(e as TouchEvent));
-    el.addEventListener(
-      'touchcancel',
-      (e) => this.handleTouchEnd(e as TouchEvent)
-    );
+    el.addEventListener('touchcancel', (e) => this.handleTouchEnd(e as TouchEvent));
 
     // Mouse events
     el.addEventListener('mousedown', (e) => this.handleMouseDown(e as MouseEvent));
@@ -105,7 +95,7 @@ export class TouchController {
   private handleWheel(e: WheelEvent): void {
     if (this.isInteractive(e.target)) return;
     e.preventDefault();
-    
+
     const zoomSpeed = 1.1;
     const multiplier = e.deltaY > 0 ? 1 / zoomSpeed : zoomSpeed;
     this.state.adjustZoom(multiplier);
@@ -149,8 +139,7 @@ export class TouchController {
     const dLat = dy * sensitivity;
 
     this.state.centerLat = this.startLat + dLat;
-    this.state.centerLon =
-      ((((this.startLon + dLon + 180) % 360) + 360) % 360) - 180;
+    this.state.centerLon = ((((this.startLon + dLon + 180) % 360) + 360) % 360) - 180;
 
     this.onUpdate();
   }
@@ -165,8 +154,6 @@ export class TouchController {
   }
 
   private getDistance(t1: Touch, t2: Touch): number {
-    return Math.sqrt(
-      (t2.clientX - t1.clientX) ** 2 + (t2.clientY - t1.clientY) ** 2
-    );
+    return Math.sqrt((t2.clientX - t1.clientX) ** 2 + (t2.clientY - t1.clientY) ** 2);
   }
 }

@@ -138,14 +138,12 @@
   .layer-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
   .layer-option.active { color: var(--accent); }
 
-  /* Search Modal */
-  #search-overlay {
+  /* Search/Zoom/Help Modals */
+  .overlay-dialog {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 320px;
     background: #1e293b;
     border: 1px solid var(--accent);
     border-radius: 12px;
@@ -170,6 +168,10 @@
   .search-item { padding: 8px; border-bottom: 1px solid #334155; cursor: pointer; transition: background 0.1s; }
   .search-item.selected { background: var(--accent); color: var(--bg); font-weight: 700; }
 
+  .help-list { list-style: none; padding: 0; margin: 0; font-size: 11px; }
+  .help-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .help-key { background: #334155; padding: 1px 4px; border-radius: 4px; font-family: monospace; font-weight: 700; color: var(--accent); }
+
   /* Map Visuals */
   .slice { fill: rgba(56, 189, 248, 0.03); stroke: rgba(255,255,255,0.05); }
   .slice.alt { fill: rgba(56, 189, 248, 0.08); }
@@ -193,6 +195,7 @@
 
       <!-- Right side: Controls -->
       <div style="display: flex; gap: 6px; align-items: center;">
+        <button id="btn-help" class="hud-btn" title="Help / Shortcuts" type="button">?</button>
         <button id="btn-locate" class="hud-btn" title="Set/Go Home" type="button">🎯</button>
         <button id="btn-search" class="hud-btn" title="Search Location" type="button">🔍</button>
         
@@ -219,20 +222,35 @@
         <span class="hud-label">COORDINATES</span>
         <span id="display-pos">0.00° N, 0.00° E</span>
       </div>
-      <div class="hud-group" style="text-align: right;">
+      <div class="hud-group" style="text-align: right; pointer-events: auto; cursor: pointer;" id="group-zoom">
         <span class="hud-label">ZOOM</span>
         <span id="display-zoom">1.0x</span>
       </div>
     </div>
 
-    <div id="search-overlay">
+    <div id="search-overlay" class="overlay-dialog" style="width: 90%; max-width: 320px;">
       <input type="text" id="locationSearch" placeholder="Search city or postcode..." autocomplete="off">
       <div id="searchResults"></div>
     </div>
 
-    <div id="zoom-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 200px; background: #1e293b; border: 1px solid var(--accent); border-radius: 12px; padding: 15px; z-index: 100; display: none; box-shadow: 0 0 100px rgba(0,0,0,0.9);">
+    <div id="zoom-overlay" class="overlay-dialog" style="width: 90%; max-width: 200px;">
       <span class="hud-label" style="display: block; margin-bottom: 8px;">Set Zoom Level</span>
       <input type="number" id="zoomInput" placeholder="3000" step="100" min="0.5">
+    </div>
+
+    <div id="help-overlay" class="overlay-dialog" style="width: 90%; max-width: 280px; color: #fff;">
+      <span class="hud-label" style="display: block; margin-bottom: 12px; font-size: 10px;">Keyboard Shortcuts</span>
+      <div class="help-list">
+        <div class="help-item"><span>Pan Map</span> <span class="help-key">Arrows</span></div>
+        <div class="help-item"><span>Zoom In/Out</span> <span class="help-key">+</span> / <span class="help-key">-</span></div>
+        <div class="help-item"><span>Search City</span> <span class="help-key">s</span> / <span class="help-key">/</span></div>
+        <div class="help-item"><span>Set/Go Home</span> <span class="help-key">h</span></div>
+        <div class="help-item"><span>Manual Zoom</span> <span class="help-key">z</span></div>
+        <div class="help-item"><span>Cycle Layers</span> <span class="help-key">l</span></div>
+        <div class="help-item"><span>Reset Map</span> <span class="help-key">0</span></div>
+        <div class="help-item"><span>Close Menus</span> <span class="help-key">Esc</span></div>
+      </div>
+      <button class="hud-btn" type="button" style="width: 100%; margin-top: 15px; height: 30px; font-size: 12px;" onclick="document.getElementById('help-overlay').style.display='none'">Close</button>
     </div>
 
     <!-- Attribution -->

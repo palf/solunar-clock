@@ -70,6 +70,10 @@ export class KeyboardController {
         e.preventDefault();
         this.ui.showSearch();
         break;
+      case '?':
+        e.preventDefault();
+        this.ui.showHelpDialog();
+        break;
       case 'z':
         e.preventDefault();
         this.ui.showZoomDialog();

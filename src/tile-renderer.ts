@@ -18,7 +18,7 @@ export class TileRenderer {
   private ctx2d: CanvasRenderingContext2D | null;
   private gl: WebGLRenderingContext | null = null;
   private tileCache = new Map<string, HTMLImageElement>();
-  
+
   private program: WebGLProgram | null = null;
   private vertexBuffer: WebGLBuffer | null = null;
 
@@ -37,10 +37,7 @@ export class TileRenderer {
     this.initWebGL();
   }
 
-  async render(
-    layer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS',
-    mode: '2D' | '3D'
-  ): Promise<void> {
+  async render(layer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS', mode: '2D' | '3D'): Promise<void> {
     if (mode === '3D' && this.gl) {
       this.canvas2d.style.display = 'none';
       this.canvas3d.style.display = 'block';
@@ -82,13 +79,18 @@ export class TileRenderer {
       for (let y = ty - range; y <= ty + range; y++) {
         const wx = ((x % n) + n) % n;
         if (y < 0 || y >= n) continue;
-        const url = this.tileUrls[layer].replace('{z}', z.toString()).replace('{x}', wx.toString()).replace('{y}', y.toString());
-        tiles.push(this.getTileImage(url).then(img => {
-          if (img) this.renderTile2D(wx, y, z, img);
-        }));
+        const url = this.tileUrls[layer]
+          .replace('{z}', z.toString())
+          .replace('{x}', wx.toString())
+          .replace('{y}', y.toString());
+        tiles.push(
+          this.getTileImage(url).then((img) => {
+            if (img) this.renderTile2D(wx, y, z, img);
+          })
+        );
       }
     }
-    
+
     await Promise.all(tiles);
 
     // Atomic Swap
@@ -103,8 +105,20 @@ export class TileRenderer {
     for (let i = 0; i < subdivisions; i++) {
       for (let j = 0; j < subdivisions; j++) {
         const pNW = this.projection.project(this.tileToLonLat(tx + i * step, ty + j * step, z));
-        const pSE = this.projection.project(this.tileToLonLat(tx + (i + 1) * step, ty + (j + 1) * step, z));
-        this.backCtx!.drawImage(img, i * step * tileSize, j * step * tileSize, step * tileSize, step * tileSize, pNW[0], pNW[1], pSE[0] - pNW[0] + 1.1, pSE[1] - pNW[1] + 1.1);
+        const pSE = this.projection.project(
+          this.tileToLonLat(tx + (i + 1) * step, ty + (j + 1) * step, z)
+        );
+        this.backCtx!.drawImage(
+          img,
+          i * step * tileSize,
+          j * step * tileSize,
+          step * tileSize,
+          step * tileSize,
+          pNW[0],
+          pNW[1],
+          pSE[0] - pNW[0] + 1.1,
+          pSE[1] - pNW[1] + 1.1
+        );
       }
     }
   }
@@ -114,10 +128,10 @@ export class TileRenderer {
   // ========================================================================
 
   private initWebGL(): void {
-    this.gl = this.canvas3d.getContext('webgl', { 
-      alpha: false, 
+    this.gl = this.canvas3d.getContext('webgl', {
+      alpha: false,
       antialias: true,
-      preserveDrawingBuffer: true 
+      preserveDrawingBuffer: true,
     });
     if (!this.gl) return;
 
@@ -175,8 +189,8 @@ export class TileRenderer {
     const ty = Math.floor(fTY);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    
-    // WebGL Double Buffering Strategy: 
+
+    // WebGL Double Buffering Strategy:
     // We clear ONLY once we know we are about to draw the new set
     gl.clearColor(0.05, 0.09, 0.16, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -193,7 +207,10 @@ export class TileRenderer {
       for (let y = ty - range; y <= ty + range; y++) {
         const wx = ((x % n) + n) % n;
         if (y < 0 || y >= n) continue;
-        const url = this.tileUrls[layer].replace('{z}', z.toString()).replace('{x}', wx.toString()).replace('{y}', y.toString());
+        const url = this.tileUrls[layer]
+          .replace('{z}', z.toString())
+          .replace('{x}', wx.toString())
+          .replace('{y}', y.toString());
         const img = await this.getTileImage(url);
         if (img) this.drawTile3D(wx, y, z, img);
       }
@@ -208,7 +225,14 @@ export class TileRenderer {
 
     for (let i = 0; i < subdivisions; i++) {
       for (let j = 0; j < subdivisions; j++) {
-        const coords = [[i, j], [i + 1, j], [i, j + 1], [i, j + 1], [i + 1, j], [i + 1, j + 1]];
+        const coords = [
+          [i, j],
+          [i + 1, j],
+          [i, j + 1],
+          [i, j + 1],
+          [i + 1, j],
+          [i + 1, j + 1],
+        ];
         for (const [si, sj] of coords) {
           const [lon, lat] = this.tileToLonLat(tx + si * step, ty + sj * step, z);
           vertices.push(lon, lat, si * step, sj * step);
@@ -246,11 +270,14 @@ export class TileRenderer {
   private createProgram(vsSrc: string, fsSrc: string): WebGLProgram | null {
     const gl = this.gl!;
     const v = gl.createShader(gl.VERTEX_SHADER)!;
-    gl.shaderSource(v, vsSrc); gl.compileShader(v);
+    gl.shaderSource(v, vsSrc);
+    gl.compileShader(v);
     const f = gl.createShader(gl.FRAGMENT_SHADER)!;
-    gl.shaderSource(f, fsSrc); gl.compileShader(f);
+    gl.shaderSource(f, fsSrc);
+    gl.compileShader(f);
     const p = gl.createProgram()!;
-    gl.attachShader(p, v); gl.attachShader(p, f);
+    gl.attachShader(p, v);
+    gl.attachShader(p, f);
     gl.linkProgram(p);
     return p;
   }
@@ -258,9 +285,14 @@ export class TileRenderer {
   private async getTileImage(url: string): Promise<HTMLImageElement | null> {
     if (this.tileCache.has(url)) return this.tileCache.get(url)!;
     return new Promise((r) => {
-      const i = new Image(); i.crossOrigin = 'Anonymous';
-      i.onload = () => { this.tileCache.set(url, i); r(i); };
-      i.onerror = () => r(null); i.src = url;
+      const i = new Image();
+      i.crossOrigin = 'Anonymous';
+      i.onload = () => {
+        this.tileCache.set(url, i);
+        r(i);
+      };
+      i.onerror = () => r(null);
+      i.src = url;
     });
   }
 

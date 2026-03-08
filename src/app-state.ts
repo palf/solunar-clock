@@ -37,12 +37,12 @@ export class AppState {
   mapData: TopoJSONData | null = null;
 
   constructor() {
-    // Start with London as fallback
+    // 1. Start with hardcoded defaults
     this._centerLat = CONFIG.DEFAULT_LOCATION.lat;
     this._centerLon = CONFIG.DEFAULT_LOCATION.lon;
 
-    // Load from storage (will override London if home exists)
-    this.loadHome();
+    // 2. Load from storage (overrides defaults if they exist)
+    this.loadState();
   }
 
   // Getters
@@ -61,14 +61,14 @@ export class AppState {
 
   // Setters with NaN guards
   set scalingFactor(val: number) {
-    if (Number.isFinite(val) && val > 0) this._scalingFactor = val;
+    if (Number.isFinite(val) && val > 0) {
+      this._scalingFactor = val;
+      this.saveState(); // Persist zoom change
+    }
   }
   set centerLat(val: number) {
     if (Number.isFinite(val)) {
-      this._centerLat = Math.max(
-        -CONFIG.MAX_LATITUDE,
-        Math.min(CONFIG.MAX_LATITUDE, val)
-      );
+      this._centerLat = Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, val));
     }
   }
   set centerLon(val: number) {
@@ -84,29 +84,47 @@ export class AppState {
   // STATE ACTIONS
   // ========================================================================
 
-  private loadHome(): void {
+  /**
+   * Load all persistent state (home and zoom)
+   */
+  private loadState(): void {
     if (typeof localStorage === 'undefined') return;
     try {
-      const stored = localStorage.getItem('solunar-clock-home');
-      if (stored) {
-        this._homeLocation = JSON.parse(stored);
+      // Load Home
+      const storedHome = localStorage.getItem('solunar-clock-home');
+      if (storedHome) {
+        this._homeLocation = JSON.parse(storedHome);
         if (this._homeLocation) {
           this._centerLat = this._homeLocation.lat;
           this._centerLon = this._homeLocation.lon;
         }
       }
+
+      // Load Zoom
+      const storedZoom = localStorage.getItem('solunar-clock-zoom');
+      if (storedZoom) {
+        const val = parseFloat(storedZoom);
+        if (!Number.isNaN(val) && val > 0) {
+          this._scalingFactor = val;
+        }
+      }
     } catch (e) {
-      console.warn('Failed to load home from storage', e);
+      console.warn('Failed to load state from storage', e);
     }
+  }
+
+  /**
+   * Persist specific state items
+   */
+  private saveState(): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem('solunar-clock-zoom', this._scalingFactor.toString());
   }
 
   setHome(): void {
     this._homeLocation = { lat: this._centerLat, lon: this._centerLon };
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(
-        'solunar-clock-home',
-        JSON.stringify(this._homeLocation)
-      );
+      localStorage.setItem('solunar-clock-home', JSON.stringify(this._homeLocation));
     }
   }
 
@@ -143,10 +161,7 @@ export class AppState {
     if (!Number.isFinite(multiplier)) return;
     const minScale = CONFIG.MIN_SCALING_FACTOR;
     const maxScale = CONFIG.MAX_SCALING_FACTOR;
-    this.scalingFactor = Math.max(
-      minScale,
-      Math.min(maxScale, this._scalingFactor * multiplier)
-    );
+    this.scalingFactor = Math.max(minScale, Math.min(maxScale, this._scalingFactor * multiplier));
   }
 
   /**
@@ -162,11 +177,7 @@ export class AppState {
    * Cycle through map layers
    */
   cycleLayer(): void {
-    const layers: ('TOPOGRAPHIC' | 'IMAGERY' | 'STREETS')[] = [
-      'TOPOGRAPHIC',
-      'IMAGERY',
-      'STREETS',
-    ];
+    const layers: ('TOPOGRAPHIC' | 'IMAGERY' | 'STREETS')[] = ['TOPOGRAPHIC', 'IMAGERY', 'STREETS'];
     const idx = layers.indexOf(this.mapLayer);
     this.mapLayer = layers[(idx + 1) % layers.length];
   }

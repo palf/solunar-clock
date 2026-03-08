@@ -4,7 +4,7 @@
 
 /// <reference path="./types.ts" />
 
-import * as d3 from 'd3';
+import type * as d3 from 'd3';
 import { CONFIG } from './config';
 
 export class ClockFace {
@@ -32,9 +32,7 @@ export class ClockFace {
    * Draw the background circle and rim
    * Note: Background should be drawn first, but should not cover the map
    */
-  drawBackground(
-    bgGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>
-  ): void {
+  drawBackground(bgGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {
     // Outer rim circle (larger, just for border effect)
     bgGroup
       .append('circle')
@@ -57,18 +55,14 @@ export class ClockFace {
   /**
    * Draw compass point labels (N, NE, E, SE, S, SW, W, NW)
    */
-  drawHourLabels(
-    labelsGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>
-  ): void {
+  drawHourLabels(labelsGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {
     const compassPoints = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
     for (let i = 0; i < CONFIG.COMPASS_POINTS_COUNT; i++) {
       const angDeg = i * CONFIG.COMPASS_INTERVAL_DEG;
       const theta = (angDeg * Math.PI) / 180;
-      const tx =
-        this.centerX + (this.radius + CONFIG.LABEL_SPACING) * Math.sin(theta);
-      const ty =
-        this.centerY - (this.radius + CONFIG.LABEL_SPACING) * Math.cos(theta);
+      const tx = this.centerX + (this.radius + CONFIG.LABEL_SPACING) * Math.sin(theta);
+      const ty = this.centerY - (this.radius + CONFIG.LABEL_SPACING) * Math.cos(theta);
 
       labelsGroup
         .append('text')
@@ -84,9 +78,7 @@ export class ClockFace {
   /**
    * Draw center mark
    */
-  drawCenterMark(
-    centerGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>
-  ): void {
+  drawCenterMark(centerGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {
     centerGroup
       .append('circle')
       .attr('cx', this.centerX)
