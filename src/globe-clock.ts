@@ -131,8 +131,9 @@ async function bootstrap() {
 
   const updateDynamicElements = (onlyTime = false) => {
     const now = timeSim.getSimulatedTime();
-    ui.updateHUD(now, onlyTime);
+    ui.updateTime(now);
     if (!onlyTime) {
+      ui.updateMetadata();
       updateHands(now);
     }
   };
@@ -229,7 +230,7 @@ async function bootstrap() {
   // 8. Start Tick Loop (1Hz for RPi Zero) - Only update time text and hands
   setInterval(() => {
     const now = timeSim.getSimulatedTime();
-    ui.updateHUD(now, true);
+    ui.updateTime(now);
     updateHands(now);
   }, CONFIG.PERFORMANCE.UPDATE_INTERVAL_MS);
 }

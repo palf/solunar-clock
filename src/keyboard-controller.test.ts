@@ -19,7 +19,8 @@ describe('KeyboardController', () => {
       showZoomDialog: vi.fn(),
       toggleHelpDialog: vi.fn(),
       handleHomeAction: vi.fn(),
-      updateHUD: vi.fn(),
+      updateTime: vi.fn(),
+      updateMetadata: vi.fn(),
     } as any;
     onRedraw = vi.fn().mockResolvedValue(undefined);
   });
@@ -74,7 +75,7 @@ describe('KeyboardController', () => {
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'l' }));
     expect(state.mapLayer).not.toBe(initialLayer);
-    expect(ui.updateHUD).toHaveBeenCalled();
+    expect(ui.updateMetadata).toHaveBeenCalled();
     expect(onRedraw).toHaveBeenCalled();
   });
 

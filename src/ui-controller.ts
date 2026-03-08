@@ -34,6 +34,13 @@ export class UIController {
   private btnLocate = document.getElementById('btn-locate');
   private btnMode = document.getElementById('btn-mode');
   private btnSearch = document.getElementById('btn-search');
+
+  // HUD display elements
+  private displayTime = document.getElementById('display-time');
+  private displayPos = document.getElementById('display-pos');
+  private displayZoom = document.getElementById('display-zoom');
+  private displayAttribution = document.getElementById('display-attribution');
+
   private searchDebounce: ReturnType<typeof setTimeout> | undefined;
 
   // Keyboard navigation for search
@@ -53,22 +60,35 @@ export class UIController {
     this.initClickOutside();
   }
 
+  private metadataUpdatePending = false;
+
   /**
-   * Update HUD elements.
-   * onlyTime = true allows 1Hz ticks to only refresh the clock text.
+   * Update the clock display. Called at 1Hz.
    */
-  updateHUD(now: Date, onlyTime = false): void {
-    const timeEl = document.getElementById('display-time');
-    if (timeEl) timeEl.textContent = now.toISOString().substring(11, 19);
+  updateTime(now: Date): void {
+    if (this.displayTime) this.displayTime.textContent = now.toISOString().substring(11, 19);
+  }
 
-    if (onlyTime) return;
+  /**
+   * Update all non-temporal HUD elements (position, zoom, mode, etc.).
+   * Throttled via requestAnimationFrame to prevent DOM churn during rapid panning/zooming.
+   */
+  updateMetadata(): void {
+    if (this.metadataUpdatePending) return;
 
-    const modeEl = document.getElementById('btn-mode');
-    if (modeEl) {
-      modeEl.textContent = this.state.renderMode;
-      modeEl.style.color =
+    this.metadataUpdatePending = true;
+    requestAnimationFrame(() => {
+      this.performMetadataUpdate();
+      this.metadataUpdatePending = false;
+    });
+  }
+
+  private performMetadataUpdate(): void {
+    if (this.btnMode) {
+      this.btnMode.textContent = this.state.renderMode;
+      this.btnMode.style.color =
         this.state.renderMode === '3D' ? CONFIG.THEME.COLOR_ACTIVE : CONFIG.THEME.COLOR_TEXT_DIM;
-      modeEl.style.borderColor =
+      this.btnMode.style.borderColor =
         this.state.renderMode === '3D' ? CONFIG.THEME.COLOR_ACTIVE : CONFIG.THEME.COLOR_BORDER;
     }
 
@@ -92,23 +112,20 @@ export class UIController {
       }
     }
 
-    const posEl = document.getElementById('display-pos');
-    if (posEl) {
-      posEl.textContent = `${Math.abs(this.state.centerLat).toFixed(
+    if (this.displayPos) {
+      this.displayPos.textContent = `${Math.abs(this.state.centerLat).toFixed(
         2
       )}° ${this.state.centerLat >= 0 ? 'N' : 'S'}, ${Math.abs(this.state.centerLon).toFixed(
         2
       )}° ${this.state.centerLon >= 0 ? 'E' : 'W'}`;
     }
 
-    const zoomEl = document.getElementById('display-zoom');
-    if (zoomEl) {
-      zoomEl.textContent = `${(this.state.scalingFactor / CONFIG.DISPLAY.ZOOM_DISPLAY_MULTIPLIER).toFixed(1)}x`;
+    if (this.displayZoom) {
+      this.displayZoom.textContent = `${(this.state.scalingFactor / CONFIG.DISPLAY.ZOOM_DISPLAY_MULTIPLIER).toFixed(1)}x`;
     }
 
-    const attrEl = document.getElementById('display-attribution');
-    if (attrEl) {
-      attrEl.textContent = TileRenderer.getAttribution(this.state.mapLayer);
+    if (this.displayAttribution) {
+      this.displayAttribution.textContent = TileRenderer.getAttribution(this.state.mapLayer);
     }
 
     this.syncLayerButtons();
@@ -200,7 +217,7 @@ export class UIController {
       this.state.setLocation(home.lat, home.lon);
     }
 
-    this.updateHUD(new Date());
+    this.updateMetadata();
     await this.onLocationSelected();
   }
 
@@ -266,9 +283,9 @@ export class UIController {
           this.state.timeSpeedMultiplier = asTimeMultiplier(val);
           this.timeSim.setSpeedMultiplier(this.state.timeSpeedMultiplier);
           this.hideTimeDialog();
-          // We don't necessarily need to trigger a full onLocationSelected redraw
-          // but we want the HUD to update.
-          this.updateHUD(new Date());
+          // Metadata includes zoom display which doesn't change here, 
+          // but if we had other sim-related HUD elements we'd update them.
+          this.updateMetadata();
         }
       }
     });

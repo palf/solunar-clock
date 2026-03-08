@@ -55,7 +55,7 @@ export const CONFIG = {
 
   // Performance and hardware tuning
   PERFORMANCE: {
-    UPDATE_INTERVAL_MS: asMilliseconds(1000),
+    UPDATE_INTERVAL_MS: asMilliseconds(16),
     TILE_FETCH_RANGE: 3,
     TILE_SUBDIVISIONS_2D: 4,
     TILE_SUBDIVISIONS_3D: 8,

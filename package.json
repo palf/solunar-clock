@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "start": "vite",
     "type-check": "tsc --noEmit",
+    "test": "vitest run",
     "lint": "biome lint .",
     "format": "biome format .",
     "check": "biome check ."
