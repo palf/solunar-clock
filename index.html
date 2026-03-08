@@ -44,11 +44,12 @@
     background: #0f172a;
   }
 
-  /* Map Canvases fill entire window */
+  /* Map Canvases fill entire window without stretching */
   #map-canvas, #webgl-canvas {
     position: absolute;
     width: 100vw;
     height: 100vh;
+    object-fit: cover; /* Prevents stretching, maintains 1:1 aspect ratio */
     pointer-events: none;
   }
 
