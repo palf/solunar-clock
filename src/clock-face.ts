@@ -11,6 +11,7 @@ export class ClockFace {
   // Non-configurable structural constants
   private static readonly COMPASS_POINTS_COUNT = 8;
   private static readonly COMPASS_INTERVAL_DEG = 45; // 360 / 8
+  private static readonly COMPASS_POINTS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
   constructor(
     _svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>,
@@ -23,8 +24,6 @@ export class ClockFace {
    * Draw compass point labels (N, NE, E, SE, S, SW, W, NW)
    */
   drawHourLabels(labelsGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {
-    const compassPoints = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-
     for (let i = 0; i < ClockFace.COMPASS_POINTS_COUNT; i++) {
       const angDeg = i * ClockFace.COMPASS_INTERVAL_DEG;
       const theta = (angDeg * Math.PI) / 180;
@@ -40,7 +39,7 @@ export class ClockFace {
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'central')
         .attr('class', 'label')
-        .text(compassPoints[i]);
+        .text(ClockFace.COMPASS_POINTS[i]);
     }
   }
 
@@ -53,6 +52,6 @@ export class ClockFace {
       .attr('cx', this.centerX)
       .attr('cy', this.centerY)
       .attr('r', CONFIG.CENTER_MARK_RADIUS)
-      .attr('fill', '#222');
+      .attr('fill', CONFIG.CENTER_MARK_COLOR);
   }
 }

@@ -17,13 +17,13 @@ export interface AppStateConfig {
 
 export class AppState {
   // Fixed internal coordinate system for consistent rendering math
-  readonly width = 600;
-  readonly height = 600;
-  readonly centerX = 300;
-  readonly centerY = 300;
+  readonly width = CONFIG.INTERNAL_WIDTH;
+  readonly height = CONFIG.INTERNAL_HEIGHT;
+  readonly centerX = CONFIG.INTERNAL_CENTER_X;
+  readonly centerY = CONFIG.INTERNAL_CENTER_Y;
 
   // Radius is a percentage of the internal dimension
-  readonly radius = 600 * CONFIG.RADIUS_FACTOR;
+  readonly radius = CONFIG.INTERNAL_WIDTH * CONFIG.RADIUS_FACTOR;
 
   // Zoom scale (configurable)
   private _scalingFactor: number;
@@ -51,8 +51,8 @@ export class AppState {
    */
   static loadInitialState(): AppStateConfig {
     const config: AppStateConfig = {
-      centerLat: asLatitude(51.5074), // Default London
-      centerLon: asLongitude(-0.1278),
+      centerLat: CONFIG.DEFAULT_LOCATION.lat,
+      centerLon: CONFIG.DEFAULT_LOCATION.lon,
       scalingFactor: CONFIG.DEFAULT_SCALING_FACTOR,
       mapLayer: 'STREETS',
       homeLocation: null,
@@ -183,10 +183,9 @@ export class AppState {
 
   isAtHome(): boolean {
     if (!this._homeLocation) return false;
-    const tolerance = 0.0001;
     return (
-      Math.abs(this._centerLat - this._homeLocation.lat) < tolerance &&
-      Math.abs(this._centerLon - this._homeLocation.lon) < tolerance
+      Math.abs(this._centerLat - this._homeLocation.lat) < CONFIG.HOME_TOLERANCE &&
+      Math.abs(this._centerLon - this._homeLocation.lon) < CONFIG.HOME_TOLERANCE
     );
   }
 

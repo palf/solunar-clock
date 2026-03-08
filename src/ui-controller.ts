@@ -63,9 +63,9 @@ export class UIController {
     if (modeEl) {
       modeEl.textContent = this.state.renderMode;
       modeEl.style.color =
-        this.state.renderMode === '3D' ? '#4ade80' : 'var(--text-dim)';
+        this.state.renderMode === '3D' ? CONFIG.COLOR_ACTIVE : CONFIG.COLOR_TEXT_DIM;
       modeEl.style.borderColor =
-        this.state.renderMode === '3D' ? '#4ade80' : 'var(--border)';
+        this.state.renderMode === '3D' ? CONFIG.COLOR_ACTIVE : CONFIG.COLOR_BORDER;
     }
 
     // Combined Locate/Home button logic
@@ -75,15 +75,15 @@ export class UIController {
 
       if (!hasHome) {
         this.btnLocate.textContent = '🎯';
-        this.btnLocate.style.color = 'var(--accent)';
+        this.btnLocate.style.color = CONFIG.COLOR_ACCENT;
         this.btnLocate.title = 'Set Current Location as Home';
       } else if (atHome) {
         this.btnLocate.textContent = '✖️'; // Clear icon
-        this.btnLocate.style.color = '#ef4444'; // Red
+        this.btnLocate.style.color = CONFIG.COLOR_DANGER; 
         this.btnLocate.title = 'Clear Saved Home';
       } else {
         this.btnLocate.textContent = '🏠'; // Go Home icon
-        this.btnLocate.style.color = 'var(--accent)';
+        this.btnLocate.style.color = CONFIG.COLOR_ACCENT;
         this.btnLocate.title = 'Return to Stored Home';
       }
     }
@@ -99,7 +99,7 @@ export class UIController {
 
     const zoomEl = document.getElementById('display-zoom');
     if (zoomEl) {
-      zoomEl.textContent = `${(this.state.scalingFactor / 10).toFixed(1)}x`;
+      zoomEl.textContent = `${(this.state.scalingFactor / CONFIG.ZOOM_DISPLAY_MULTIPLIER).toFixed(1)}x`;
     }
 
     const attrEl = document.getElementById('display-attribution');
@@ -130,7 +130,7 @@ export class UIController {
     this.hideHelpDialog();
     if (this.zoomOverlay) this.zoomOverlay.style.display = 'block';
     if (this.zoomInput) {
-      this.zoomInput.value = (this.state.scalingFactor / 10).toString();
+      this.zoomInput.value = (this.state.scalingFactor / CONFIG.ZOOM_DISPLAY_MULTIPLIER).toString();
       this.zoomInput.focus();
       this.zoomInput.select();
     }
@@ -182,7 +182,7 @@ export class UIController {
   private initSearch(): void {
     this.searchInput?.addEventListener('input', (e) => {
       const query = (e.target as HTMLInputElement).value;
-      if (!this.searchResults || query.length < 3) return;
+      if (!this.searchResults || query.length < CONFIG.SEARCH_MIN_QUERY) return;
 
       clearTimeout(this.searchDebounce);
       this.searchDebounce = setTimeout(
@@ -217,8 +217,8 @@ export class UIController {
       } else if (e.key === 'Enter') {
         e.preventDefault();
         const val = parseFloat(this.zoomInput.value);
-        if (!isNaN(val) && val >= 0.05) { // 0.5x minimum
-          this.state.scalingFactor = val * 10;
+        if (!isNaN(val) && val >= CONFIG.MIN_ZOOM_INPUT) {
+          this.state.scalingFactor = val * CONFIG.ZOOM_DISPLAY_MULTIPLIER;
           this.hideZoomDialog();
           this.onLocationSelected();
         }
@@ -362,7 +362,7 @@ export class UIController {
       const resp = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           query
-        )}&limit=5`
+        )}&limit=${CONFIG.SEARCH_RESULT_LIMIT}`
       );
       this.currentSearchData = await resp.json();
       this.selectedSearchIndex = -1;

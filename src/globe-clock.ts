@@ -169,7 +169,7 @@ async function bootstrap() {
     .attr('y1', 0)
     .attr('x2', 0)
     .attr('y2', -state.radius)
-    .attr('stroke', 'rgba(255, 165, 0, 0.3)')
+    .attr('stroke', CONFIG.SUN_ARM_COLOR)
     .attr('stroke-width', 2);
 
   const sunIcon = sunHandGroup
@@ -177,21 +177,21 @@ async function bootstrap() {
     .attr('transform', `translate(0, ${-state.radius})`);
   sunIcon
     .append('circle')
-    .attr('r', 10)
-    .attr('fill', '#fbbf24')
-    .attr('stroke', '#f59e0b')
+    .attr('r', CONFIG.SUN_RADIUS)
+    .attr('fill', CONFIG.SUN_COLOR_PRIMARY)
+    .attr('stroke', CONFIG.SUN_COLOR_SECONDARY)
     .attr('stroke-width', 2);
   // Sun rays
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < CONFIG.SUN_RAY_COUNT; i++) {
     sunIcon
       .append('line')
       .attr('x1', 0)
-      .attr('y1', -12)
+      .attr('y1', CONFIG.SUN_RAY_START)
       .attr('x2', 0)
-      .attr('y2', -16)
-      .attr('stroke', '#fbbf24')
+      .attr('y2', CONFIG.SUN_RAY_END)
+      .attr('stroke', CONFIG.SUN_COLOR_PRIMARY)
       .attr('stroke-width', 2)
-      .attr('transform', `rotate(${i * 45})`);
+      .attr('transform', `rotate(${i * (360 / CONFIG.SUN_RAY_COUNT)})`);
   }
 
   // Create Moon Icon
@@ -204,7 +204,7 @@ async function bootstrap() {
     .attr('y1', 0)
     .attr('x2', 0)
     .attr('y2', -state.radius)
-    .attr('stroke', 'rgba(56, 189, 248, 0.3)')
+    .attr('stroke', CONFIG.MOON_ARM_COLOR)
     .attr('stroke-width', 2);
 
   const moonIcon = moonHandGroup
@@ -213,9 +213,9 @@ async function bootstrap() {
   // Crescent moon
   moonIcon
     .append('path')
-    .attr('d', 'M -6 -8 A 10 10 0 1 1 -6 8 A 8 8 0 1 0 -6 -8')
-    .attr('fill', '#f1f5f9')
-    .attr('stroke', '#38bdf8')
+    .attr('d', CONFIG.MOON_PATH)
+    .attr('fill', CONFIG.MOON_COLOR_PRIMARY)
+    .attr('stroke', CONFIG.MOON_COLOR_SECONDARY)
     .attr('stroke-width', 1);
 
   // 5. Initialize Controllers

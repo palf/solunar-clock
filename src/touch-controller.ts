@@ -96,8 +96,7 @@ export class TouchController {
     if (this.isInteractive(e.target)) return;
     e.preventDefault();
 
-    const zoomSpeed = 1.1;
-    const multiplier = e.deltaY > 0 ? 1 / zoomSpeed : zoomSpeed;
+    const multiplier = e.deltaY > 0 ? 1 / CONFIG.WHEEL_ZOOM_FACTOR : CONFIG.WHEEL_ZOOM_FACTOR;
     this.state.adjustZoom(multiplier);
     this.onUpdate();
   }
@@ -131,7 +130,7 @@ export class TouchController {
     this.startX = clientX;
     this.startY = clientY;
 
-    const sensitivity = 0.1 / (this.state.scalingFactor / 10);
+    const sensitivity = CONFIG.TOUCH_PAN_SENSITIVITY / (this.state.scalingFactor / CONFIG.TOUCH_PAN_DIVISOR);
     const dLon = -dx * sensitivity;
     const dLat = dy * sensitivity;
 
