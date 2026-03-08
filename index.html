@@ -169,8 +169,9 @@
   .search-item.selected { background: var(--accent); color: var(--bg); font-weight: 700; }
 
   .help-list { list-style: none; padding: 0; margin: 0; font-size: 11px; }
-  .help-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .help-key { background: #334155; padding: 1px 4px; border-radius: 4px; font-family: monospace; font-weight: 700; color: var(--accent); }
+  .help-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .help-keys { display: flex; gap: 4px; align-items: center; }
+  .help-key { background: #334155; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-weight: 700; color: var(--accent); min-width: 20px; text-align: center; }
 
   /* Map Visuals */
   .slice { fill: rgba(56, 189, 248, 0.03); stroke: rgba(255,255,255,0.05); }
@@ -241,14 +242,15 @@
     <div id="help-overlay" class="overlay-dialog" style="width: 90%; max-width: 280px; color: #fff;">
       <span class="hud-label" style="display: block; margin-bottom: 12px; font-size: 10px;">Keyboard Shortcuts</span>
       <div class="help-list">
-        <div class="help-item"><span>Pan Map</span> <span class="help-key">Arrows</span></div>
-        <div class="help-item"><span>Zoom In/Out</span> <span class="help-key">+</span> / <span class="help-key">-</span></div>
-        <div class="help-item"><span>Search City</span> <span class="help-key">s</span> / <span class="help-key">/</span></div>
-        <div class="help-item"><span>Set/Go Home</span> <span class="help-key">h</span></div>
-        <div class="help-item"><span>Manual Zoom</span> <span class="help-key">z</span></div>
-        <div class="help-item"><span>Cycle Layers</span> <span class="help-key">l</span></div>
-        <div class="help-item"><span>Reset Map</span> <span class="help-key">0</span></div>
-        <div class="help-item"><span>Close Menus</span> <span class="help-key">Esc</span></div>
+        <div class="help-item"><span>Pan Map</span> <div class="help-keys"><span class="help-key">Arrows</span></div></div>
+        <div class="help-item"><span>Zoom In/Out</span> <div class="help-keys"><span class="help-key">+</span> <span class="help-key">-</span></div></div>
+        <div class="help-item"><span>Search City</span> <div class="help-keys"><span class="help-key">s</span> <span class="help-key">/</span></div></div>
+        <div class="help-item"><span>Set/Go Home</span> <div class="help-keys"><span class="help-key">h</span></div></div>
+        <div class="help-item"><span>Manual Zoom</span> <div class="help-keys"><span class="help-key">z</span></div></div>
+        <div class="help-item"><span>Cycle Layers</span> <div class="help-keys"><span class="help-key">l</span></div></div>
+        <div class="help-item"><span>Reset Map</span> <div class="help-keys"><span class="help-key">0</span></div></div>
+        <div class="help-item"><span>Help Dialog</span> <div class="help-keys"><span class="help-key">?</span></div></div>
+        <div class="help-item"><span>Close Menus</span> <div class="help-keys"><span class="help-key">Esc</span></div></div>
       </div>
       <button class="hud-btn" type="button" style="width: 100%; margin-top: 15px; height: 30px; font-size: 12px;" onclick="document.getElementById('help-overlay').style.display='none'">Close</button>
     </div>
