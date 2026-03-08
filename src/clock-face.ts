@@ -8,6 +8,10 @@ import type * as d3 from 'd3';
 import { CONFIG } from './config';
 
 export class ClockFace {
+  // Non-configurable structural constants
+  private static readonly COMPASS_POINTS_COUNT = 8;
+  private static readonly COMPASS_INTERVAL_DEG = 45; // 360 / 8
+
   constructor(
     _svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>,
     private centerX: number,
@@ -21,8 +25,8 @@ export class ClockFace {
   drawHourLabels(labelsGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {
     const compassPoints = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
-    for (let i = 0; i < CONFIG.COMPASS_POINTS_COUNT; i++) {
-      const angDeg = i * CONFIG.COMPASS_INTERVAL_DEG;
+    for (let i = 0; i < ClockFace.COMPASS_POINTS_COUNT; i++) {
+      const angDeg = i * ClockFace.COMPASS_INTERVAL_DEG;
       const theta = (angDeg * Math.PI) / 180;
       const tx =
         this.centerX + (this.radius + CONFIG.LABEL_SPACING) * Math.sin(theta);

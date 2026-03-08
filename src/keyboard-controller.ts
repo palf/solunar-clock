@@ -80,7 +80,7 @@ export class KeyboardController {
         this.ui.showZoomDialog();
         break;
       case '0':
-        this.state.setLocation(CONFIG.DEFAULT_LOCATION.lat, CONFIG.DEFAULT_LOCATION.lon);
+        this.state.setLocation(51.5074, -0.1278);
         this.state.scalingFactor = CONFIG.DEFAULT_SCALING_FACTOR;
         await this.onRedraw();
         break;

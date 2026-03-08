@@ -2,14 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { CONFIG } from './config';
 
 describe('Configuration', () => {
-  it('contains valid essential display dimensions', () => {
-    expect(CONFIG.WIDTH).toBeGreaterThan(0);
-    expect(CONFIG.HEIGHT).toBeGreaterThan(0);
-  });
-
-  it('defines valid latitude and longitude location constants', () => {
+  it('defines valid latitude and longitude for the home location', () => {
     expect(CONFIG.HOME_LOCATION.lat).toBeGreaterThan(-90);
     expect(CONFIG.HOME_LOCATION.lat).toBeLessThan(90);
-    expect(CONFIG.DEFAULT_LOCATION.lat).toBe(51.5074);
+    expect(CONFIG.HOME_LOCATION.lon).toBeGreaterThan(-180);
+    expect(CONFIG.HOME_LOCATION.lon).toBeLessThan(180);
   });
 });

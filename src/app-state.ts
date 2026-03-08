@@ -1,5 +1,6 @@
 /**
- * Application state management
+ * Application state management.
+ * Internalizes fixed coordinate constants while utilizing CONFIG for user preferences.
  */
 
 import { CONFIG } from './config';
@@ -15,13 +16,13 @@ export interface AppStateConfig {
 
 export class AppState {
   // Fixed internal coordinate system for consistent rendering math
-  readonly width = CONFIG.WIDTH;
-  readonly height = CONFIG.HEIGHT;
-  readonly centerX = CONFIG.CENTER_X;
-  readonly centerY = CONFIG.CENTER_Y;
+  readonly width = 600;
+  readonly height = 600;
+  readonly centerX = 300;
+  readonly centerY = 300;
 
   // Radius is a percentage of the internal dimension
-  readonly radius = CONFIG.WIDTH * CONFIG.RADIUS_FACTOR;
+  readonly radius = 600 * CONFIG.RADIUS_FACTOR;
 
   // Zoom scale (configurable)
   private _scalingFactor: number;
@@ -46,12 +47,11 @@ export class AppState {
 
   /**
    * Load the initial state from storage or defaults.
-   * Includes rigorous validation against manual tampering.
    */
   static loadInitialState(): AppStateConfig {
     const config: AppStateConfig = {
-      centerLat: CONFIG.DEFAULT_LOCATION.lat,
-      centerLon: CONFIG.DEFAULT_LOCATION.lon,
+      centerLat: 51.5074, // Default London
+      centerLon: -0.1278,
       scalingFactor: CONFIG.DEFAULT_SCALING_FACTOR,
       mapLayer: 'STREETS',
       homeLocation: null,
@@ -64,13 +64,14 @@ export class AppState {
       const storedHome = localStorage.getItem('solunar-clock-home');
       if (storedHome) {
         const parsed = JSON.parse(storedHome);
+        const MAX_LAT = 85.0511;
         if (
           parsed &&
           typeof parsed.lat === 'number' &&
           typeof parsed.lon === 'number' &&
           !Number.isNaN(parsed.lat) &&
           !Number.isNaN(parsed.lon) &&
-          Math.abs(parsed.lat) <= CONFIG.MAX_LATITUDE
+          Math.abs(parsed.lat) <= MAX_LAT
         ) {
           config.homeLocation = parsed;
           config.centerLat = parsed.lat;
@@ -133,15 +134,13 @@ export class AppState {
   set scalingFactor(val: number) {
     if (Number.isFinite(val) && val > 0) {
       this._scalingFactor = val;
-      this.saveState(); // Persist zoom change
+      this.saveState();
     }
   }
   set centerLat(val: number) {
     if (Number.isFinite(val)) {
-      this._centerLat = Math.max(
-        -CONFIG.MAX_LATITUDE,
-        Math.min(CONFIG.MAX_LATITUDE, val)
-      );
+      const MAX_LAT = 85.0511;
+      this._centerLat = Math.max(-MAX_LAT, Math.min(MAX_LAT, val));
     }
   }
   set centerLon(val: number) {
@@ -157,9 +156,6 @@ export class AppState {
   // STATE ACTIONS
   // ========================================================================
 
-  /**
-   * Persist specific state items
-   */
   private saveState(): void {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem('solunar-clock-zoom', this._scalingFactor.toString());
@@ -192,9 +188,6 @@ export class AppState {
     );
   }
 
-  /**
-   * Set map center to specific coordinates
-   */
   setLocation(lat: number, lon: number): void {
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
       this.centerLat = lat;
@@ -202,31 +195,20 @@ export class AppState {
     }
   }
 
-  /**
-   * Adjust zoom level by a multiplier, clamping to bounds
-   */
   adjustZoom(multiplier: number): void {
     if (!Number.isFinite(multiplier)) return;
-    const minScale = CONFIG.MIN_SCALING_FACTOR;
-    const maxScale = CONFIG.MAX_SCALING_FACTOR;
     this.scalingFactor = Math.max(
-      minScale,
-      Math.min(maxScale, this._scalingFactor * multiplier)
+      CONFIG.MIN_SCALING_FACTOR,
+      Math.min(CONFIG.MAX_SCALING_FACTOR, this._scalingFactor * multiplier)
     );
   }
 
-  /**
-   * Pan the map by a geographic offset
-   */
   pan(dLat: number, dLon: number): void {
     if (!Number.isFinite(dLat) || !Number.isFinite(dLon)) return;
     this.centerLat = this._centerLat + dLat;
     this._centerLon = ((((this._centerLon + dLon + 180) % 360) + 360) % 360) - 180;
   }
 
-  /**
-   * Cycle through map layers
-   */
   cycleLayer(): void {
     const layers: ('STREETS' | 'TOPOGRAPHIC' | 'IMAGERY')[] = [
       'STREETS',
@@ -235,6 +217,6 @@ export class AppState {
     ];
     const idx = layers.indexOf(this.mapLayer);
     this.mapLayer = layers[(idx + 1) % layers.length];
-    this.saveState(); // Persist layer change
+    this.saveState();
   }
 }

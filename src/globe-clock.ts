@@ -31,7 +31,7 @@ import { UIController } from './ui-controller';
   const state = new AppState(initialConfig);
 
   // 2. Core Components
-  const svg = d3.select<SVGSVGElement, unknown>('#svg').attr('viewBox', `0 0 ${CONFIG.WIDTH} ${CONFIG.HEIGHT}`);
+  const svg = d3.select<SVGSVGElement, unknown>('#svg').attr('viewBox', `0 0 ${state.width} ${state.height}`);
 
   const projection = new Projection(
     state.centerX,

@@ -7,6 +7,12 @@ import { CONFIG } from './config';
 import type { Projection } from './projection';
 
 export class TileRenderer {
+  // Non-configurable technical constants for the Web Mercator tile system
+  private static readonly TILE_SIZE_PX = 256;
+  private static readonly TILE_SCALE_BASE = 20; // Maps internal scale to Z levels
+  private static readonly MAX_LATITUDE = 85.0511; // Web Mercator limit
+  private static readonly TILE_OVERLAP_PX = 1.1; // Sub-pixel bleed to prevent seams
+
   private tileUrls = {
     IMAGERY:
       'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -32,8 +38,9 @@ export class TileRenderer {
     private projection: Projection
   ) {
     this.ctx2d = canvas2d.getContext('2d', { alpha: false });
-    this.backCanvas.width = CONFIG.WIDTH;
-    this.backCanvas.height = CONFIG.HEIGHT;
+    // Using hardcoded internal dimensions (600x600)
+    this.backCanvas.width = 600;
+    this.backCanvas.height = 600;
     this.initWebGL();
   }
 
@@ -63,7 +70,8 @@ export class TileRenderer {
 
     const center = this.projection.getCenter();
     const scale = this.projection.getScale();
-    const baseZ = Math.floor(Math.log2(scale / CONFIG.TILE_SCALE_BASE));
+    const baseZ = Math.floor(Math.log2(scale / TileRenderer.TILE_SCALE_BASE));
+    // Labels are more readable at baseZ - 1
     const z = Math.max(0, Math.min(19, baseZ - 1));
 
     const [fTX, fTY] = this.lonLatToTile(center.lon, center.lat, z);
@@ -101,7 +109,7 @@ export class TileRenderer {
   private renderTile2D(tx: number, ty: number, z: number, img: HTMLImageElement): void {
     const subdivisions = 4;
     const step = 1 / subdivisions;
-    const tileSize = CONFIG.TILE_SIZE_PX;
+    const tileSize = TileRenderer.TILE_SIZE_PX;
     for (let i = 0; i < subdivisions; i++) {
       for (let j = 0; j < subdivisions; j++) {
         const pNW = this.projection.project(this.tileToLonLat(tx + i * step, ty + j * step, z));
@@ -116,8 +124,8 @@ export class TileRenderer {
           step * tileSize,
           pNW[0],
           pNW[1],
-          pSE[0] - pNW[0] + 1.1,
-          pSE[1] - pNW[1] + 1.1
+          pSE[0] - pNW[0] + TileRenderer.TILE_OVERLAP_PX,
+          pSE[1] - pNW[1] + TileRenderer.TILE_OVERLAP_PX
         );
       }
     }
@@ -181,7 +189,7 @@ export class TileRenderer {
 
     const center = this.projection.getCenter();
     const scale = this.projection.getScale();
-    const baseZ = Math.floor(Math.log2(scale / CONFIG.TILE_SCALE_BASE));
+    const baseZ = Math.floor(Math.log2(scale / TileRenderer.TILE_SCALE_BASE));
     const z = Math.max(0, Math.min(19, baseZ - 1));
 
     const [fTX, fTY] = this.lonLatToTile(center.lon, center.lat, z);
@@ -190,8 +198,7 @@ export class TileRenderer {
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    // WebGL Double Buffering Strategy:
-    // We clear ONLY once we know we are about to draw the new set
+    // Dark slate background for empty areas
     gl.clearColor(0.05, 0.09, 0.16, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -202,7 +209,7 @@ export class TileRenderer {
     const range = CONFIG.TILE_FETCH_RANGE;
     const n = 2 ** z;
 
-    // Use sequential await to prevent CPU saturation on RPi
+    // Use sequential await to prevent CPU saturation on RPi Zero
     for (let x = tx - range; x <= tx + range; x++) {
       for (let y = ty - range; y <= ty + range; y++) {
         const wx = ((x % n) + n) % n;
@@ -299,7 +306,7 @@ export class TileRenderer {
   private lonLatToTile(lon: number, lat: number, z: number): [number, number] {
     const n = 2 ** z;
     const x = ((lon + 180) / 360) * n;
-    const c = Math.max(-85.0511, Math.min(85.0511, lat));
+    const c = Math.max(-TileRenderer.MAX_LATITUDE, Math.min(TileRenderer.MAX_LATITUDE, lat));
     const r = (c * Math.PI) / 180;
     const y = ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n;
     return [x, y];

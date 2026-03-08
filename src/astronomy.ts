@@ -8,11 +8,15 @@
  * All values are referenced against the J2000.0 Epoch (January 1, 2000, 12:00 UTC).
  */
 
-import { CONFIG } from './config';
 import type { GeoCoordinates } from './types';
 
 // Non-configurable mathematical constants for astronomical series
 const ASTRONOMY_CONSTANTS = {
+  /**
+   * J2000_EPOCH: The standard astronomical epoch (January 1, 2000, 12:00 UTC).
+   */
+  J2000_EPOCH: new Date('2000-01-01T12:00:00Z'),
+
   /**
    * SUN_MEAN_LON_BASE: The mean longitude of the Sun at the J2000.0 epoch.
    * Value (280.459°) represents the geometric mean longitude.
@@ -121,7 +125,7 @@ export function normalizeLongitude(lon: number): number {
  */
 function daysSinceJ2000(date: Date): number {
   const msPerDay = 1000 * 60 * 60 * 24;
-  return (date.getTime() - CONFIG.J2000_EPOCH.getTime()) / msPerDay;
+  return (date.getTime() - ASTRONOMY_CONSTANTS.J2000_EPOCH.getTime()) / msPerDay;
 }
 
 /**
