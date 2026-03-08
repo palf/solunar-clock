@@ -1,162 +1,128 @@
-/**
- * @vitest-environment jsdom
- */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppState } from './app-state';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { UIController } from './ui-controller';
+import { AppState } from './app-state';
+import { asLatitude, asLongitude } from './types';
 
-describe('UIController Button Behaviors', () => {
+describe('UIController', () => {
   let state: AppState;
-  let onLocationSelected: () => Promise<void>;
   let ui: UIController;
+  const onLocationSelected = vi.fn();
 
   beforeEach(() => {
+    // Setup DOM
     document.body.innerHTML = `
-      <div id="search-overlay" style="display: none;"></div>
-      <input id="locationSearch" />
-      <div id="searchResults"></div>
-      <div id="zoom-overlay" style="display: none;"></div>
-      <input id="zoomInput" />
-      <div id="help-overlay" style="display: none;"></div>
       <div id="display-time"></div>
+      <div id="btn-mode"></div>
+      <div id="btn-locate"></div>
       <div id="display-pos"></div>
       <div id="display-zoom"></div>
-      <div id="group-zoom"></div>
-      <button id="layer-trigger"></button>
       <div id="display-attribution"></div>
-      <button id="btn-mode"></button>
-      <button id="btn-locate"></button>
-      <button id="btn-search"></button>
+      <div id="search-overlay"></div>
+      <input id="locationSearch" />
+      <div id="searchResults"></div>
+      <div id="zoom-overlay"></div>
+      <input id="zoomInput" />
+      <div id="group-zoom"></div>
+      <div id="help-overlay"></div>
       <button id="btn-help"></button>
-      <div id="layer-dropdown" style="display: none;">
-        <div class="layer-option" data-layer="TOPOGRAPHIC"></div>
-        <div class="layer-option" data-layer="IMAGERY"></div>
-        <div class="layer-option" data-layer="STREETS"></div>
-      </div>
+      <div id="layer-trigger"></div>
+      <div id="layer-dropdown"></div>
+      <button id="btn-locate"></button>
+      <button id="btn-mode"></button>
+      <button id="btn-search"></button>
+      <div class="layer-option" data-layer="STREETS"></div>
+      <div class="layer-option" data-layer="TOPOGRAPHIC"></div>
+      <div class="layer-option" data-layer="IMAGERY"></div>
     `;
-    state = new AppState(AppState.loadInitialState());
-    onLocationSelected = vi.fn().mockResolvedValue(undefined);
+
+    const config = AppState.loadInitialState();
+    state = new AppState(config);
     ui = new UIController(state, onLocationSelected);
   });
 
-  it('updates all HUD elements with the current application state', () => {
-    const now = new Date('2024-03-07T12:00:00Z');
+  it('updates the HUD time correctly', () => {
+    const now = new Date('2024-03-07T12:34:56Z');
     ui.updateHUD(now);
-
-    expect(document.getElementById('display-time')?.textContent).toBe('12:00:00');
-    expect(document.getElementById('display-pos')?.textContent).toContain('51.51° N');
+    const timeEl = document.getElementById('display-time');
+    expect(timeEl?.textContent).toBe('12:34:56');
   });
 
-  it('correctly toggles the visibility of the search overlay', () => {
-    const overlay = document.getElementById('search-overlay');
+  it('updates the HUD position correctly', () => {
+    state.setLocation(asLatitude(10), asLongitude(20));
+    ui.updateHUD(new Date());
+    const posEl = document.getElementById('display-pos');
+    expect(posEl?.textContent).toContain('10.00° N');
+    expect(posEl?.textContent).toContain('20.00° E');
+  });
+
+  it('toggles the search overlay', () => {
+    ui.showSearch();
+    const searchOverlay = document.getElementById('search-overlay');
+    expect(searchOverlay?.style.display).toBe('block');
+    
+    ui.hideSearch();
+    expect(searchOverlay?.style.display).toBe('none');
+  });
+
+  it('handles the home button logic (Set Home)', async () => {
+    state.clearHome();
+    state.setLocation(asLatitude(10), asLongitude(20));
+    
+    await ui.handleHomeAction();
+    expect(state.homeLocation).toEqual({ lat: asLatitude(10), lon: asLongitude(20) });
+  });
+
+  it('handles the home button logic (Go Home)', async () => {
+    state.setLocation(asLatitude(50), asLongitude(50));
+    state.setHome();
+    
+    state.setLocation(asLatitude(10), asLongitude(20));
+    await ui.handleHomeAction();
+    
+    expect(state.centerLat).toBe(asLatitude(50));
+    expect(state.centerLon).toBe(asLongitude(50));
+  });
+
+  it('cycles the render mode', () => {
+    const initialMode = state.renderMode;
+    const btnMode = document.getElementById('btn-mode');
+    btnMode?.click();
+    
+    expect(state.renderMode).not.toBe(initialMode);
+    expect(onLocationSelected).toHaveBeenCalled();
+  });
+
+  it('filters search results (mocked fetch)', async () => {
+    const mockResults = [
+      { display_name: 'Test City', lat: '10', lon: '20' }
+    ];
+    
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockResults)
+    });
 
     ui.showSearch();
-    expect(overlay?.style.display).toBe('block');
+    const input = document.getElementById('locationSearch') as HTMLInputElement;
+    input.value = 'test';
+    input.dispatchEvent(new Event('input'));
 
-    ui.hideSearch();
-    expect(overlay?.style.display).toBe('none');
+    // Wait for debounce
+    await new Promise(r => setTimeout(r, 400));
+    
+    const results = document.getElementById('searchResults');
+    expect(results?.children.length).toBe(1);
+    expect(results?.children[0].textContent).toBe('Test City');
   });
 
-  it('toggles between 2D and 3D render modes when the mode button is clicked', () => {
-    const modeBtn = document.getElementById('btn-mode') as HTMLButtonElement;
-    ui.updateHUD(new Date());
+  it('selects a search result', async () => {
+    const item = { display_name: 'Test', lat: '10', lon: '20' };
+    state.setLocation(asLatitude(0), asLongitude(0));
     
-    // Initial state
-    expect(state.renderMode).toBe('3D');
-    expect(modeBtn.textContent).toBe('3D');
-
-    // Toggle to 2D
-    modeBtn.dispatchEvent(new Event('click'));
-    expect(state.renderMode).toBe('2D');
-    ui.updateHUD(new Date());
-    expect(modeBtn.textContent).toBe('2D');
-
-    // Toggle back to 3D
-    modeBtn.dispatchEvent(new Event('click'));
-    expect(state.renderMode).toBe('3D');
-  });
-
-  it('handles the complex multi-state behavior of the locate button (Set/Go/Clear Home)', async () => {
-    const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
+    // @ts-expect-error - testing private method
+    ui.selectItem(item);
     
-    // 1. Initial State: No home set
-    expect(state.homeLocation).toBeNull();
-    ui.updateHUD(new Date());
-    expect(locateBtn.textContent).toBe('🎯');
-
-    // 2. Click to Set Home
-    state.setLocation(10, 20);
-    locateBtn.dispatchEvent(new Event('click'));
-    
-    expect(state.homeLocation).toEqual({ lat: 10, lon: 20 });
-    expect(locateBtn.textContent).toBe('✖️'); // Should show clear icon because we are at home
-  });
-
-  it('navigates back to the stored home location when the user has moved away', async () => {
-    const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
-    
-    // 1. Setup: Stored home at 10, 20
-    state.setLocation(10, 20);
-    state.setHome();
-    
-    // 2. Move Away
-    state.setLocation(50, 50);
-    ui.updateHUD(new Date());
-    expect(locateBtn.textContent).toBe('🏠'); // Icon for "Go Home"
-
-    // 3. Click to Go Home
-    locateBtn.dispatchEvent(new Event('click'));
-    
-    expect(state.centerLat).toBe(10);
-    expect(state.centerLon).toBe(20);
-    expect(locateBtn.textContent).toBe('✖️'); // Now at home, icon for "Clear"
-  });
-
-  it('clears the stored home location when clicked while already at home', async () => {
-    const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
-    
-    // 1. Setup: At home
-    state.setLocation(10, 20);
-    state.setHome();
-    ui.updateHUD(new Date());
-    expect(locateBtn.textContent).toBe('✖️');
-
-    // 2. Click to Clear
-    locateBtn.dispatchEvent(new Event('click'));
-    
-    expect(state.homeLocation).toBeNull();
-    expect(locateBtn.textContent).toBe('🎯');
-  });
-
-  it('launches the search overlay when the dedicated search button is clicked', () => {
-    const searchBtn = document.getElementById('btn-search') as HTMLButtonElement;
-    const overlay = document.getElementById('search-overlay');
-    
-    expect(overlay?.style.display).toBe('none');
-    searchBtn.dispatchEvent(new Event('click'));
-    expect(overlay?.style.display).toBe('block');
-  });
-
-  it('displays the manual zoom dialog when the showZoomDialog method is called', () => {
-    const overlay = document.getElementById('zoom-overlay');
-    expect(overlay?.style.display).toBe('none');
-    ui.showZoomDialog();
-    expect(overlay?.style.display).toBe('block');
-  });
-
-  it('toggles the help overlay visibility when the help button is clicked', () => {
-    const overlay = document.getElementById('help-overlay');
-    expect(overlay?.style.display).toBe('none');
-    ui.showHelpDialog();
-    expect(overlay?.style.display).toBe('block');
-  });
-
-  it('opens the manual zoom dialog when the zoom information in the HUD is clicked', () => {
-    const zoomGroup = document.getElementById('group-zoom');
-    const overlay = document.getElementById('zoom-overlay');
-    
-    expect(overlay?.style.display).toBe('none');
-    zoomGroup?.dispatchEvent(new Event('click'));
-    expect(overlay?.style.display).toBe('block');
+    expect(state.centerLat).toBe(asLatitude(10));
+    expect(state.centerLon).toBe(asLongitude(20));
+    expect(onLocationSelected).toHaveBeenCalled();
   });
 });

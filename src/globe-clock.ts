@@ -17,6 +17,7 @@ import { TileRenderer } from './tile-renderer';
 import { TimeSimulation } from './time-simulation';
 import { TouchController } from './touch-controller';
 import { UIController } from './ui-controller';
+import type { Latitude, Longitude, Scale } from './types';
 
 /**
  * Bootstrap the application within an async context to handle data loading.
@@ -70,9 +71,9 @@ async function bootstrap() {
   let isInitialRender = true;
 
   // Dirty check variables to stop 1Hz "blips"
-  let lastLat = -999;
-  let lastLon = -999;
-  let lastScale = -999;
+  let lastLat: Latitude | null = null;
+  let lastLon: Longitude | null = null;
+  let lastScale: Scale | null = null;
   let lastLayer = '';
   let lastMode = '';
 

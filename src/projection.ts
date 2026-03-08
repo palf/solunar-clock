@@ -5,15 +5,15 @@
 /// <reference path="./types.ts" />
 
 import * as d3 from 'd3';
-import type { GeoCoordinates, GeoRing } from './types';
+import { asScreenPixel, type GeoCoordinates, type GeoRing, type Longitude, type Latitude, type Scale } from './types';
 
 export class Projection {
   constructor(
     private centerX: number,
     private centerY: number,
-    private centerLat: number,
-    private centerLon: number,
-    private scale: number
+    private centerLat: Latitude,
+    private centerLon: Longitude,
+    private scale: Scale
   ) {}
 
   /**
@@ -57,13 +57,13 @@ export class Projection {
       return [this.centerX, this.centerY];
     }
 
-    return [screenX, screenY];
+    return [asScreenPixel(screenX), asScreenPixel(screenY)];
   }
 
   /**
    * Update the center point for the projection
    */
-  updateCenter(lat: number, lon: number): void {
+  updateCenter(lat: Latitude, lon: Longitude): void {
     this.centerLat = lat;
     this.centerLon = lon;
   }
@@ -71,21 +71,21 @@ export class Projection {
   /**
    * Update the scale for the projection
    */
-  updateScale(scale: number): void {
+  updateScale(scale: Scale): void {
     this.scale = scale;
   }
 
   /**
    * Get current center position
    */
-  getCenter(): { lat: number; lon: number } {
+  getCenter(): { lat: Latitude; lon: Longitude } {
     return { lat: this.centerLat, lon: this.centerLon };
   }
 
   /**
    * Get current scale
    */
-  getScale(): number {
+  getScale(): Scale {
     return this.scale;
   }
 

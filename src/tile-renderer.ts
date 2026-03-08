@@ -5,6 +5,7 @@
 
 import { CONFIG } from './config';
 import type { Projection } from './projection';
+import { asLongitude, asLatitude, type GeoCoordinates } from './types';
 
 export class TileRenderer {
   // Non-configurable technical constants for the Web Mercator tile system
@@ -327,10 +328,10 @@ export class TileRenderer {
     return [x, y];
   }
 
-  private tileToLonLat(x: number, y: number, z: number): [number, number] {
+  private tileToLonLat(x: number, y: number, z: number): GeoCoordinates {
     const n = 2 ** z;
     const lon = (x / n) * 360 - 180;
     const lat = (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI;
-    return [lon, lat];
+    return [asLongitude(lon), asLatitude(lat)];
   }
 }

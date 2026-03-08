@@ -4,14 +4,15 @@
  */
 
 import { CONFIG } from './config';
-import type { TopoJSONData } from './types';
+import { asLatitude, asLongitude, asScale, type TopoJSONData, type TimeMultiplier, type Latitude, type Longitude, type Scale } from './types';
+import { normalizeLongitude } from './astronomy';
 
 export interface AppStateConfig {
-  centerLat: number;
-  centerLon: number;
+  centerLat: Latitude;
+  centerLon: Longitude;
   scalingFactor: number;
   mapLayer: 'STREETS' | 'TOPOGRAPHIC' | 'IMAGERY';
-  homeLocation: { lat: number; lon: number } | null;
+  homeLocation: { lat: Latitude; lon: Longitude } | null;
 }
 
 export class AppState {
@@ -28,19 +29,19 @@ export class AppState {
   private _scalingFactor: number;
 
   // Map center position
-  private _centerLat: number;
-  private _centerLon: number;
+  private _centerLat: Latitude;
+  private _centerLon: Longitude;
 
   // Time simulation
   readonly startTime: Date = new Date();
-  timeSpeedMultiplier: number = CONFIG.DEFAULT_TIME_SPEED;
+  timeSpeedMultiplier: TimeMultiplier = CONFIG.DEFAULT_TIME_SPEED;
 
   // Map Layer
   mapLayer: 'STREETS' | 'TOPOGRAPHIC' | 'IMAGERY';
   renderMode: '2D' | '3D' = '3D'; // 2D = Canvas Quad Grid, 3D = WebGL Vertex Warp
 
   // Dynamic Home Location
-  private _homeLocation: { lat: number; lon: number } | null;
+  private _homeLocation: { lat: Latitude; lon: Longitude } | null;
 
   // Map data
   mapData: TopoJSONData | null = null;
@@ -50,8 +51,8 @@ export class AppState {
    */
   static loadInitialState(): AppStateConfig {
     const config: AppStateConfig = {
-      centerLat: 51.5074, // Default London
-      centerLon: -0.1278,
+      centerLat: asLatitude(51.5074), // Default London
+      centerLon: asLongitude(-0.1278),
       scalingFactor: CONFIG.DEFAULT_SCALING_FACTOR,
       mapLayer: 'STREETS',
       homeLocation: null,
@@ -64,18 +65,20 @@ export class AppState {
       const storedHome = localStorage.getItem('solunar-clock-home');
       if (storedHome) {
         const parsed = JSON.parse(storedHome);
-        const MAX_LAT = 85.0511;
         if (
           parsed &&
           typeof parsed.lat === 'number' &&
           typeof parsed.lon === 'number' &&
           !Number.isNaN(parsed.lat) &&
           !Number.isNaN(parsed.lon) &&
-          Math.abs(parsed.lat) <= MAX_LAT
+          Math.abs(parsed.lat) <= CONFIG.MAX_LATITUDE
         ) {
-          config.homeLocation = parsed;
-          config.centerLat = parsed.lat;
-          config.centerLon = parsed.lon;
+          config.homeLocation = {
+            lat: asLatitude(parsed.lat),
+            lon: asLongitude(parsed.lon)
+          };
+          config.centerLat = config.homeLocation.lat;
+          config.centerLon = config.homeLocation.lon;
         }
       }
 
@@ -120,10 +123,10 @@ export class AppState {
   get scalingFactor(): number {
     return this._scalingFactor;
   }
-  get centerLat(): number {
+  get centerLat(): Latitude {
     return this._centerLat;
   }
-  get centerLon(): number {
+  get centerLon(): Longitude {
     return this._centerLon;
   }
   get homeLocation() {
@@ -137,19 +140,18 @@ export class AppState {
       this.saveState();
     }
   }
-  set centerLat(val: number) {
+  set centerLat(val: Latitude) {
     if (Number.isFinite(val)) {
-      const MAX_LAT = 85.0511;
-      this._centerLat = Math.max(-MAX_LAT, Math.min(MAX_LAT, val));
+      this._centerLat = asLatitude(Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, val)));
     }
   }
-  set centerLon(val: number) {
+  set centerLon(val: Longitude) {
     if (Number.isFinite(val)) this._centerLon = val;
   }
 
   // Computed scale for projection
-  get scale(): number {
-    return (this.radius / Math.PI) * this._scalingFactor;
+  get scale(): Scale {
+    return asScale((this.radius / Math.PI) * this._scalingFactor);
   }
 
   // ========================================================================
@@ -188,7 +190,7 @@ export class AppState {
     );
   }
 
-  setLocation(lat: number, lon: number): void {
+  setLocation(lat: Latitude, lon: Longitude): void {
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
       this.centerLat = lat;
       this.centerLon = lon;
@@ -205,8 +207,9 @@ export class AppState {
 
   pan(dLat: number, dLon: number): void {
     if (!Number.isFinite(dLat) || !Number.isFinite(dLon)) return;
-    this.centerLat = this._centerLat + dLat;
-    this._centerLon = ((((this._centerLon + dLon + 180) % 360) + 360) % 360) - 180;
+    const newLat = Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, this._centerLat + dLat));
+    this.centerLat = asLatitude(newLat);
+    this._centerLon = normalizeLongitude(this._centerLon + dLon);
   }
 
   cycleLayer(): void {

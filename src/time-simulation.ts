@@ -2,10 +2,12 @@
  * Time simulation for accelerating or slowing down time
  */
 
+import type { TimeMultiplier } from './types';
+
 export class TimeSimulation {
   constructor(
     private startTime: Date,
-    private speedMultiplier: number
+    private speedMultiplier: TimeMultiplier
   ) {}
 
   /**
@@ -21,7 +23,7 @@ export class TimeSimulation {
   /**
    * Update the speed multiplier
    */
-  setSpeedMultiplier(multiplier: number): void {
+  setSpeedMultiplier(multiplier: TimeMultiplier): void {
     this.speedMultiplier = multiplier;
   }
 }

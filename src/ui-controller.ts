@@ -5,6 +5,7 @@
 import type { AppState } from './app-state';
 import { CONFIG } from './config';
 import { TileRenderer } from './tile-renderer';
+import { asLatitude, asLongitude } from './types';
 
 interface SearchResult {
   display_name: string;
@@ -278,7 +279,7 @@ export class UIController {
   }
 
   private selectItem(item: SearchResult): void {
-    this.state.setLocation(parseFloat(item.lat), parseFloat(item.lon));
+    this.state.setLocation(asLatitude(parseFloat(item.lat)), asLongitude(parseFloat(item.lon)));
     this.hideSearch();
     this.onLocationSelected();
   }

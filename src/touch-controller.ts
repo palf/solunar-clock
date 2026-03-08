@@ -8,8 +8,6 @@ import { CONFIG } from './config';
 export class TouchController {
   private startX = 0;
   private startY = 0;
-  private startLat = 0;
-  private startLon = 0;
   private startDist = 0;
   private startScale = 0;
   private isPinching = false;
@@ -63,7 +61,8 @@ export class TouchController {
 
     if (e.touches.length === 1) {
       this.isPinching = false;
-      this.resetPanAnchors(e.touches[0].clientX, e.touches[0].clientY);
+      this.startX = e.touches[0].clientX;
+      this.startY = e.touches[0].clientY;
     } else if (e.touches.length === 2) {
       this.isPinching = true;
       this.startDist = this.getDistance(e.touches[0], e.touches[1]);
@@ -76,7 +75,8 @@ export class TouchController {
   private handleMouseDown(e: MouseEvent): void {
     if (this.isInteractive(e.target)) return;
     this.isDragging = true;
-    this.resetPanAnchors(e.clientX, e.clientY);
+    this.startX = e.clientX;
+    this.startY = e.clientY;
   }
 
   private handleMouseMove(e: MouseEvent): void {
@@ -100,13 +100,6 @@ export class TouchController {
     const multiplier = e.deltaY > 0 ? 1 / zoomSpeed : zoomSpeed;
     this.state.adjustZoom(multiplier);
     this.onUpdate();
-  }
-
-  private resetPanAnchors(clientX: number, clientY: number): void {
-    this.startX = clientX;
-    this.startY = clientY;
-    this.startLat = this.state.centerLat;
-    this.startLon = this.state.centerLon;
   }
 
   private handleTouchMove(e: TouchEvent): void {
@@ -134,19 +127,22 @@ export class TouchController {
     const dx = clientX - this.startX;
     const dy = clientY - this.startY;
 
+    // Reset start for relative movement
+    this.startX = clientX;
+    this.startY = clientY;
+
     const sensitivity = 0.1 / (this.state.scalingFactor / 10);
     const dLon = -dx * sensitivity;
     const dLat = dy * sensitivity;
 
-    this.state.centerLat = this.startLat + dLat;
-    this.state.centerLon = ((((this.startLon + dLon + 180) % 360) + 360) % 360) - 180;
-
+    this.state.pan(dLat, dLon);
     this.onUpdate();
   }
 
   private handleTouchEnd(e: TouchEvent): void {
     if (e.touches.length === 1) {
-      this.resetPanAnchors(e.touches[0].clientX, e.touches[0].clientY);
+      this.startX = e.touches[0].clientX;
+      this.startY = e.touches[0].clientY;
     } else if (e.touches.length === 0) {
       this.isPinching = false;
       this.onUpdate();

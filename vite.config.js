@@ -34,4 +34,10 @@ export default defineConfig({
   esbuild: {
     target: 'es2020',
   },
+
+  // Vitest configuration
+  test: {
+    environment: 'jsdom',
+    globals: true,
+  },
 });

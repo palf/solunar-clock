@@ -8,7 +8,7 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import { CONFIG } from './config';
 import type { Projection } from './projection';
-import type { GeoCoordinates, GeoFeature, GeoFeatureCollection, TopoJSONData } from './types';
+import { asLongitude, asLatitude, type GeoCoordinates, type GeoFeature, type TopoJSONData } from './types';
 
 export class MapRenderer {
   constructor(
@@ -102,23 +102,23 @@ export class MapRenderer {
     console.log('Creating fallback world outline');
     const fallbackPath = d3.path();
     const worldOutline: GeoCoordinates[] = [
-      [-180, -60],
-      [-180, 80],
-      [-120, 80],
-      [-60, 80],
-      [0, 80],
-      [60, 80],
-      [120, 80],
-      [180, 80],
-      [180, 60],
-      [180, 0],
-      [180, -60],
-      [120, -60],
-      [60, -60],
-      [0, -60],
-      [-60, -60],
-      [-120, -60],
-      [-180, -60],
+      [asLongitude(-180), asLatitude(-60)],
+      [asLongitude(-180), asLatitude(80)],
+      [asLongitude(-120), asLatitude(80)],
+      [asLongitude(-60), asLatitude(80)],
+      [asLongitude(0), asLatitude(80)],
+      [asLongitude(60), asLatitude(80)],
+      [asLongitude(120), asLatitude(80)],
+      [asLongitude(180), asLatitude(80)],
+      [asLongitude(180), asLatitude(60)],
+      [asLongitude(180), asLatitude(0)],
+      [asLongitude(180), asLatitude(-60)],
+      [asLongitude(120), asLatitude(-60)],
+      [asLongitude(60), asLatitude(-60)],
+      [asLongitude(0), asLatitude(-60)],
+      [asLongitude(-60), asLatitude(-60)],
+      [asLongitude(-120), asLatitude(-60)],
+      [asLongitude(-180), asLatitude(-60)],
     ];
 
     worldOutline.forEach((pt: GeoCoordinates, idx: number) => {
@@ -129,60 +129,32 @@ export class MapRenderer {
         fallbackPath.lineTo(x, y);
       }
     });
-
     this.mapGroup
       .append('path')
       .attr('d', fallbackPath.toString())
-      .attr('class', 'land')
-      .attr('fill', '#e6f0dd')
-      .attr('stroke', '#2b3b2b')
-      .attr('stroke-width', 1);
+      .attr('class', 'land');
   }
 
   /**
-   * Render the map with current projection center
+   * Main render method
    */
-  async render(mapData: TopoJSONData | null): Promise<void> {
+  render(data: TopoJSONData | null): void {
     this.mapGroup.selectAll('*').remove();
 
-    if (!mapData) {
+    if (!data) {
       this.renderFallbackOutline();
       return;
     }
 
-    try {
-      // Handle GeoJSON format
-      if (mapData.type === 'FeatureCollection') {
-        console.log('Detected GeoJSON format');
-        this.renderGeoJSONFeatures((mapData as GeoFeatureCollection).features);
-      }
-      // Handle TopoJSON format
-      else if (mapData.objects?.land) {
-        console.log('Detected TopoJSON format with land object');
-        const land = topojson.feature(mapData, mapData.objects.land) as any;
-        this.renderGeoJSONFeatures(land.features);
-        this.renderCoastlines(mapData);
-      }
-      // Try to find any geometry object
-      else if (mapData.objects) {
-        const objectKeys = Object.keys(mapData.objects);
-        const geometryKey = objectKeys.find((key) => {
-          const obj = mapData.objects![key];
-          return obj && (obj.type === 'GeometryCollection' || obj.geometries);
-        });
-
-        if (geometryKey) {
-          console.log(`Using geometry object: ${geometryKey}`);
-          const geometry = topojson.feature(mapData, mapData.objects[geometryKey]!) as any;
-          this.renderGeoJSONFeatures(geometry.features);
-        } else {
-          throw new Error('No suitable geometry found');
-        }
-      } else {
-        throw new Error('No objects property found');
-      }
-    } catch (mapError) {
-      console.error('Error processing map data:', mapError);
+    // Try TopoJSON mesh first (coastlines only)
+    if (data.objects) {
+      console.log('Detected TopoJSON format');
+      this.renderCoastlines(data);
+    } else if (data.type === 'FeatureCollection' || data.features) {
+      console.log('Detected GeoJSON format');
+      const features = (data.features || data) as GeoFeature[];
+      this.renderGeoJSONFeatures(features);
+    } else {
       this.renderFallbackOutline();
     }
   }

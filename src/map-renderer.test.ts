@@ -1,53 +1,42 @@
-/**
- * @vitest-environment jsdom
- */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { MapRenderer } from './map-renderer';
 import { Projection } from './projection';
+import { asLatitude, asLongitude, asScale } from './types';
+import * as d3 from 'd3';
 
 describe('MapRenderer', () => {
-  let mapG: any;
   let projection: Projection;
+  let mapG: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
 
   beforeEach(() => {
-    mapG = {
-      append: vi.fn().mockReturnThis(),
-      attr: vi.fn().mockReturnThis(),
-      selectAll: vi.fn().mockReturnThis(),
-      remove: vi.fn().mockReturnThis(),
-    };
-    projection = new Projection(300, 300, 0, 0, 100);
+    const svg = d3.select(document.body).append('svg');
+    mapG = svg.append('g') as any;
+    projection = new Projection(300, 300, asLatitude(0), asLongitude(0), asScale(100));
   });
 
-  it('renders a GeoJSON feature collection correctly', async () => {
+  it('renders a GeoJSON feature collection correctly', () => {
     const renderer = new MapRenderer(mapG, projection);
-    const mockData = {
+    const data = {
       type: 'FeatureCollection',
       features: [
         {
+          type: 'Feature',
           geometry: {
             type: 'Polygon',
-            coordinates: [
-              [
-                [0, 0],
-                [0, 1],
-                [1, 1],
-                [1, 0],
-                [0, 0],
-              ],
-            ],
-          },
-        },
-      ],
+            coordinates: [[[asLongitude(0), asLatitude(0)], [asLongitude(10), asLatitude(0)], [asLongitude(10), asLatitude(10)], [asLongitude(0), asLatitude(10)], [asLongitude(0), asLatitude(0)]]]
+          }
+        }
+      ]
     };
 
-    await renderer.render(mockData as any);
-    expect(mapG.append).toHaveBeenCalledWith('path');
+    renderer.render(data as any);
+    expect(mapG.selectAll('path').size()).toBe(1);
   });
 
-  it('handles null map data by falling back to a world outline', async () => {
+  it('handles null map data by falling back to a world outline', () => {
     const renderer = new MapRenderer(mapG, projection);
-    await renderer.render(null);
-    expect(mapG.append).toHaveBeenCalled();
+    renderer.render(null);
+    expect(mapG.selectAll('path').size()).toBe(1);
+    expect(mapG.select('path').attr('class')).toBe('land');
   });
 });
