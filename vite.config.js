@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   // Set the root directory
   root: '.',
+  base: './',
 
   // Configure the development server
   server: {
