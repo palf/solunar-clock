@@ -52,15 +52,14 @@
     pointer-events: none;
   }
 
-  /* The 50% Opacity Mask with a clear hole in the center */
+  /* The Opacity Mask with a clear hole in the center */
   #stage::after {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    /* 50% opacity background with a sharp hole in center.
-       Using % ensures it scales with the viewport correctly.
-       Matching 38% to exactly align with the clock face radius. */
-    background: radial-gradient(circle 38% at 50% 50%, transparent 99%, rgba(2, 6, 23, 0.5) 100%);
+    /* 80% opacity background with a sharp hole in center.
+       36.1vmin matches the 95vmin svg x 0.38 radius factor. */
+    background: radial-gradient(circle 36.1vmin at 50% 50%, transparent 99%, rgba(2, 6, 23, 0.8) 100%);
     pointer-events: none;
     z-index: 2;
   }
