@@ -27,7 +27,7 @@ export interface GeoFeatureCollection {
 
 export interface TopoJSONObject {
   type: 'GeometryCollection';
-  geometries?: any[];
+  geometries?: unknown[];
 }
 
-export type TopoJSONData = any;
+export type TopoJSONData = any; // TopoJSON is too complex for unknown in these specific d3/topojson-client calls

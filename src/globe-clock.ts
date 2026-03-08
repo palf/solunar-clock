@@ -28,7 +28,7 @@ import { UIController } from './ui-controller';
 
   // 1. Initialize State & Core Components
   const state = new AppState();
-  const svg = d3.select('#svg').attr('viewBox', `0 0 ${CONFIG.WIDTH} ${CONFIG.HEIGHT}`);
+  const svg = d3.select<SVGSVGElement, unknown>('#svg').attr('viewBox', `0 0 ${CONFIG.WIDTH} ${CONFIG.HEIGHT}`);
 
   const projection = new Projection(
     state.centerX,
@@ -41,27 +41,27 @@ import { UIController } from './ui-controller';
   const timeSim = new TimeSimulation(state.startTime, state.timeSpeedMultiplier);
 
   // 2. Initialize Rendering Layers
-  const bgG = svg.append('g').attr('id', 'layer-bg');
+  const bgG = svg.append<SVGGElement>('g').attr('id', 'layer-bg');
   const rotatableG = svg
-    .append('g')
+    .append<SVGGElement>('g')
     .attr('id', 'layer-rotatable');
 
-  const mapG = rotatableG.append('g').attr('id', 'layer-map');
-  const staticG = rotatableG.append('g').attr('id', 'layer-static');
-  const handG = rotatableG.append('g').attr('id', 'layer-hands');
+  const mapG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-map');
+  const staticG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-static');
+  const handG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-hands');
 
   const canvas = document.getElementById('map-canvas') as HTMLCanvasElement;
   const webglCanvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
   const mapRenderer = new MapRenderer(mapG, projection);
   const tileRenderer = new TileRenderer(canvas, webglCanvas, projection);
   const clockFace = new ClockFace(
-    svg as any,
+    svg,
     state.centerX,
     state.centerY,
     state.radius
   );
 
-  const defs = svg.append('defs');
+  const defs = svg.append<SVGDefsElement>('defs');
   clockFace.drawMask(defs);
   mapG.attr('clip-path', 'url(#clock-mask)');
 

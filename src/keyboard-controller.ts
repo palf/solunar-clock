@@ -70,6 +70,10 @@ export class KeyboardController {
         e.preventDefault();
         this.ui.showSearch();
         break;
+      case 'z':
+        e.preventDefault();
+        this.ui.showZoomDialog();
+        break;
       case '0':
         this.state.setLocation(CONFIG.DEFAULT_LOCATION.lat, CONFIG.DEFAULT_LOCATION.lon);
         this.state.scalingFactor = CONFIG.DEFAULT_SCALING_FACTOR;

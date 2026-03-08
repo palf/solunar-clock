@@ -197,9 +197,7 @@
         <button id="btn-search" class="hud-btn" title="Search Location" type="button">🔍</button>
         
         <div style="position: relative;">
-          <div id="layer-trigger">
-            <span id="display-layer" style="color: #4ade80; font-size: 13px; font-weight: 700;">TOPOGRAPHIC</span>
-          </div>
+          <button id="layer-trigger" class="hud-btn" title="Change Map Layer" type="button">🗺️</button>
           <div id="layer-dropdown">
             <div class="layer-option active" data-layer="TOPOGRAPHIC">TOPOGRAPHIC</div>
             <div class="layer-option" data-layer="IMAGERY">IMAGERY</div>
@@ -230,6 +228,11 @@
     <div id="search-overlay">
       <input type="text" id="locationSearch" placeholder="Search city or postcode..." autocomplete="off">
       <div id="searchResults"></div>
+    </div>
+
+    <div id="zoom-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 200px; background: #1e293b; border: 1px solid var(--accent); border-radius: 12px; padding: 15px; z-index: 100; display: none; box-shadow: 0 0 100px rgba(0,0,0,0.9);">
+      <span class="hud-label" style="display: block; margin-bottom: 8px;">Set Zoom Level</span>
+      <input type="number" id="zoomInput" placeholder="3000" step="100" min="0.5">
     </div>
 
     <!-- Attribution -->

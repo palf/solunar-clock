@@ -5,12 +5,22 @@
 import type { AppState } from './app-state';
 import { CONFIG } from './config';
 
+interface SearchResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
 export class UIController {
   private searchOverlay = document.getElementById('search-overlay');
   private searchInput = document.getElementById(
     'locationSearch'
   ) as HTMLInputElement;
   private searchResults = document.getElementById('searchResults');
+  
+  private zoomOverlay = document.getElementById('zoom-overlay');
+  private zoomInput = document.getElementById('zoomInput') as HTMLInputElement;
+
   private layerTrigger = document.getElementById('layer-trigger');
   private layerDropdown = document.getElementById('layer-dropdown');
   private btnLocate = document.getElementById('btn-locate');
@@ -20,13 +30,14 @@ export class UIController {
 
   // Keyboard navigation for search
   private selectedSearchIndex = -1;
-  private currentSearchData: any[] = [];
+  private currentSearchData: SearchResult[] = [];
 
   constructor(
     private state: AppState,
     private onLocationSelected: () => Promise<void>
   ) {
     this.initSearch();
+    this.initZoomDialog();
     this.initLayerSwitcher();
     this.initButtons();
   }
@@ -107,6 +118,7 @@ export class UIController {
   }
 
   showSearch(): void {
+    this.hideZoomDialog();
     if (this.searchOverlay) this.searchOverlay.style.display = 'block';
     this.searchInput?.focus();
   }
@@ -117,6 +129,21 @@ export class UIController {
     this.searchInput.value = '';
     this.selectedSearchIndex = -1;
     if (this.searchResults) this.searchResults.innerHTML = '';
+  }
+
+  showZoomDialog(): void {
+    this.hideSearch();
+    if (this.zoomOverlay) this.zoomOverlay.style.display = 'block';
+    if (this.zoomInput) {
+      this.zoomInput.value = (this.state.scalingFactor / 10).toString();
+      this.zoomInput.focus();
+      this.zoomInput.select();
+    }
+  }
+
+  hideZoomDialog(): void {
+    if (this.zoomOverlay) this.zoomOverlay.style.display = 'none';
+    this.zoomInput?.blur();
   }
 
   /**
@@ -170,6 +197,22 @@ export class UIController {
     });
   }
 
+  private initZoomDialog(): void {
+    this.zoomInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.hideZoomDialog();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = parseFloat(this.zoomInput.value);
+        if (!isNaN(val) && val >= 0.05) { // 0.5x minimum
+          this.state.scalingFactor = val * 10;
+          this.hideZoomDialog();
+          this.onLocationSelected();
+        }
+      }
+    });
+  }
+
   private navigateResults(dir: number): void {
     if (this.currentSearchData.length === 0) return;
     
@@ -193,7 +236,7 @@ export class UIController {
     });
   }
 
-  private selectItem(item: any): void {
+  private selectItem(item: SearchResult): void {
     this.state.setLocation(parseFloat(item.lat), parseFloat(item.lon));
     this.hideSearch();
     this.onLocationSelected();
@@ -215,7 +258,7 @@ export class UIController {
         e.preventDefault();
         const layer = (e.currentTarget as HTMLElement).getAttribute(
           'data-layer'
-        ) as any;
+        ) as 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS';
         if (layer) {
           this.state.mapLayer = layer;
           if (this.layerDropdown) this.layerDropdown.style.display = 'none';
@@ -273,7 +316,7 @@ export class UIController {
       const resultsContainer = this.searchResults;
       if (resultsContainer) {
         resultsContainer.innerHTML = '';
-        this.currentSearchData.forEach((item: any) => {
+        this.currentSearchData.forEach((item: SearchResult) => {
           const div = document.createElement('div');
           div.className = 'search-item';
           div.textContent = item.display_name;

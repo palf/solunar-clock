@@ -7,7 +7,7 @@ import { UIController } from './ui-controller';
 
 describe('UIController Button Behaviors', () => {
   let state: AppState;
-  let onLocationSelected: any;
+  let onLocationSelected: () => Promise<void>;
   let ui: UIController;
 
   beforeEach(() => {
@@ -15,15 +15,16 @@ describe('UIController Button Behaviors', () => {
       <div id="search-overlay" style="display: none;"></div>
       <input id="locationSearch" />
       <div id="searchResults"></div>
+      <div id="zoom-overlay" style="display: none;"></div>
+      <input id="zoomInput" />
       <div id="display-time"></div>
       <div id="display-pos"></div>
       <div id="display-zoom"></div>
-      <div id="display-layer"></div>
       <div id="display-attribution"></div>
       <button id="btn-mode"></button>
       <button id="btn-locate"></button>
       <button id="btn-search"></button>
-      <div id="layer-trigger"></div>
+      <button id="layer-trigger"></button>
       <div id="layer-dropdown" style="display: none;">
         <div class="layer-option" data-layer="TOPOGRAPHIC"></div>
         <div class="layer-option" data-layer="IMAGERY"></div>
@@ -32,6 +33,24 @@ describe('UIController Button Behaviors', () => {
     state = new AppState();
     onLocationSelected = vi.fn().mockResolvedValue(undefined);
     ui = new UIController(state, onLocationSelected);
+  });
+
+  it('updates HUD elements', () => {
+    const now = new Date('2024-03-07T12:00:00Z');
+    ui.updateHUD(now);
+
+    expect(document.getElementById('display-time')?.textContent).toBe('12:00:00');
+    expect(document.getElementById('display-pos')?.textContent).toContain('51.51° N');
+  });
+
+  it('shows and hides search', () => {
+    const overlay = document.getElementById('search-overlay');
+
+    ui.showSearch();
+    expect(overlay?.style.display).toBe('block');
+
+    ui.hideSearch();
+    expect(overlay?.style.display).toBe('none');
   });
 
   it('toggles render mode when mode button is clicked', () => {
@@ -111,6 +130,13 @@ describe('UIController Button Behaviors', () => {
     
     expect(overlay?.style.display).toBe('none');
     searchBtn.dispatchEvent(new Event('click'));
+    expect(overlay?.style.display).toBe('block');
+  });
+
+  it('shows zoom dialog', () => {
+    const overlay = document.getElementById('zoom-overlay');
+    expect(overlay?.style.display).toBe('none');
+    ui.showZoomDialog();
     expect(overlay?.style.display).toBe('block');
   });
 });
