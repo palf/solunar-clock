@@ -13,6 +13,14 @@ export class TileRenderer {
   private static readonly MAX_LATITUDE = 85.0511; // Web Mercator limit
   private static readonly TILE_OVERLAP_PX = 1.1; // Sub-pixel bleed to prevent seams
 
+  private static readonly ATTRIBUTIONS = {
+    IMAGERY:
+      'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    TOPOGRAPHIC:
+      'Tiles © Esri — Source: Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+    STREETS: '© OpenStreetMap contributors',
+  };
+
   private tileUrls = {
     IMAGERY:
       'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -20,6 +28,13 @@ export class TileRenderer {
       'https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
     STREETS: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   };
+
+  /**
+   * Get the legal attribution text for a specific layer
+   */
+  static getAttribution(layer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS'): string {
+    return TileRenderer.ATTRIBUTIONS[layer] || '';
+  }
 
   private ctx2d: CanvasRenderingContext2D | null;
   private gl: WebGLRenderingContext | null = null;

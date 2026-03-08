@@ -4,6 +4,7 @@
 
 import type { AppState } from './app-state';
 import { CONFIG } from './config';
+import { TileRenderer } from './tile-renderer';
 
 interface SearchResult {
   display_name: string;
@@ -102,10 +103,7 @@ export class UIController {
 
     const attrEl = document.getElementById('display-attribution');
     if (attrEl) {
-      attrEl.textContent =
-        CONFIG.ATTRIBUTIONS[
-          this.state.mapLayer as keyof typeof CONFIG.ATTRIBUTIONS
-        ] || '';
+      attrEl.textContent = TileRenderer.getAttribution(this.state.mapLayer);
     }
 
     this.syncLayerButtons();

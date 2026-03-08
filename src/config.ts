@@ -6,7 +6,7 @@
 
 export const CONFIG = {
   // Display & Scaling
-  RADIUS_FACTOR: 0.38, // Percentage of viewport for globe radius
+  RADIUS_FACTOR: 0.40, // Percentage of viewport for globe radius
   DEFAULT_SCALING_FACTOR: 30000, // Default zoom level multiplier
   MIN_SCALING_FACTOR: 5, // 0.5x zoom
   MAX_SCALING_FACTOR: 1000000, // 100,000x zoom
@@ -25,12 +25,7 @@ export const CONFIG = {
   // Time simulation
   DEFAULT_TIME_SPEED: 1.0,
 
-  // User Defaults
-  HOME_LOCATION: {
-    lat: 51.071,
-    lon: -1.3451,
-  },
-
+  // London
   DEFAULT_LOCATION: {
     lat: 51.5074,
     lon: -0.1278,
@@ -49,10 +44,4 @@ export const CONFIG = {
     'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson',
     'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/world/110m.json',
   ],
-
-  ATTRIBUTIONS: {
-    IMAGERY: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-    TOPOGRAPHIC: 'Tiles © Esri — Source: Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
-    STREETS: '© OpenStreetMap contributors'
-  }
 } as const;
