@@ -9,17 +9,16 @@ describe('ClockFace', () => {
   let group: any;
 
   beforeEach(() => {
-    // Mock D3 selection
     group = {
       append: vi.fn().mockReturnThis(),
       attr: vi.fn().mockReturnThis(),
       text: vi.fn().mockReturnThis(),
+      selectAll: vi.fn().mockReturnThis(),
+      remove: vi.fn().mockReturnThis(),
     };
     svg = {
-      selectAll: vi.fn().mockReturnThis(),
-      data: vi.fn().mockReturnThis(),
-      enter: vi.fn().mockReturnThis(),
-      append: vi.fn().mockReturnThis(),
+      append: vi.fn().mockReturnValue(group),
+      attr: vi.fn().mockReturnThis(),
     };
 
     // Mock d3.path
@@ -61,7 +60,7 @@ describe('ClockFace', () => {
     expect(group.append).toHaveBeenCalledTimes(8);
   });
 
-  it('draws slices', () => {
+  it('draws hour slices', () => {
     const clock = new ClockFace(svg, 240, 240, 200);
     clock.drawSlices(group);
 

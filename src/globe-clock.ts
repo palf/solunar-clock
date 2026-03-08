@@ -78,7 +78,6 @@ import { UIController } from './ui-controller';
   let lastMode = '';
 
   const redrawMap = async () => {
-    // Check if anything geographic actually changed
     const isDirty = 
       isInitialRender ||
       state.centerLat !== lastLat || 
@@ -97,7 +96,6 @@ import { UIController } from './ui-controller';
     isRendering = true;
     isInitialRender = false;
     
-    // Update trackers
     lastLat = state.centerLat;
     lastLon = state.centerLon;
     lastScale = state.scale;
@@ -144,35 +142,46 @@ import { UIController } from './ui-controller';
     const [sunX, sunY] = projection.project(sunPos);
     const [moonX, moonY] = projection.project(moonPos);
 
-    const handLen = state.radius * CONFIG.HAND_LENGTH_FACTOR;
-    const sunAngle = Math.atan2(sunX - state.centerX, state.centerY - sunY);
-    const moonAngle = Math.atan2(moonX - state.centerX, state.centerY - moonY);
+    const sunAngle = Math.atan2(sunX - state.centerX, state.centerY - sunY) * (180 / Math.PI);
+    const moonAngle = Math.atan2(moonX - state.centerX, state.centerY - moonY) * (180 / Math.PI);
 
-    sunHand
-      .attr('x1', state.centerX)
-      .attr('y1', state.centerY)
-      .attr('x2', state.centerX + handLen * Math.sin(sunAngle))
-      .attr('y2', state.centerY - handLen * Math.cos(sunAngle));
-
-    moonHand
-      .attr('x1', state.centerX)
-      .attr('y1', state.centerY)
-      .attr('x2', state.centerX + handLen * Math.sin(moonAngle))
-      .attr('y2', state.centerY - handLen * Math.cos(moonAngle));
+    sunHandGroup.attr('transform', `translate(${state.centerX}, ${state.centerY}) rotate(${sunAngle})`);
+    moonHandGroup.attr('transform', `translate(${state.centerX}, ${state.centerY}) rotate(${moonAngle})`);
   };
 
-  const sunHand = handG
-    .append('line')
-    .attr('class', 'hand-sun')
-    .attr('stroke', 'orange')
-    .attr('stroke-width', 3)
-    .attr('stroke-linecap', 'round');
-  const moonHand = handG
-    .append('line')
-    .attr('class', 'hand-moon')
+  // Create Sun Icon
+  const sunHandGroup = handG.append('g').attr('class', 'hand-sun-group');
+  
+  // Thin arm
+  sunHandGroup.append('line')
+    .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', -state.radius)
+    .attr('stroke', 'rgba(255, 165, 0, 0.3)').attr('stroke-width', 1);
+
+  const sunIcon = sunHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
+  sunIcon.append('circle').attr('r', 10).attr('fill', '#fbbf24').attr('stroke', '#f59e0b').attr('stroke-width', 2);
+  // Sun rays
+  for (let i = 0; i < 8; i++) {
+    sunIcon.append('line')
+      .attr('x1', 0).attr('y1', -12).attr('x2', 0).attr('y2', -16)
+      .attr('stroke', '#fbbf24').attr('stroke-width', 2)
+      .attr('transform', `rotate(${i * 45})`);
+  }
+
+  // Create Moon Icon
+  const moonHandGroup = handG.append('g').attr('class', 'hand-moon-group');
+  
+  // Thin arm
+  moonHandGroup.append('line')
+    .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', -state.radius)
+    .attr('stroke', 'rgba(56, 189, 248, 0.3)').attr('stroke-width', 1);
+
+  const moonIcon = moonHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
+  // Crescent moon
+  moonIcon.append('path')
+    .attr('d', 'M -6 -8 A 10 10 0 1 1 -6 8 A 8 8 0 1 0 -6 -8')
+    .attr('fill', '#f1f5f9')
     .attr('stroke', '#38bdf8')
-    .attr('stroke-width', 3)
-    .attr('stroke-linecap', 'round');
+    .attr('stroke-width', 1);
 
   // 4. Initialize Controllers
   const ui = new UIController(state, redrawMap);
@@ -191,7 +200,7 @@ import { UIController } from './ui-controller';
   // Initial draw
   await redrawMap();
 
-  // 7. Start Tick Loop (1Hz for RPi Zero) - Only update time text and hands
+  // 7. Start Tick Loop (1Hz for RPi Zero) - Update time text and hands
   setInterval(() => {
     const now = timeSim.getSimulatedTime();
     ui.updateHUD(now, true);
