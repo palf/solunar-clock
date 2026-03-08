@@ -16,30 +16,6 @@ export class ClockFace {
   ) {}
 
   /**
-   * Draw the background circle and rim
-   * Note: Background should be drawn first, but should not cover the map
-   */
-  drawBackground(bgGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {
-    // Outer rim circle (larger, just for border effect)
-    bgGroup
-      .append('circle')
-      .attr('cx', this.centerX)
-      .attr('cy', this.centerY)
-      .attr('r', this.radius + CONFIG.RIM_WIDTH)
-      .attr('fill', 'var(--border)');
-
-    // Main clock face circle (Transparent so map below is visible)
-    bgGroup
-      .append('circle')
-      .attr('cx', this.centerX)
-      .attr('cy', this.centerY)
-      .attr('r', this.radius)
-      .attr('fill', 'none')
-      .attr('stroke', 'var(--accent)')
-      .attr('stroke-width', 1);
-  }
-
-  /**
    * Draw compass point labels (N, NE, E, SE, S, SW, W, NW)
    */
   drawHourLabels(labelsGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {

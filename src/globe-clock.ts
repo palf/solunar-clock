@@ -190,7 +190,6 @@ import { UIController } from './ui-controller';
   new TouchController(document.body, state, redrawMap);
 
   // 6. Draw Initial Static UI
-  clockFace.drawBackground(bgG);
   clockFace.drawHourLabels(staticG);
   clockFace.drawCenterMark(staticG);
 

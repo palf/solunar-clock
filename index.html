@@ -41,6 +41,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #0f172a;
   }
 
   /* Map Canvases fill entire window */
@@ -56,8 +57,8 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    /* 50% opacity background with a sharp 0% opacity circle in center */
-    background: radial-gradient(circle 228px at 50% 50%, transparent 100%, rgba(2, 6, 23, 0.5) 100%);
+    /* 50% opacity background with a sharp hole in center */
+    background: radial-gradient(circle 228px at 50% 50%, transparent 99%, rgba(2, 6, 23, 0.5) 100%);
     pointer-events: none;
     z-index: 2;
   }
@@ -68,7 +69,7 @@
     max-width: 95vmin;
     max-height: 95vmin;
     background: transparent;
-    z-index: 3; /* Above the mask */
+    z-index: 3;
   }
 
   /* HUD Styling */
@@ -198,8 +199,8 @@
 </head>
 <body>
   <div id="stage">
-    <canvas id="map-canvas" width="600" height="600" style="border-radius: 50%;"></canvas>
-    <canvas id="webgl-canvas" width="600" height="600" style="border-radius: 50%; display: none;"></canvas>
+    <canvas id="map-canvas" width="600" height="600"></canvas>
+    <canvas id="webgl-canvas" width="600" height="600" style="display: none;"></canvas>
     
     <!-- Top HUD -->
     <div id="hud-top" class="hud">
