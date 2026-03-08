@@ -18,190 +18,218 @@ import { TimeSimulation } from './time-simulation';
 import { TouchController } from './touch-controller';
 import { UIController } from './ui-controller';
 
-(async (): Promise<void> => {
-  console.log(
-    '%c🌍 Solunar Globe Clock %c v1.0.0\n%chttps://github.com/palf/solunar-clock',
-    'color: #38bdf8; font-size: 20px; font-weight: bold;',
-    'color: #94a3b8; font-size: 12px;',
-    'color: #accent; text-decoration: underline;'
-  );
+console.log(
+  '%c🌍 Solunar Globe Clock %c v1.0.0\n%chttps://github.com/palf/solunar-clock',
+  'color: #38bdf8; font-size: 20px; font-weight: bold;',
+  'color: #94a3b8; font-size: 12px;',
+  'color: #accent; text-decoration: underline;'
+);
 
-  // 1. Initialize State (The very first thing)
-  const initialConfig = AppState.loadInitialState();
-  const state = new AppState(initialConfig);
+// 1. Initialize State (The very first thing)
+const initialConfig = AppState.loadInitialState();
+const state = new AppState(initialConfig);
 
-  // 2. Core Components
-  const svg = d3.select<SVGSVGElement, unknown>('#svg').attr('viewBox', `0 0 ${state.width} ${state.height}`);
+// 2. Core Components
+const svg = d3
+  .select<SVGSVGElement, unknown>('#svg')
+  .attr('viewBox', `0 0 ${state.width} ${state.height}`);
 
-  const projection = new Projection(
-    state.centerX,
-    state.centerY,
-    state.centerLat,
-    state.centerLon,
-    state.scale
-  );
+const projection = new Projection(
+  state.centerX,
+  state.centerY,
+  state.centerLat,
+  state.centerLon,
+  state.scale
+);
 
-  const timeSim = new TimeSimulation(state.startTime, state.timeSpeedMultiplier);
+const timeSim = new TimeSimulation(state.startTime, state.timeSpeedMultiplier);
 
-  // 3. Initialize Rendering Layers
-  const rotatableG = svg
-    .append<SVGGElement>('g')
-    .attr('id', 'layer-rotatable');
+// 3. Initialize Rendering Layers
+const rotatableG = svg.append<SVGGElement>('g').attr('id', 'layer-rotatable');
 
-  const mapG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-map');
-  const staticG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-static');
-  const handG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-hands');
+const mapG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-map');
+const staticG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-static');
+const handG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-hands');
 
-  const canvas = document.getElementById('map-canvas') as HTMLCanvasElement;
-  const webglCanvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
-  const mapRenderer = new MapRenderer(mapG, projection);
-  const tileRenderer = new TileRenderer(canvas, webglCanvas, projection);
-  const clockFace = new ClockFace(
-    svg,
-    state.centerX,
-    state.centerY,
-    state.radius
-  );
+const canvas = document.getElementById('map-canvas') as HTMLCanvasElement;
+const webglCanvas = document.getElementById(
+  'webgl-canvas'
+) as HTMLCanvasElement;
+const mapRenderer = new MapRenderer(mapG, projection);
+const tileRenderer = new TileRenderer(canvas, webglCanvas, projection);
+const clockFace = new ClockFace(svg, state.centerX, state.centerY, state.radius);
 
-  // 4. Rendering Lifecycle Management
-  let isRendering = false;
-  let needsRedraw = false;
-  let isInitialRender = true;
+// 4. Rendering Lifecycle Management
+let isRendering = false;
+let needsRedraw = false;
+let isInitialRender = true;
 
-  // Dirty check variables to stop 1Hz "blips"
-  let lastLat = -999;
-  let lastLon = -999;
-  let lastScale = -999;
-  let lastLayer = '';
-  let lastMode = '';
+// Dirty check variables to stop 1Hz "blips"
+let lastLat = -999;
+let lastLon = -999;
+let lastScale = -999;
+let lastLayer = '';
+let lastMode = '';
 
-  const redrawMap = async () => {
-    // Check if anything geographic actually changed
-    const isDirty = 
-      isInitialRender ||
-      state.centerLat !== lastLat || 
-      state.centerLon !== lastLon || 
-      state.scale !== lastScale || 
-      state.mapLayer !== lastLayer ||
-      state.renderMode !== lastMode;
+const redrawMap = async () => {
+  // Check if anything geographic actually changed
+  const isDirty =
+    isInitialRender ||
+    state.centerLat !== lastLat ||
+    state.centerLon !== lastLon ||
+    state.scale !== lastScale ||
+    state.mapLayer !== lastLayer ||
+    state.renderMode !== lastMode;
 
-    if (!isDirty) return;
+  if (!isDirty) return;
 
-    if (isRendering) {
-      needsRedraw = true;
-      return;
-    }
-
-    isRendering = true;
-    isInitialRender = false;
-    
-    // Update trackers
-    lastLat = state.centerLat;
-    lastLon = state.centerLon;
-    lastScale = state.scale;
-    lastLayer = state.mapLayer;
-    lastMode = state.renderMode;
-
-    projection.updateCenter(state.centerLat, state.centerLon);
-    projection.updateScale(state.scale);
-
-    if (
-      state.mapLayer === 'IMAGERY' ||
-      state.mapLayer === 'TOPOGRAPHIC' ||
-      state.mapLayer === 'STREETS'
-    ) {
-      mapG.selectAll('*').remove();
-      await tileRenderer.render(state.mapLayer, state.renderMode);
-    } else {
-      canvas.style.display = 'block';
-      webglCanvas.style.display = 'none';
-      const ctx = canvas.getContext('2d');
-      ctx?.clearRect(0, 0, canvas.width, canvas.height);
-      await mapRenderer.render(state.mapData);
-    }
-
-    updateDynamicElements(false);
-    isRendering = false;
-    if (needsRedraw) {
-      needsRedraw = false;
-      requestAnimationFrame(redrawMap);
-    }
-  };
-
-  const updateDynamicElements = (onlyTime = false) => {
-    const now = timeSim.getSimulatedTime();
-    ui.updateHUD(now, onlyTime);
-    if (!onlyTime) {
-      updateHands(now);
-    }
-  };
-
-  const updateHands = (now: Date) => {
-    const sunPos = calculateSunPosition(now);
-    const moonPos = calculateMoonPosition(now);
-    const [sunX, sunY] = projection.project(sunPos);
-    const [moonX, moonY] = projection.project(moonPos);
-
-    const sunAngle = Math.atan2(sunX - state.centerX, state.centerY - sunY) * (180 / Math.PI);
-    const moonAngle = Math.atan2(moonX - state.centerX, state.centerY - moonY) * (180 / Math.PI);
-
-    sunHandGroup.attr('transform', `translate(${state.centerX}, ${state.centerY}) rotate(${sunAngle})`);
-    moonHandGroup.attr('transform', `translate(${state.centerX}, ${state.centerY}) rotate(${moonAngle})`);
-  };
-
-  // Create Sun Icon
-  const sunHandGroup = handG.append('g').attr('class', 'hand-sun-group');
-  
-  // Thin arm
-  sunHandGroup.append('line')
-    .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', -state.radius)
-    .attr('stroke', 'rgba(255, 165, 0, 0.3)').attr('stroke-width', 2);
-
-  const sunIcon = sunHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
-  sunIcon.append('circle').attr('r', 10).attr('fill', '#fbbf24').attr('stroke', '#f59e0b').attr('stroke-width', 2);
-  // Sun rays
-  for (let i = 0; i < 8; i++) {
-    sunIcon.append('line')
-      .attr('x1', 0).attr('y1', -12).attr('x2', 0).attr('y2', -16)
-      .attr('stroke', '#fbbf24').attr('stroke-width', 2)
-      .attr('transform', `rotate(${i * 45})`);
+  if (isRendering) {
+    needsRedraw = true;
+    return;
   }
 
-  // Create Moon Icon
-  const moonHandGroup = handG.append('g').attr('class', 'hand-moon-group');
-  
-  // Thin arm
-  moonHandGroup.append('line')
-    .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', -state.radius)
-    .attr('stroke', 'rgba(56, 189, 248, 0.3)').attr('stroke-width', 2);
+  isRendering = true;
+  isInitialRender = false;
 
-  const moonIcon = moonHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
-  // Crescent moon
-  moonIcon.append('path')
-    .attr('d', 'M -6 -8 A 10 10 0 1 1 -6 8 A 8 8 0 1 0 -6 -8')
-    .attr('fill', '#f1f5f9')
-    .attr('stroke', '#38bdf8')
-    .attr('stroke-width', 1);
+  // Update trackers
+  lastLat = state.centerLat;
+  lastLon = state.centerLon;
+  lastScale = state.scale;
+  lastLayer = state.mapLayer;
+  lastMode = state.renderMode;
 
-  // 5. Initialize Controllers
-  const ui = new UIController(state, redrawMap);
-  new KeyboardController(state, ui, redrawMap);
-  new TouchController(document.body, state, redrawMap);
+  projection.updateCenter(state.centerLat, state.centerLon);
+  projection.updateScale(state.scale);
 
-  // 6. Draw Initial Static UI
-  clockFace.drawHourLabels(staticG);
-  clockFace.drawCenterMark(staticG);
+  if (
+    state.mapLayer === 'IMAGERY' ||
+    state.mapLayer === 'TOPOGRAPHIC' ||
+    state.mapLayer === 'STREETS'
+  ) {
+    mapG.selectAll('*').remove();
+    await tileRenderer.render(state.mapLayer, state.renderMode);
+  } else {
+    canvas.style.display = 'block';
+    webglCanvas.style.display = 'none';
+    const ctx = canvas.getContext('2d');
+    ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    await mapRenderer.render(state.mapData);
+  }
 
-  // 7. Bootstrap Application
-  state.mapData = await mapRenderer.loadMapData();
+  updateDynamicElements(false);
+  isRendering = false;
+  if (needsRedraw) {
+    needsRedraw = false;
+    requestAnimationFrame(redrawMap);
+  }
+};
 
-  // Initial draw
-  await redrawMap();
-
-  // 8. Start Tick Loop (1Hz for RPi Zero) - Only update time text and hands
-  setInterval(() => {
-    const now = timeSim.getSimulatedTime();
-    ui.updateHUD(now, true);
+const updateDynamicElements = (onlyTime = false) => {
+  const now = timeSim.getSimulatedTime();
+  ui.updateHUD(now, onlyTime);
+  if (!onlyTime) {
     updateHands(now);
-  }, CONFIG.UPDATE_INTERVAL_MS);
-})();
+  }
+};
+
+const updateHands = (now: Date) => {
+  const sunPos = calculateSunPosition(now);
+  const moonPos = calculateMoonPosition(now);
+  const [sunX, sunY] = projection.project(sunPos);
+  const [moonX, moonY] = projection.project(moonPos);
+
+  const sunAngle =
+    Math.atan2(sunX - state.centerX, state.centerY - sunY) * (180 / Math.PI);
+  const moonAngle =
+    Math.atan2(moonX - state.centerX, state.centerY - moonY) * (180 / Math.PI);
+
+  sunHandGroup.attr(
+    'transform',
+    `translate(${state.centerX}, ${state.centerY}) rotate(${sunAngle})`
+  );
+  moonHandGroup.attr(
+    'transform',
+    `translate(${state.centerX}, ${state.centerY}) rotate(${moonAngle})`
+  );
+};
+
+// Create Sun Icon
+const sunHandGroup = handG.append('g').attr('class', 'hand-sun-group');
+
+// Thin arm
+sunHandGroup
+  .append('line')
+  .attr('x1', 0)
+  .attr('y1', 0)
+  .attr('x2', 0)
+  .attr('y2', -state.radius)
+  .attr('stroke', 'rgba(255, 165, 0, 0.3)')
+  .attr('stroke-width', 2);
+
+const sunIcon = sunHandGroup
+  .append('g')
+  .attr('transform', `translate(0, ${-state.radius})`);
+sunIcon
+  .append('circle')
+  .attr('r', 10)
+  .attr('fill', '#fbbf24')
+  .attr('stroke', '#f59e0b')
+  .attr('stroke-width', 2);
+// Sun rays
+for (let i = 0; i < 8; i++) {
+  sunIcon
+    .append('line')
+    .attr('x1', 0)
+    .attr('y1', -12)
+    .attr('x2', 0)
+    .attr('y2', -16)
+    .attr('stroke', '#fbbf24')
+    .attr('stroke-width', 2)
+    .attr('transform', `rotate(${i * 45})`);
+}
+
+// Create Moon Icon
+const moonHandGroup = handG.append('g').attr('class', 'hand-moon-group');
+
+// Thin arm
+moonHandGroup
+  .append('line')
+  .attr('x1', 0)
+  .attr('y1', 0)
+  .attr('x2', 0)
+  .attr('y2', -state.radius)
+  .attr('stroke', 'rgba(56, 189, 248, 0.3)')
+  .attr('stroke-width', 2);
+
+const moonIcon = moonHandGroup
+  .append('g')
+  .attr('transform', `translate(0, ${-state.radius})`);
+// Crescent moon
+moonIcon
+  .append('path')
+  .attr('d', 'M -6 -8 A 10 10 0 1 1 -6 8 A 8 8 0 1 0 -6 -8')
+  .attr('fill', '#f1f5f9')
+  .attr('stroke', '#38bdf8')
+  .attr('stroke-width', 1);
+
+// 5. Initialize Controllers
+const ui = new UIController(state, redrawMap);
+new KeyboardController(state, ui, redrawMap);
+new TouchController(document.body, state, redrawMap);
+
+// 6. Draw Initial Static UI
+clockFace.drawHourLabels(staticG);
+clockFace.drawCenterMark(staticG);
+
+// 7. Bootstrap Application
+state.mapData = await mapRenderer.loadMapData();
+
+// Initial draw
+await redrawMap();
+
+// 8. Start Tick Loop (1Hz for RPi Zero) - Only update time text and hands
+setInterval(() => {
+  const now = timeSim.getSimulatedTime();
+  ui.updateHUD(now, true);
+  updateHands(now);
+}, CONFIG.UPDATE_INTERVAL_MS);
