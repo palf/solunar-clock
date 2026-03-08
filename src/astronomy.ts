@@ -1,15 +1,16 @@
 /**
- * Astronomical calculations for sun and moon positions
+ * Astronomical calculations for sun and moon positions.
+ * Referenced from standard astronomical algorithms (Low-precision series).
  */
 
 import { CONFIG } from './config';
 import type { GeoCoordinates } from './types';
 
 /**
- * Calculate days since J2000.0 epoch
+ * Standard angle normalization to [0, 360) range.
  */
-function daysSinceJ2000(date: Date): number {
-  return (date.getTime() - CONFIG.J2000_EPOCH.getTime()) / (1000 * 60 * 60 * 24);
+function normalizeAngle(deg: number): number {
+  return deg - 360 * Math.floor(deg / 360);
 }
 
 /**
@@ -20,75 +21,84 @@ export function normalizeLongitude(lon: number): number {
 }
 
 /**
- * Calculate the geographic position where the sun is directly overhead
+ * Calculate fractional days since J2000.0 epoch.
+ */
+function daysSinceJ2000(date: Date): number {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return (date.getTime() - CONFIG.J2000_EPOCH.getTime()) / msPerDay;
+}
+
+/**
+ * Calculate the current obliquity of the ecliptic.
+ */
+function getEclipticObliquity(n: number): number {
+  const { ECLIPTIC_OBLIQUITY_BASE, ECLIPTIC_OBLIQUITY_RATE } = CONFIG.ASTRONOMY;
+  return (ECLIPTIC_OBLIQUITY_BASE - ECLIPTIC_OBLIQUITY_RATE * n) * (Math.PI / 180);
+}
+
+/**
+ * Calculate the geographic position where the sun is directly overhead.
  * Returns [longitude, latitude]
  */
 export function calculateSunPosition(date: Date): GeoCoordinates {
   const n = daysSinceJ2000(date);
+  const ast = CONFIG.ASTRONOMY;
 
-  // Mean longitude of the sun (degrees)
-  const q = (280.459 + 0.98564736 * n) % 360;
+  // 1. Mean longitude and anomaly
+  const q = normalizeAngle(ast.SUN_MEAN_LON_BASE + ast.SUN_MEAN_LON_RATE * n);
+  const g = normalizeAngle(ast.SUN_MEAN_ANOM_BASE + ast.SUN_MEAN_ANOM_RATE * n);
+  const gRad = g * (Math.PI / 180);
 
-  // Mean anomaly (degrees)
-  const g = (357.529 + 0.98560028 * n) % 360;
-  const gRad = (g * Math.PI) / 180;
+  // 2. Ecliptic longitude
+  const L = q + ast.SUN_ECLIPTIC_LON_C1 * Math.sin(gRad) + ast.SUN_ECLIPTIC_LON_C2 * Math.sin(2 * gRad);
+  const LRad = L * (Math.PI / 180);
 
-  // Apparent ecliptic longitude (degrees)
-  const L = q + 1.915 * Math.sin(gRad) + 0.02 * Math.sin(2 * gRad);
-  const LRad = (L * Math.PI) / 180;
+  // 3. Obliquity
+  const epsilonRad = getEclipticObliquity(n);
 
-  // Obliquity of the ecliptic (degrees)
-  const epsilon = 23.439 - 0.00000036 * n;
-  const epsilonRad = (epsilon * Math.PI) / 180;
-
-  // Right ascension and declination
+  // 4. Coordinates
   const alpha = (Math.atan2(Math.cos(epsilonRad) * Math.sin(LRad), Math.cos(LRad)) * 180) / Math.PI;
   const delta = Math.asin(Math.sin(epsilonRad) * Math.sin(LRad));
 
-  // Convert to latitude (declination = latitude where sun is overhead)
+  // Latitude is direct declination
   const sunLat = (delta * 180) / Math.PI;
 
-  // Calculate Greenwich Hour Angle (GHA)
+  // 5. Longitude (Greenwich Hour Angle)
   const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
   const eot = q - alpha;
-  const gha = (15 * (utcHours - 12) + eot) % 360;
+  const gha = normalizeAngle(15 * (utcHours - 12) + eot);
   const sunLon = normalizeLongitude(-gha);
 
   return [sunLon, sunLat];
 }
 
 /**
- * Calculate the geographic position where the moon is directly overhead
+ * Calculate the geographic position where the moon is directly overhead.
  * Returns [longitude, latitude]
- * Note: This is a simplified calculation
  */
 export function calculateMoonPosition(date: Date): GeoCoordinates {
   const n = daysSinceJ2000(date);
+  const ast = CONFIG.ASTRONOMY;
 
-  // Mean longitude of the moon (degrees)
-  const Lm = (218.316 + 13.176396 * n) % 360;
+  // 1. Mean lunar elements
+  const Lm = normalizeAngle(ast.MOON_MEAN_LON_BASE + ast.MOON_MEAN_LON_RATE * n);
+  const Mm = normalizeAngle(ast.MOON_MEAN_ANOM_BASE + ast.MOON_MEAN_ANOM_RATE * n);
+  const D = normalizeAngle(ast.MOON_MEAN_ELON_BASE + ast.MOON_MEAN_ELON_RATE * n);
+  
+  const MmRad = Mm * (Math.PI / 180);
+  const DRad = D * (Math.PI / 180);
 
-  // Mean anomaly of the moon (degrees)
-  const Mm = (134.963 + 13.064993 * n) % 360;
-  const MmRad = (Mm * Math.PI) / 180;
+  // 2. Simplified Ecliptic Coordinates
+  const lambdaM = Lm + ast.MOON_ECLIPTIC_LON_C1 * Math.sin(MmRad) + ast.MOON_ECLIPTIC_LON_C2 * Math.sin(2 * DRad - MmRad);
+  const lambdaMRad = lambdaM * (Math.PI / 180);
 
-  // Mean elongation of the moon (degrees)
-  const D = (297.85 + 12.190749 * n) % 360;
-  const DRad = (D * Math.PI) / 180;
+  const betaM = ast.MOON_ECLIPTIC_LAT_C1 * Math.sin(DRad);
+  const betaMRad = betaM * (Math.PI / 180);
 
-  // Ecliptic longitude (simplified)
-  const lambdaM = Lm + 6.289 * Math.sin(MmRad) + 1.274 * Math.sin(2 * DRad - MmRad);
-  const lambdaMRad = (lambdaM * Math.PI) / 180;
+  // 3. Obliquity
+  const epsilonRad = getEclipticObliquity(n);
 
-  // Ecliptic latitude (simplified)
-  const betaM = 5.128 * Math.sin(DRad);
-  const betaMRad = (betaM * Math.PI) / 180;
-
-  // Obliquity of the ecliptic
-  const epsilon = 23.439 - 0.0000004 * n;
-  const epsilonRad = (epsilon * Math.PI) / 180;
-
-  // Convert to equatorial coordinates
+  // 4. Equatorial conversion
   const alphaM = Math.atan2(
     Math.cos(epsilonRad) * Math.sin(lambdaMRad) - Math.tan(betaMRad) * Math.sin(epsilonRad),
     Math.cos(lambdaMRad)
@@ -98,12 +108,11 @@ export function calculateMoonPosition(date: Date): GeoCoordinates {
       Math.cos(betaMRad) * Math.sin(epsilonRad) * Math.sin(lambdaMRad)
   );
 
-  // Convert to latitude
   const moonLat = (deltaM * 180) / Math.PI;
 
-  // Calculate Greenwich Hour Angle
+  // 5. Longitude
   const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
-  const gha = (15 * utcHours - (alphaM * 180) / Math.PI) % 360;
+  const gha = normalizeAngle(15 * utcHours - (alphaM * 180) / Math.PI);
   const moonLon = normalizeLongitude(-gha);
 
   return [moonLon, moonLat];
