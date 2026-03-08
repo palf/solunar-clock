@@ -10,7 +10,6 @@ import { AppState } from './app-state';
 import { calculateMoonPosition, calculateSunPosition } from './astronomy';
 import { ClockFace } from './clock-face';
 import { CONFIG } from './config';
-import { getCurrentPosition } from './geolocation-service';
 import { KeyboardController } from './keyboard-controller';
 import { MapRenderer } from './map-renderer';
 import { Projection } from './projection';
@@ -178,14 +177,6 @@ import { UIController } from './ui-controller';
 
   // Redraw once map data is in
   await redrawMap();
-
-  // Only auto-locate if no persistent home is set
-  if (!state.homeLocation) {
-    getCurrentPosition().then(async ([userLon, userLat]) => {
-      state.setLocation(userLat, userLon);
-      await redrawMap();
-    });
-  }
 
   // 7. Start Tick Loop (1Hz for RPi Zero) - Only update time text and hands
   setInterval(() => {
