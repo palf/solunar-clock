@@ -156,7 +156,7 @@ import { UIController } from './ui-controller';
   // Thin arm
   sunHandGroup.append('line')
     .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', -state.radius)
-    .attr('stroke', 'rgba(255, 165, 0, 0.3)').attr('stroke-width', 1);
+    .attr('stroke', 'rgba(255, 165, 0, 0.3)').attr('stroke-width', 2);
 
   const sunIcon = sunHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
   sunIcon.append('circle').attr('r', 10).attr('fill', '#fbbf24').attr('stroke', '#f59e0b').attr('stroke-width', 2);
@@ -174,7 +174,7 @@ import { UIController } from './ui-controller';
   // Thin arm
   moonHandGroup.append('line')
     .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', -state.radius)
-    .attr('stroke', 'rgba(56, 189, 248, 0.3)').attr('stroke-width', 1);
+    .attr('stroke', 'rgba(56, 189, 248, 0.3)').attr('stroke-width', 2);
 
   const moonIcon = moonHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
   // Crescent moon
