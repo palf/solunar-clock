@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-The initial prototype used TopoJSON for rendering map features. While efficient for simple outlines, TopoJSON does not support high-resolution satellite imagery, detailed terrain, or logistical data (roads/streets) which are required for the advanced map modes.
+The initial prototype used TopoJSON for rendering map features. While efficient for simple outlines, TopoJSON does not support high-resolution satellite imagery or detailed terrain required for fixed-location neighborhood views (3000x zoom).
 
 ## Decision
 We will transition to a **Tile-Based Rendering** system. This involves:
@@ -14,9 +14,12 @@ We will transition to a **Tile-Based Rendering** system. This involves:
   - **TOPOGRAPHIC:** Esri World Topographic Map.
   - **STREETS:** OpenStreetMap.
 - Dynamically calculating Web Mercator tile coordinates based on the custom Azimuthal Equidistant projection.
+- Using a **7x7 grid** (49 tiles) to provide a movement buffer and ensure full coverage of the circular clock face at all zoom levels.
 
 ## Consequences
-- **Improved Detail:** Provides high-resolution visual data at all zoom levels (up to 100,000x).
+- **Improved Detail:** Provides high-resolution visual data at all zoom levels (up to 1,000,000x scaling).
 - **Network Dependency:** Requires an internet connection to fetch tiles (cached locally by the browser).
-- **Rendering Complexity:** Requires mapping spherical Mercator tiles into the azimuthal screen space, which results in some distortion at the tile boundaries but provides a superior visual experience.
-- **Hardware Impact:** Throttled rendering (1Hz) remains necessary for RPi Zero stability when loading multiple tile images.
+- **Rendering Complexity:** Requires a dual-engine approach:
+  - **2D Engine:** Quad-grid subdivision for performance.
+  - **3D Engine:** WebGL fragment shaders for pixel-perfect warping.
+- **Hardware Impact:** Throttled rendering (1Hz) and double-buffering are used to maintain stability on the Raspberry Pi Zero.

@@ -68,4 +68,10 @@ export const CONFIG = {
 
   MIN_SCALING_FACTOR: 5, // 0.5x zoom
   MAX_SCALING_FACTOR: 1000000, // 100,000x zoom
+
+  ATTRIBUTIONS: {
+    IMAGERY: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    TOPOGRAPHIC: 'Tiles © Esri — Source: Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+    STREETS: '© OpenStreetMap contributors'
+  }
 } as const;

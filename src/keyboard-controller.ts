@@ -3,7 +3,7 @@
  */
 
 import type { AppState } from './app-state';
-import { getCurrentPosition } from './geolocation-service';
+import { CONFIG } from './config';
 import type { UIController } from './ui-controller';
 
 export class KeyboardController {
@@ -71,7 +71,8 @@ export class KeyboardController {
         this.ui.showSearch();
         break;
       case '0':
-        this.state.resetToLondon();
+        this.state.setLocation(CONFIG.DEFAULT_LOCATION.lat, CONFIG.DEFAULT_LOCATION.lon);
+        this.state.scalingFactor = CONFIG.DEFAULT_SCALING_FACTOR;
         await this.onRedraw();
         break;
       case 'h':
@@ -81,8 +82,18 @@ export class KeyboardController {
   }
 
   private async resetToHome(): Promise<void> {
-    const [lon, lat] = await getCurrentPosition();
-    this.state.setLocation(lat, lon);
+    const hasHome = this.state.homeLocation !== null;
+    const atHome = this.state.isAtHome();
+
+    if (!hasHome) {
+      this.state.setHome();
+    } else if (atHome) {
+      this.state.clearHome();
+    } else {
+      const home = this.state.homeLocation!;
+      this.state.setLocation(home.lat, home.lon);
+    }
+
     await this.onRedraw();
   }
 }

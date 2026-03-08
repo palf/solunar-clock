@@ -193,8 +193,7 @@
       <!-- Right side: Controls -->
       <div style="display: flex; gap: 6px; align-items: center;">
         <button id="btn-mode" class="hud-btn" title="Toggle Render Mode" type="button" style="font-size: 10px; font-weight: 900;">3D</button>
-        <button id="btn-gps" class="hud-btn" title="Current Location" type="button">🎯</button>
-        <button id="btn-home" class="hud-btn" title="Home" type="button">🏠</button>
+        <button id="btn-locate" class="hud-btn" title="Set/Go Home" type="button">🎯</button>
         
         <div style="position: relative;">
           <div id="layer-trigger">
@@ -229,6 +228,9 @@
       <input type="text" id="locationSearch" placeholder="Search city..." autocomplete="off">
       <div id="searchResults"></div>
     </div>
+
+    <!-- Attribution -->
+    <div id="display-attribution" style="position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; font-size: 7px; color: var(--text-dim); opacity: 0.6; pointer-events: none;"></div>
   </div>
 
   <script src="https://d3js.org/d3.v7.min.js"></script>

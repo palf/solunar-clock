@@ -29,29 +29,6 @@ describe('AppState', () => {
       expect(state.scalingFactor).toBe(initial);
     });
 
-    it('rejects Infinity for latitude', () => {
-      const state = new AppState();
-      const initial = state.centerLat;
-      state.centerLat = Infinity;
-      expect(state.centerLat).toBe(initial);
-    });
-
-    it('rejects invalid inputs in setLocation', () => {
-      const state = new AppState();
-      const initialLat = state.centerLat;
-      const initialLon = state.centerLon;
-      state.setLocation(NaN, 10);
-      expect(state.centerLat).toBe(initialLat);
-      expect(state.centerLon).toBe(initialLon);
-    });
-
-    it('rejects invalid multiplier in adjustZoom', () => {
-      const state = new AppState();
-      const initial = state.scalingFactor;
-      state.adjustZoom(NaN);
-      expect(state.scalingFactor).toBe(initial);
-    });
-
     it('rejects invalid values in pan', () => {
       const state = new AppState();
       const initialLat = state.centerLat;

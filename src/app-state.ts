@@ -18,9 +18,32 @@ export class AppState {
   // Zoom scale (configurable)
   private _scalingFactor: number = CONFIG.DEFAULT_SCALING_FACTOR;
 
-  // Map center position (Default: London)
-  private _centerLat: number = CONFIG.DEFAULT_LOCATION.lat;
-  private _centerLon: number = CONFIG.DEFAULT_LOCATION.lon;
+  // Map center position
+  private _centerLat: number;
+  private _centerLon: number;
+
+  // Time simulation
+  readonly startTime: Date = new Date();
+  timeSpeedMultiplier: number = CONFIG.DEFAULT_TIME_SPEED;
+
+  // Map Layer
+  mapLayer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS' = 'TOPOGRAPHIC';
+  renderMode: '2D' | '3D' = '3D'; // 2D = Canvas Quad Grid, 3D = WebGL Vertex Warp
+
+  // Dynamic Home Location
+  private _homeLocation: { lat: number; lon: number } | null = null;
+
+  // Map data
+  mapData: TopoJSONData | null = null;
+
+  constructor() {
+    // Start with London as fallback
+    this._centerLat = CONFIG.DEFAULT_LOCATION.lat;
+    this._centerLon = CONFIG.DEFAULT_LOCATION.lon;
+
+    // Load from storage (will override London if home exists)
+    this.loadHome();
+  }
 
   // Getters
   get scalingFactor(): number {
@@ -32,6 +55,9 @@ export class AppState {
   get centerLon(): number {
     return this._centerLon;
   }
+  get homeLocation() {
+    return this._homeLocation;
+  }
 
   // Setters with NaN guards
   set scalingFactor(val: number) {
@@ -39,27 +65,15 @@ export class AppState {
   }
   set centerLat(val: number) {
     if (Number.isFinite(val)) {
-      this._centerLat = Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, val));
+      this._centerLat = Math.max(
+        -CONFIG.MAX_LATITUDE,
+        Math.min(CONFIG.MAX_LATITUDE, val)
+      );
     }
   }
   set centerLon(val: number) {
     if (Number.isFinite(val)) this._centerLon = val;
   }
-
-  // Rotation (in degrees)
-  rotation: number = 0;
-
-  // Time simulation
-  readonly startTime: Date = new Date();
-  timeSpeedMultiplier: number = CONFIG.DEFAULT_TIME_SPEED;
-
-  // Map Layer
-  mapLayer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS' = 'TOPOGRAPHIC';
-  renderMode: '2D' | '3D' = '3D'; // 2D = Canvas Quad Grid, 3D = WebGL Pixel Warp
-
-  // Map data
-  mapData: TopoJSONData | null = null;
-  mapLoaded: boolean = false;
 
   // Computed scale for projection
   get scale(): number {
@@ -70,19 +84,46 @@ export class AppState {
   // STATE ACTIONS
   // ========================================================================
 
-  /**
-   * Reset the map to Winchester Home
-   */
-  resetToHome(): void {
-    this.setLocation(CONFIG.HOME_LOCATION.lat, CONFIG.HOME_LOCATION.lon);
+  private loadHome(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const stored = localStorage.getItem('solunar-clock-home');
+      if (stored) {
+        this._homeLocation = JSON.parse(stored);
+        if (this._homeLocation) {
+          this._centerLat = this._homeLocation.lat;
+          this._centerLon = this._homeLocation.lon;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load home from storage', e);
+    }
   }
 
-  /**
-   * Reset the map to London with default zoom
-   */
-  resetToLondon(): void {
-    this.setLocation(51.5074, -0.1278);
-    this.scalingFactor = 10;
+  setHome(): void {
+    this._homeLocation = { lat: this._centerLat, lon: this._centerLon };
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(
+        'solunar-clock-home',
+        JSON.stringify(this._homeLocation)
+      );
+    }
+  }
+
+  clearHome(): void {
+    this._homeLocation = null;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('solunar-clock-home');
+    }
+  }
+
+  isAtHome(): boolean {
+    if (!this._homeLocation) return false;
+    const tolerance = 0.0001;
+    return (
+      Math.abs(this._centerLat - this._homeLocation.lat) < tolerance &&
+      Math.abs(this._centerLon - this._homeLocation.lon) < tolerance
+    );
   }
 
   /**
@@ -90,8 +131,8 @@ export class AppState {
    */
   setLocation(lat: number, lon: number): void {
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      this._centerLat = lat;
-      this._centerLon = lon;
+      this.centerLat = lat;
+      this.centerLon = lon;
     }
   }
 
@@ -107,7 +148,6 @@ export class AppState {
       Math.min(maxScale, this._scalingFactor * multiplier)
     );
   }
-
 
   /**
    * Pan the map by a geographic offset

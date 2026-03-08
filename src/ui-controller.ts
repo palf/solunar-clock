@@ -3,7 +3,6 @@
  */
 
 import type { AppState } from './app-state';
-import { getCurrentPosition } from './geolocation-service';
 import { CONFIG } from './config';
 
 export class UIController {
@@ -14,8 +13,7 @@ export class UIController {
   private searchResults = document.getElementById('searchResults');
   private layerTrigger = document.getElementById('layer-trigger');
   private layerDropdown = document.getElementById('layer-dropdown');
-  private btnHome = document.getElementById('btn-home');
-  private btnGPS = document.getElementById('btn-gps');
+  private btnLocate = document.getElementById('btn-locate');
   private btnMode = document.getElementById('btn-mode');
   private searchDebounce: ReturnType<typeof setTimeout> | undefined;
 
@@ -29,11 +27,14 @@ export class UIController {
   }
 
   /**
-   * Update all HUD elements with latest state
+   * Update HUD elements. 
+   * onlyTime = true allows 1Hz ticks to only refresh the clock text.
    */
-  updateHUD(now: Date): void {
+  updateHUD(now: Date, onlyTime = false): void {
     const timeEl = document.getElementById('display-time');
     if (timeEl) timeEl.textContent = now.toISOString().substring(11, 19);
+
+    if (onlyTime) return;
 
     const modeEl = document.getElementById('btn-mode');
     if (modeEl) {
@@ -42,6 +43,26 @@ export class UIController {
         this.state.renderMode === '3D' ? '#4ade80' : 'var(--text-dim)';
       modeEl.style.borderColor =
         this.state.renderMode === '3D' ? '#4ade80' : 'var(--border)';
+    }
+
+    // Combined Locate/Home button logic
+    if (this.btnLocate) {
+      const hasHome = this.state.homeLocation !== null;
+      const atHome = this.state.isAtHome();
+
+      if (!hasHome) {
+        this.btnLocate.textContent = '🎯';
+        this.btnLocate.style.color = 'var(--accent)';
+        this.btnLocate.title = 'Set Current Location as Home';
+      } else if (atHome) {
+        this.btnLocate.textContent = '✖️'; // Clear icon
+        this.btnLocate.style.color = '#ef4444'; // Red
+        this.btnLocate.title = 'Clear Saved Home';
+      } else {
+        this.btnLocate.textContent = '🏠'; // Go Home icon
+        this.btnLocate.style.color = 'var(--accent)';
+        this.btnLocate.title = 'Return to Stored Home';
+      }
     }
 
     const posEl = document.getElementById('display-pos');
@@ -67,6 +88,14 @@ export class UIController {
           : this.state.mapLayer === 'IMAGERY'
             ? '#38bdf8'
             : '#fb923c';
+    }
+
+    const attrEl = document.getElementById('display-attribution');
+    if (attrEl) {
+      attrEl.textContent =
+        CONFIG.ATTRIBUTIONS[
+          this.state.mapLayer as keyof typeof CONFIG.ATTRIBUTIONS
+        ] || '';
     }
 
     this.syncLayerButtons();
@@ -131,18 +160,26 @@ export class UIController {
   }
 
   private initButtons(): void {
-    this.btnHome?.addEventListener('click', async (e) => {
+    this.btnLocate?.addEventListener('click', async (e) => {
       e.stopPropagation();
       e.preventDefault();
-      this.state.resetToHome();
-      await this.onLocationSelected();
-    });
 
-    this.btnGPS?.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const [lon, lat] = await getCurrentPosition();
-      this.state.setLocation(lat, lon);
+      const hasHome = this.state.homeLocation !== null;
+      const atHome = this.state.isAtHome();
+
+      if (!hasHome) {
+        // Step 1: Set current location as home
+        this.state.setHome();
+      } else if (atHome) {
+        // Step 2: Unset home
+        this.state.clearHome();
+      } else {
+        // Step 3: Go home
+        const home = this.state.homeLocation!;
+        this.state.setLocation(home.lat, home.lon);
+      }
+
+      this.updateHUD(new Date()); // Immediate visual feedback for icon change
       await this.onLocationSelected();
     });
 

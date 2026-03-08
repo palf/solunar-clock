@@ -38,11 +38,7 @@ import { UIController } from './ui-controller';
   const bgG = svg.append('g').attr('id', 'layer-bg');
   const rotatableG = svg
     .append('g')
-    .attr('id', 'layer-rotatable')
-    .attr(
-      'transform',
-      `translate(${state.centerX}, ${state.centerY}) rotate(${state.rotation}) translate(${-state.centerX}, ${-state.centerY})`
-    );
+    .attr('id', 'layer-rotatable');
 
   const mapG = rotatableG.append('g').attr('id', 'layer-map');
   const staticG = rotatableG.append('g').attr('id', 'layer-static');
@@ -66,16 +62,36 @@ import { UIController } from './ui-controller';
   // 3. Rendering Lifecycle Management
   let isRendering = false;
   let needsRedraw = false;
-  let userHasInteracted = false;
+
+  // Dirty check variables to stop 1Hz "blips"
+  let lastLat = -999;
+  let lastLon = -999;
+  let lastScale = -999;
+  let lastLayer = '';
+  let lastMode = '';
 
   const redrawMap = async () => {
-    userHasInteracted = true;
+    const isDirty = 
+      state.centerLat !== lastLat || 
+      state.centerLon !== lastLon || 
+      state.scale !== lastScale || 
+      state.mapLayer !== lastLayer ||
+      state.renderMode !== lastMode;
+
+    if (!isDirty) return;
+
     if (isRendering) {
       needsRedraw = true;
       return;
     }
 
     isRendering = true;
+    lastLat = state.centerLat;
+    lastLon = state.centerLon;
+    lastScale = state.scale;
+    lastLayer = state.mapLayer;
+    lastMode = state.renderMode;
+
     projection.updateCenter(state.centerLat, state.centerLon);
     projection.updateScale(state.scale);
 
@@ -84,17 +100,17 @@ import { UIController } from './ui-controller';
       state.mapLayer === 'TOPOGRAPHIC' ||
       state.mapLayer === 'STREETS'
     ) {
-      mapG.selectAll('*').remove(); // Clear SVG map if exists
+      mapG.selectAll('*').remove();
       await tileRenderer.render(state.mapLayer, state.renderMode);
     } else {
       canvas.style.display = 'block';
       webglCanvas.style.display = 'none';
       const ctx = canvas.getContext('2d');
-      ctx?.clearRect(0, 0, canvas.width, canvas.height); // Clear Canvas
+      ctx?.clearRect(0, 0, canvas.width, canvas.height);
       await mapRenderer.render(state.mapData);
     }
 
-    updateDynamicElements();
+    updateDynamicElements(false);
     isRendering = false;
     if (needsRedraw) {
       needsRedraw = false;
@@ -102,10 +118,12 @@ import { UIController } from './ui-controller';
     }
   };
 
-  const updateDynamicElements = () => {
+  const updateDynamicElements = (onlyTime = false) => {
     const now = timeSim.getSimulatedTime();
-    ui.updateHUD(now);
-    updateHands(now);
+    ui.updateHUD(now, onlyTime);
+    if (!onlyTime) {
+      updateHands(now);
+    }
   };
 
   const updateHands = (now: Date) => {
@@ -158,21 +176,21 @@ import { UIController } from './ui-controller';
   // 6. Bootstrap Application
   state.mapData = await mapRenderer.loadMapData();
 
-  // Initial draw with default location
+  // Redraw once map data is in
   await redrawMap();
-  userHasInteracted = false; // Reset after initial draw
 
-  // Try to upgrade to user's real location
-  getCurrentPosition().then(async ([userLon, userLat]) => {
-    // Only apply if user hasn't moved the map themselves
-    if (!userHasInteracted) {
-      state.centerLat = userLat;
-      state.centerLon = userLon;
+  // Only auto-locate if no persistent home is set
+  if (!state.homeLocation) {
+    getCurrentPosition().then(async ([userLon, userLat]) => {
+      state.setLocation(userLat, userLon);
       await redrawMap();
-      userHasInteracted = false; // Reset again
-    }
-  });
+    });
+  }
 
-  // 7. Start Tick Loop (1Hz for RPi Zero)
-  setInterval(updateDynamicElements, CONFIG.UPDATE_INTERVAL_MS);
+  // 7. Start Tick Loop (1Hz for RPi Zero) - Only update time text and hands
+  setInterval(() => {
+    const now = timeSim.getSimulatedTime();
+    ui.updateHUD(now, true);
+    updateHands(now);
+  }, CONFIG.UPDATE_INTERVAL_MS);
 })();
