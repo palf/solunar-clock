@@ -43,13 +43,13 @@ export class ClockFace {
       .attr('r', this.radius + CONFIG.RIM_WIDTH)
       .attr('fill', 'var(--border)');
 
-    // Main clock face circle (Ocean background)
+    // Main clock face circle (Transparent so map below is visible)
     bgGroup
       .append('circle')
       .attr('cx', this.centerX)
       .attr('cy', this.centerY)
       .attr('r', this.radius)
-      .attr('fill', '#0f172a') // Deep ocean blue
+      .attr('fill', 'none')
       .attr('stroke', 'var(--accent)')
       .attr('stroke-width', 1);
   }

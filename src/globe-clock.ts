@@ -6,7 +6,6 @@
 
 import * as d3 from 'd3';
 
-import { AnimationController } from './animation-controller';
 import { AppState } from './app-state';
 import { calculateMoonPosition, calculateSunPosition } from './astronomy';
 import { ClockFace } from './clock-face';
@@ -49,8 +48,10 @@ import { UIController } from './ui-controller';
   const staticG = rotatableG.append('g').attr('id', 'layer-static');
   const handG = rotatableG.append('g').attr('id', 'layer-hands');
 
+  const canvas = document.getElementById('map-canvas') as HTMLCanvasElement;
+  const webglCanvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
   const mapRenderer = new MapRenderer(mapG, projection);
-  const tileRenderer = new TileRenderer(mapG, projection);
+  const tileRenderer = new TileRenderer(canvas, webglCanvas, projection);
   const clockFace = new ClockFace(
     svg as any,
     state.centerX,
@@ -83,8 +84,13 @@ import { UIController } from './ui-controller';
       state.mapLayer === 'TOPOGRAPHIC' ||
       state.mapLayer === 'STREETS'
     ) {
-      await tileRenderer.render(state.mapLayer, state.tileWarping);
+      mapG.selectAll('*').remove(); // Clear SVG map if exists
+      await tileRenderer.render(state.mapLayer, state.renderMode);
     } else {
+      canvas.style.display = 'block';
+      webglCanvas.style.display = 'none';
+      const ctx = canvas.getContext('2d');
+      ctx?.clearRect(0, 0, canvas.width, canvas.height); // Clear Canvas
       await mapRenderer.render(state.mapData);
     }
 
@@ -138,11 +144,9 @@ import { UIController } from './ui-controller';
     .attr('stroke-width', 3)
     .attr('stroke-linecap', 'round');
 
-  const animationController = new AnimationController(state, redrawMap);
-
   // 4. Initialize Controllers
-  const ui = new UIController(state, redrawMap, animationController);
-  new KeyboardController(state, ui, redrawMap, animationController);
+  const ui = new UIController(state, redrawMap);
+  new KeyboardController(state, ui, redrawMap);
   new TouchController(document.body, state, redrawMap);
 
   // 5. Draw Initial Static UI

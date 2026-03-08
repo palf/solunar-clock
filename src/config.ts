@@ -9,7 +9,7 @@ export const CONFIG = {
   CENTER_X: 300,
   CENTER_Y: 300,
   RADIUS_FACTOR: 0.38, // Percentage of internal dimension for globe radius
-  DEFAULT_SCALING_FACTOR: 10, // Default zoom level multiplier
+  DEFAULT_SCALING_FACTOR: 30000, // 3000x zoom
 
   // Clock face
   SLICES: 24, // Number of hour slices
@@ -56,8 +56,9 @@ export const CONFIG = {
   ANIMATION_STEP_MS: 50, // Frequency of updates during transition (20fps)
 
   // Tile rendering
-  TILE_WARPING_SUBDIVISIONS: 4, // 4x4 = 16 sub-tiles per tile in WARPED mode
+  TILE_WARPING_SUBDIVISIONS: 16, // 16x16 = 256 sub-tiles per tile in WARPED mode
   TILE_SIZE_PX: 256,
+  TILE_FETCH_RANGE: 3, // Range 3 = 7x7 grid
   TILE_SCALE_BASE: 20, // Base scaling for zoom level calculation
   TILE_OVERLAP_PX: 1.0, // Overlap to prevent gaps
 
@@ -65,5 +66,6 @@ export const CONFIG = {
   SEARCH_DEBOUNCE_MS: 300,
   SEARCH_ZOOM_LEVEL: 15,
 
+  MIN_SCALING_FACTOR: 5, // 0.5x zoom
   MAX_SCALING_FACTOR: 1000000, // 100,000x zoom
 } as const;

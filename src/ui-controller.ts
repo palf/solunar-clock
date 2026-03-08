@@ -4,7 +4,6 @@
 
 import type { AppState } from './app-state';
 import { getCurrentPosition } from './geolocation-service';
-import type { AnimationController } from './animation-controller';
 import { CONFIG } from './config';
 
 export class UIController {
@@ -17,13 +16,12 @@ export class UIController {
   private layerDropdown = document.getElementById('layer-dropdown');
   private btnHome = document.getElementById('btn-home');
   private btnGPS = document.getElementById('btn-gps');
-  private btnWarp = document.getElementById('btn-warp');
+  private btnMode = document.getElementById('btn-mode');
   private searchDebounce: ReturnType<typeof setTimeout> | undefined;
 
   constructor(
     private state: AppState,
-    private onLocationSelected: () => Promise<void>,
-    private animationController: AnimationController
+    private onLocationSelected: () => Promise<void>
   ) {
     this.initSearch();
     this.initLayerSwitcher();
@@ -37,22 +35,22 @@ export class UIController {
     const timeEl = document.getElementById('display-time');
     if (timeEl) timeEl.textContent = now.toISOString().substring(11, 19);
 
-    const warpEl = document.getElementById('btn-warp');
-    if (warpEl) {
-      warpEl.textContent = this.state.tileWarping ? 'WARP' : 'BOX';
-      warpEl.style.color = this.state.tileWarping
-        ? '#4ade80'
-        : 'var(--text-dim)';
-      warpEl.style.borderColor = this.state.tileWarping
-        ? '#4ade80'
-        : 'var(--border)';
+    const modeEl = document.getElementById('btn-mode');
+    if (modeEl) {
+      modeEl.textContent = this.state.renderMode;
+      modeEl.style.color =
+        this.state.renderMode === '3D' ? '#4ade80' : 'var(--text-dim)';
+      modeEl.style.borderColor =
+        this.state.renderMode === '3D' ? '#4ade80' : 'var(--border)';
     }
 
     const posEl = document.getElementById('display-pos');
     if (posEl) {
       posEl.textContent = `${Math.abs(this.state.centerLat).toFixed(
         2
-      )}° ${this.state.centerLat >= 0 ? 'N' : 'S'}, ${Math.abs(this.state.centerLon).toFixed(2)}° ${this.state.centerLon >= 0 ? 'E' : 'W'}`;
+      )}° ${this.state.centerLat >= 0 ? 'N' : 'S'}, ${Math.abs(
+        this.state.centerLon
+      ).toFixed(2)}° ${this.state.centerLon >= 0 ? 'E' : 'W'}`;
     }
 
     const zoomEl = document.getElementById('display-zoom');
@@ -103,8 +101,7 @@ export class UIController {
   }
 
   private initLayerSwitcher(): void {
-    // Use pointerdown for instant response on touch
-    this.layerTrigger?.addEventListener('pointerdown', (e) => {
+    this.layerTrigger?.addEventListener('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
       if (this.layerDropdown) {
@@ -114,7 +111,7 @@ export class UIController {
     });
 
     document.querySelectorAll('.layer-option').forEach((opt) => {
-      opt.addEventListener('pointerdown', (e) => {
+      opt.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
         const layer = (e.currentTarget as HTMLElement).getAttribute(
@@ -128,34 +125,32 @@ export class UIController {
       });
     });
 
-    document.addEventListener('pointerdown', () => {
+    document.addEventListener('click', () => {
       if (this.layerDropdown) this.layerDropdown.style.display = 'none';
     });
   }
 
   private initButtons(): void {
-    // Use pointerdown for instant response
-    this.btnHome?.addEventListener('pointerdown', async (e) => {
+    this.btnHome?.addEventListener('click', async (e) => {
       e.stopPropagation();
       e.preventDefault();
-      await this.animationController.glideTo(
-        CONFIG.HOME_LOCATION.lat,
-        CONFIG.HOME_LOCATION.lon
-      );
+      this.state.resetToHome();
+      await this.onLocationSelected();
     });
 
-    this.btnGPS?.addEventListener('pointerdown', async (e) => {
+    this.btnGPS?.addEventListener('click', async (e) => {
       e.stopPropagation();
       e.preventDefault();
       const [lon, lat] = await getCurrentPosition();
-      await this.animationController.glideTo(lat, lon);
+      this.state.setLocation(lat, lon);
+      await this.onLocationSelected();
     });
 
-    this.btnWarp?.addEventListener('pointerdown', (e) => {
+    this.btnMode?.addEventListener('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
-      this.state.tileWarping = !this.state.tileWarping;
-      this.onLocationSelected(); // Trigger redraw
+      this.state.renderMode = this.state.renderMode === '3D' ? '2D' : '3D';
+      this.onLocationSelected();
     });
   }
 
@@ -185,15 +180,12 @@ export class UIController {
           const div = document.createElement('div');
           div.className = 'search-item';
           div.textContent = item.display_name;
-          // Use pointerdown here too for the list
           div.onpointerdown = async (e) => {
             e.stopPropagation();
+            this.state.setLocation(parseFloat(item.lat), parseFloat(item.lon));
+            this.state.scalingFactor = CONFIG.SEARCH_ZOOM_LEVEL;
             this.hideSearch();
-            await this.animationController.glideTo(
-              parseFloat(item.lat),
-              parseFloat(item.lon),
-              CONFIG.SEARCH_ZOOM_LEVEL
-            );
+            await this.onLocationSelected();
           };
           resultsContainer.appendChild(div);
         });

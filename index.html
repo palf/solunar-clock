@@ -43,6 +43,10 @@
     justify-content: center;
   }
 
+  #map-canvas, #webgl-canvas {
+    clip-path: circle(38% at 50% 50%);
+  }
+
   svg {
     width: 100%;
     height: 100%;
@@ -175,6 +179,9 @@
 </head>
 <body>
   <div id="stage">
+    <canvas id="map-canvas" width="600" height="600" style="position: absolute; width: 95vmin; height: 95vmin; pointer-events: none; border-radius: 50%;"></canvas>
+    <canvas id="webgl-canvas" width="600" height="600" style="position: absolute; width: 95vmin; height: 95vmin; pointer-events: none; border-radius: 50%; display: none;"></canvas>
+    
     <!-- Top HUD -->
     <div id="hud-top" class="hud">
       <!-- Left side: Clock -->
@@ -185,7 +192,7 @@
 
       <!-- Right side: Controls -->
       <div style="display: flex; gap: 6px; align-items: center;">
-        <button id="btn-warp" class="hud-btn" title="Toggle Mesh Warping" type="button" style="font-size: 10px; font-weight: 900;">OFF</button>
+        <button id="btn-mode" class="hud-btn" title="Toggle Render Mode" type="button" style="font-size: 10px; font-weight: 900;">3D</button>
         <button id="btn-gps" class="hud-btn" title="Current Location" type="button">🎯</button>
         <button id="btn-home" class="hud-btn" title="Home" type="button">🏠</button>
         

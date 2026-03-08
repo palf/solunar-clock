@@ -55,7 +55,7 @@ export class AppState {
 
   // Map Layer
   mapLayer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS' = 'TOPOGRAPHIC';
-  tileWarping = false; // Toggle for mesh-based tile warping
+  renderMode: '2D' | '3D' = '3D'; // 2D = Canvas Quad Grid, 3D = WebGL Pixel Warp
 
   // Map data
   mapData: TopoJSONData | null = null;
@@ -100,10 +100,14 @@ export class AppState {
    */
   adjustZoom(multiplier: number): void {
     if (!Number.isFinite(multiplier)) return;
-    const minScale = 1;
+    const minScale = CONFIG.MIN_SCALING_FACTOR;
     const maxScale = CONFIG.MAX_SCALING_FACTOR;
-    this.scalingFactor = Math.max(minScale, Math.min(maxScale, this._scalingFactor * multiplier));
+    this.scalingFactor = Math.max(
+      minScale,
+      Math.min(maxScale, this._scalingFactor * multiplier)
+    );
   }
+
 
   /**
    * Pan the map by a geographic offset
