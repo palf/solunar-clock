@@ -58,6 +58,11 @@ export class UIController {
     this.initLayerSwitcher();
     this.initButtons();
     this.initClickOutside();
+
+    // Reactive HUD updates
+    this.state.onChange(() => this.updateMetadata());
+    // Initial sync
+    this.updateMetadata();
   }
 
   private metadataUpdatePending = false;
@@ -217,7 +222,6 @@ export class UIController {
       this.state.setLocation(home.lat, home.lon);
     }
 
-    this.updateMetadata();
     await this.onLocationSelected();
   }
 
@@ -283,9 +287,6 @@ export class UIController {
           this.state.timeSpeedMultiplier = asTimeMultiplier(val);
           this.timeSim.setSpeedMultiplier(this.state.timeSpeedMultiplier);
           this.hideTimeDialog();
-          // Metadata includes zoom display which doesn't change here, 
-          // but if we had other sim-related HUD elements we'd update them.
-          this.updateMetadata();
         }
       }
     });

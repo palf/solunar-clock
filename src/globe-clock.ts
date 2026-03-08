@@ -68,6 +68,7 @@ async function bootstrap() {
   let isRendering = false;
   let needsRedraw = false;
   let isInitialRender = true;
+  let redrawPending = false;
 
   // Dirty check variables to stop 1Hz "blips"
   let lastLat: Latitude | null = null;
@@ -77,6 +78,16 @@ async function bootstrap() {
   let lastMode = '';
 
   const redrawMap = async () => {
+    if (redrawPending) return;
+
+    redrawPending = true;
+    requestAnimationFrame(async () => {
+      await performRedraw();
+      redrawPending = false;
+    });
+  };
+
+  const performRedraw = async () => {
     // Check if anything geographic actually changed
     const isDirty =
       isInitialRender ||
@@ -125,7 +136,7 @@ async function bootstrap() {
     isRendering = false;
     if (needsRedraw) {
       needsRedraw = false;
-      requestAnimationFrame(redrawMap);
+      redrawMap();
     }
   };
 
@@ -133,7 +144,6 @@ async function bootstrap() {
     const now = timeSim.getSimulatedTime();
     ui.updateTime(now);
     if (!onlyTime) {
-      ui.updateMetadata();
       updateHands(now);
     }
   };

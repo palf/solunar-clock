@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
 import { loadInitialState } from './state-loader';
 import { asScale } from './types';
@@ -52,5 +52,42 @@ describe('AppState', () => {
       state.pan(-200, 0);
       expect(state.centerLat).toBeCloseTo(-85.0511, 4);
     });
+  });
+
+  it('adjusts zoom level correctly', () => {
+    const config = loadInitialState();
+    const state = new AppState(config);
+    const initialScale = state.scalingFactor;
+
+    state.adjustZoom(2);
+    expect(state.scalingFactor).toBe(asScale(initialScale * 2));
+  });
+
+  it('emits a change event when state properties are modified', () => {
+    const config = loadInitialState();
+    const state = new AppState(config);
+    const callback = vi.fn();
+    state.onChange(callback);
+
+    state.centerLat = 10 as any;
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    state.centerLon = 20 as any;
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    state.scalingFactor = 5 as any;
+    expect(callback).toHaveBeenCalledTimes(3);
+
+    state.mapLayer = 'IMAGERY';
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    state.renderMode = '2D';
+    expect(callback).toHaveBeenCalledTimes(5);
+
+    state.setHome();
+    expect(callback).toHaveBeenCalledTimes(6);
+
+    state.clearHome();
+    expect(callback).toHaveBeenCalledTimes(7);
   });
 });

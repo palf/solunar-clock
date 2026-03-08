@@ -47,8 +47,8 @@ export class AppState {
   private _timeSpeedMultiplier: TimeMultiplier;
 
   // Map Layer
-  mapLayer: MapLayer;
-  renderMode: '2D' | '3D' = '3D'; // 2D = Canvas Quad Grid, 3D = WebGL Vertex Warp
+  private _mapLayer: MapLayer;
+  private _renderMode: '2D' | '3D' = '3D'; // 2D = Canvas Quad Grid, 3D = WebGL Vertex Warp
 
   // Dynamic Home Location
   private _homeLocation: { lat: Latitude; lon: Longitude } | null;
@@ -56,12 +56,15 @@ export class AppState {
   // Map data
   mapData: TopoJSONData | null = null;
 
+  // Event Listeners
+  private changeListeners: Array<() => void> = [];
+
   constructor(config: AppStateConfig) {
     this._centerLat = config.centerLat;
     this._centerLon = config.centerLon;
     this._scalingFactor = config.scalingFactor;
     this._timeSpeedMultiplier = config.timeSpeedMultiplier;
-    this.mapLayer = config.mapLayer;
+    this._mapLayer = config.mapLayer;
     this._homeLocation = config.homeLocation;
   }
 
@@ -81,32 +84,71 @@ export class AppState {
   get homeLocation() {
     return this._homeLocation;
   }
+  get mapLayer(): MapLayer {
+    return this._mapLayer;
+  }
 
   // Setters with NaN guards
   set scalingFactor(val: Scale) {
-    if (Number.isFinite(val) && val > 0) {
+    if (Number.isFinite(val) && val > 0 && val !== this._scalingFactor) {
       this._scalingFactor = val;
       this.saveState();
+      this.emitChange();
     }
   }
   set centerLat(val: Latitude) {
-    if (Number.isFinite(val)) {
-      this._centerLat = asLatitude(
-        Math.max(-CONFIG.ENGINE.MAX_LATITUDE, Math.min(CONFIG.ENGINE.MAX_LATITUDE, val))
-      );
+    const clamped = asLatitude(
+      Math.max(-CONFIG.ENGINE.MAX_LATITUDE, Math.min(CONFIG.ENGINE.MAX_LATITUDE, val))
+    );
+    if (Number.isFinite(val) && clamped !== this._centerLat) {
+      this._centerLat = clamped;
+      this.emitChange();
     }
   }
   set centerLon(val: Longitude) {
-    if (Number.isFinite(val)) this._centerLon = val;
+    if (Number.isFinite(val) && val !== this._centerLon) {
+      this._centerLon = val;
+      this.emitChange();
+    }
   }
   set timeSpeedMultiplier(val: TimeMultiplier) {
     if (
       Number.isFinite(val) &&
       val >= CONFIG.SIMULATION.MIN_TIME_RATIO &&
-      val <= CONFIG.SIMULATION.MAX_TIME_RATIO
+      val <= CONFIG.SIMULATION.MAX_TIME_RATIO &&
+      val !== this._timeSpeedMultiplier
     ) {
       this._timeSpeedMultiplier = val;
       this.saveState();
+      this.emitChange();
+    }
+  }
+  set mapLayer(val: MapLayer) {
+    if (val !== this._mapLayer) {
+      this._mapLayer = val;
+      this.saveState();
+      this.emitChange();
+    }
+  }
+
+  get renderMode(): '2D' | '3D' {
+    return this._renderMode;
+  }
+  set renderMode(val: '2D' | '3D') {
+    if (val !== this._renderMode) {
+      this._renderMode = val;
+      this.emitChange();
+    }
+  }
+
+  // Event methods
+  onChange(callback: () => void): void {
+    this.changeListeners.push(callback);
+  }
+
+  private emitChange(): void {
+    for (const listener of this.changeListeners) {
+      listener();
     }
   }
 
@@ -131,6 +173,7 @@ export class AppState {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('solunar-clock-home', JSON.stringify(this._homeLocation));
     }
+    this.emitChange();
   }
 
   clearHome(): void {
@@ -138,6 +181,7 @@ export class AppState {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('solunar-clock-home');
     }
+    this.emitChange();
   }
 
   isAtHome(): boolean {

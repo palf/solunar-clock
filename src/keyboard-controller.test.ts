@@ -75,7 +75,6 @@ describe('KeyboardController', () => {
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'l' }));
     expect(state.mapLayer).not.toBe(initialLayer);
-    expect(ui.updateMetadata).toHaveBeenCalled();
     expect(onRedraw).toHaveBeenCalled();
   });
 

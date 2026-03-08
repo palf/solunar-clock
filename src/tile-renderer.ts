@@ -47,6 +47,7 @@ export class TileRenderer {
   // Double buffering for 2D to stop flickering
   private backCanvas = document.createElement('canvas');
   private backCtx = this.backCanvas.getContext('2d', { alpha: false });
+  private renderIteration = 0;
 
   constructor(
     private canvas2d: HTMLCanvasElement,
@@ -60,14 +61,16 @@ export class TileRenderer {
   }
 
   async render(layer: MapLayer, mode: '2D' | '3D'): Promise<void> {
+    const iteration = ++this.renderIteration;
+
     if (mode === '3D' && this.gl) {
       this.canvas2d.style.display = 'none';
       this.canvas3d.style.display = 'block';
-      await this.render3D(layer);
+      await this.render3D(layer, iteration);
     } else {
       this.canvas3d.style.display = 'none';
       this.canvas2d.style.display = 'block';
-      await this.render2D(layer);
+      await this.render2D(layer, iteration);
     }
   }
 
@@ -75,7 +78,7 @@ export class TileRenderer {
   // 2D RENDERING
   // ========================================================================
 
-  private async render2D(layer: MapLayer): Promise<void> {
+  private async render2D(layer: MapLayer, iteration: number): Promise<void> {
     if (!this.ctx2d || !this.backCtx) return;
 
     // Clear back buffer
@@ -96,29 +99,45 @@ export class TileRenderer {
     const range = CONFIG.PERFORMANCE.TILE_FETCH_RANGE;
     const n = 2 ** z;
 
-    // Fetch and draw all quads to back buffer
-    const tiles: Promise<void>[] = [];
+    // 1. Collect all tile coordinates in range
+    const coords: { x: number; y: number; wx: number; distSq: number }[] = [];
     for (let x = tx - range; x <= tx + range; x++) {
       for (let y = ty - range; y <= ty + range; y++) {
-        const wx = ((x % n) + n) % n;
         if (y < 0 || y >= n) continue;
-        const url = this.tileUrls[layer]
-          .replace('{z}', z.toString())
-          .replace('{x}', wx.toString())
-          .replace('{y}', y.toString());
-        tiles.push(
-          this.getTileImage(url).then((img) => {
-            if (img) this.renderTile2D(wx, y, z, img);
-          })
-        );
+        const wx = ((x % n) + n) % n;
+        const distSq = (x - fTX) ** 2 + (y - fTY) ** 2;
+        coords.push({ x, y, wx, distSq });
       }
+    }
+
+    // 2. Sort by distance from floating-point center (center-first)
+    coords.sort((a, b) => a.distSq - b.distSq);
+
+    // 3. Fetch and draw in order
+    const tiles: Promise<void>[] = [];
+    for (const { wx, y } of coords) {
+      if (iteration !== this.renderIteration) return;
+
+      const url = this.tileUrls[layer]
+        .replace('{z}', z.toString())
+        .replace('{x}', wx.toString())
+        .replace('{y}', y.toString());
+      tiles.push(
+        this.getTileImage(url).then((img) => {
+          if (img && iteration === this.renderIteration) {
+            this.renderTile2D(wx, y, z, img);
+          }
+        })
+      );
     }
 
     await Promise.all(tiles);
 
-    // Atomic Swap
-    this.ctx2d.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx2d.drawImage(this.backCanvas, 0, 0);
+    // Atomic Swap - only if we're still the current iteration
+    if (iteration === this.renderIteration) {
+      this.ctx2d.setTransform(1, 0, 0, 1, 0, 0);
+      this.ctx2d.drawImage(this.backCanvas, 0, 0);
+    }
   }
 
   private renderTile2D(tx: number, ty: number, z: number, img: HTMLImageElement): void {
@@ -200,7 +219,7 @@ export class TileRenderer {
     this.vertexBuffer = this.gl.createBuffer();
   }
 
-  private async render3D(layer: MapLayer): Promise<void> {
+  private async render3D(layer: MapLayer, iteration: number): Promise<void> {
     const gl = this.gl;
     if (!gl || !this.program) return;
 
@@ -231,17 +250,31 @@ export class TileRenderer {
     const range = CONFIG.PERFORMANCE.TILE_FETCH_RANGE;
     const n = 2 ** z;
 
-    // Use sequential await to prevent CPU saturation on RPi Zero
+    // 1. Collect all tile coordinates in range
+    const coords: { x: number; y: number; wx: number; distSq: number }[] = [];
     for (let x = tx - range; x <= tx + range; x++) {
       for (let y = ty - range; y <= ty + range; y++) {
-        const wx = ((x % n) + n) % n;
         if (y < 0 || y >= n) continue;
-        const url = this.tileUrls[layer]
-          .replace('{z}', z.toString())
-          .replace('{x}', wx.toString())
-          .replace('{y}', y.toString());
-        const img = await this.getTileImage(url);
-        if (img) this.drawTile3D(wx, y, z, img);
+        const wx = ((x % n) + n) % n;
+        const distSq = (x - fTX) ** 2 + (y - fTY) ** 2;
+        coords.push({ x, y, wx, distSq });
+      }
+    }
+
+    // 2. Sort by distance from floating-point center (center-first)
+    coords.sort((a, b) => a.distSq - b.distSq);
+
+    // 3. Sequential await to prevent CPU saturation
+    for (const { wx, y } of coords) {
+      if (iteration !== this.renderIteration) return;
+
+      const url = this.tileUrls[layer]
+        .replace('{z}', z.toString())
+        .replace('{x}', wx.toString())
+        .replace('{y}', y.toString());
+      const img = await this.getTileImage(url);
+      if (img && iteration === this.renderIteration) {
+        this.drawTile3D(wx, y, z, img);
       }
     }
   }

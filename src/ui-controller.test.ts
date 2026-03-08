@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
 import { loadInitialState } from './state-loader';
 import { asLatitude, asLongitude } from './types';
@@ -40,29 +40,32 @@ describe('UIController', () => {
 
     const config = loadInitialState();
     state = new AppState(config);
-    ui = new UIController(state, null as any, onLocationSelected);
-  });
 
-  it('updates the HUD time correctly', () => {
+    // Mock requestAnimationFrame to execute immediately
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => cb(0));
+
+    ui = new UIController(state, null as any, onLocationSelected);
+    });
+
+    afterEach(() => {
+    vi.unstubAllGlobals();
+    });
+
+    it('updates the HUD time correctly', () => {
     const now = new Date('2024-03-07T12:34:56Z');
     ui.updateTime(now);
     const timeEl = document.getElementById('display-time');
     expect(timeEl?.textContent).toBe('12:34:56');
-  });
+    });
 
-  it('updates the HUD position correctly (throttled)', async () => {
-    // Mock requestAnimationFrame to execute immediately
-    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => cb(0));
-    
+    it('updates the HUD position correctly (reactive & throttled)', async () => {
     state.setLocation(asLatitude(10), asLongitude(20));
-    ui.updateMetadata();
-    
+
     const posEl = document.getElementById('display-pos');
     expect(posEl?.textContent).toContain('10.00° N');
     expect(posEl?.textContent).toContain('20.00° E');
+    });
 
-    vi.unstubAllGlobals();
-  });
 
   it('toggles the search overlay', () => {
     ui.showSearch();
