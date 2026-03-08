@@ -44,6 +44,7 @@ export class UIController {
     this.initZoomDialog();
     this.initLayerSwitcher();
     this.initButtons();
+    this.initClickOutside();
   }
 
   /**
@@ -222,6 +223,33 @@ export class UIController {
           this.hideZoomDialog();
           this.onLocationSelected();
         }
+      }
+    });
+  }
+
+  private initClickOutside(): void {
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      
+      // Close search if clicking outside
+      if (this.searchOverlay?.style.display === 'block' && 
+          !this.searchOverlay.contains(target) && 
+          !this.btnSearch?.contains(target)) {
+        this.hideSearch();
+      }
+
+      // Close zoom if clicking outside
+      if (this.zoomOverlay?.style.display === 'block' && 
+          !this.zoomOverlay.contains(target) && 
+          !this.zoomGroup?.contains(target)) {
+        this.hideZoomDialog();
+      }
+
+      // Close help if clicking outside
+      if (this.helpOverlay?.style.display === 'block' && 
+          !this.helpOverlay.contains(target) && 
+          !this.btnHelp?.contains(target)) {
+        this.hideHelpDialog();
       }
     });
   }
