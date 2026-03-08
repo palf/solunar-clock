@@ -59,8 +59,8 @@
     top: 0; left: 0; right: 0; bottom: 0;
     /* 50% opacity background with a sharp hole in center.
        Using % ensures it scales with the viewport correctly.
-       The clock face is 38% radius, icons add a bit more. */
-    background: radial-gradient(circle 42% at 50% 50%, transparent 99%, rgba(2, 6, 23, 0.5) 100%);
+       Matching 38% to exactly align with the clock face radius. */
+    background: radial-gradient(circle 38% at 50% 50%, transparent 99%, rgba(2, 6, 23, 0.5) 100%);
     pointer-events: none;
     z-index: 2;
   }
