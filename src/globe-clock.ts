@@ -19,6 +19,13 @@ import { TouchController } from './touch-controller';
 import { UIController } from './ui-controller';
 
 (async (): Promise<void> => {
+  console.log(
+    '%c🌍 Solunar Globe Clock %c v1.0.0\n%chttps://github.com/palf/solunar-clock',
+    'color: #38bdf8; font-size: 20px; font-weight: bold;',
+    'color: #94a3b8; font-size: 12px;',
+    'color: #accent; text-decoration: underline;'
+  );
+
   // 1. Initialize State & Core Components
   const state = new AppState();
   const svg = d3.select('#svg').attr('viewBox', `0 0 ${CONFIG.WIDTH} ${CONFIG.HEIGHT}`);

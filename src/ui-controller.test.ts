@@ -12,7 +12,7 @@ describe('UIController Button Behaviors', () => {
 
   beforeEach(() => {
     document.body.innerHTML = `
-      <div id="search-overlay"></div>
+      <div id="search-overlay" style="display: none;"></div>
       <input id="locationSearch" />
       <div id="searchResults"></div>
       <div id="display-time"></div>
@@ -22,6 +22,7 @@ describe('UIController Button Behaviors', () => {
       <div id="display-attribution"></div>
       <button id="btn-mode"></button>
       <button id="btn-locate"></button>
+      <button id="btn-search"></button>
       <div id="layer-trigger"></div>
       <div id="layer-dropdown" style="display: none;">
         <div class="layer-option" data-layer="TOPOGRAPHIC"></div>
@@ -102,5 +103,14 @@ describe('UIController Button Behaviors', () => {
     
     expect(state.homeLocation).toBeNull();
     expect(locateBtn.textContent).toBe('🎯');
+  });
+
+  it('shows search when search button is clicked', () => {
+    const searchBtn = document.getElementById('btn-search') as HTMLButtonElement;
+    const overlay = document.getElementById('search-overlay');
+    
+    expect(overlay?.style.display).toBe('none');
+    searchBtn.dispatchEvent(new Event('click'));
+    expect(overlay?.style.display).toBe('block');
   });
 });

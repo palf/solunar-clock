@@ -15,7 +15,12 @@ export class UIController {
   private layerDropdown = document.getElementById('layer-dropdown');
   private btnLocate = document.getElementById('btn-locate');
   private btnMode = document.getElementById('btn-mode');
+  private btnSearch = document.getElementById('btn-search');
   private searchDebounce: ReturnType<typeof setTimeout> | undefined;
+
+  // Keyboard navigation for search
+  private selectedSearchIndex = -1;
+  private currentSearchData: any[] = [];
 
   constructor(
     private state: AppState,
@@ -110,6 +115,28 @@ export class UIController {
     if (this.searchOverlay) this.searchOverlay.style.display = 'none';
     this.searchInput?.blur();
     this.searchInput.value = '';
+    this.selectedSearchIndex = -1;
+    if (this.searchResults) this.searchResults.innerHTML = '';
+  }
+
+  /**
+   * The complex Home logic (Set/Go/Clear) shared between button and hotkey
+   */
+  async handleHomeAction(): Promise<void> {
+    const hasHome = this.state.homeLocation !== null;
+    const atHome = this.state.isAtHome();
+
+    if (!hasHome) {
+      this.state.setHome();
+    } else if (atHome) {
+      this.state.clearHome();
+    } else {
+      const home = this.state.homeLocation!;
+      this.state.setLocation(home.lat, home.lon);
+    }
+
+    this.updateHUD(new Date()); 
+    await this.onLocationSelected();
   }
 
   private initSearch(): void {
@@ -125,8 +152,51 @@ export class UIController {
     });
 
     this.searchInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.hideSearch();
+      if (e.key === 'Escape') {
+        this.hideSearch();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        this.navigateResults(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        this.navigateResults(-1);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (this.selectedSearchIndex >= 0) {
+          const item = this.currentSearchData[this.selectedSearchIndex];
+          this.selectItem(item);
+        }
+      }
     });
+  }
+
+  private navigateResults(dir: number): void {
+    if (this.currentSearchData.length === 0) return;
+    
+    this.selectedSearchIndex += dir;
+    if (this.selectedSearchIndex < 0) this.selectedSearchIndex = this.currentSearchData.length - 1;
+    if (this.selectedSearchIndex >= this.currentSearchData.length) this.selectedSearchIndex = 0;
+
+    this.updateResultHighlight();
+  }
+
+  private updateResultHighlight(): void {
+    if (!this.searchResults) return;
+    const items = this.searchResults.querySelectorAll('.search-item');
+    items.forEach((item, idx) => {
+      if (idx === this.selectedSearchIndex) {
+        item.classList.add('selected');
+        item.scrollIntoView({ block: 'nearest' });
+      } else {
+        item.classList.remove('selected');
+      }
+    });
+  }
+
+  private selectItem(item: any): void {
+    this.state.setLocation(parseFloat(item.lat), parseFloat(item.lon));
+    this.hideSearch();
+    this.onLocationSelected();
   }
 
   private initLayerSwitcher(): void {
@@ -163,24 +233,7 @@ export class UIController {
     this.btnLocate?.addEventListener('click', async (e) => {
       e.stopPropagation();
       e.preventDefault();
-
-      const hasHome = this.state.homeLocation !== null;
-      const atHome = this.state.isAtHome();
-
-      if (!hasHome) {
-        // Step 1: Set current location as home
-        this.state.setHome();
-      } else if (atHome) {
-        // Step 2: Unset home
-        this.state.clearHome();
-      } else {
-        // Step 3: Go home
-        const home = this.state.homeLocation!;
-        this.state.setLocation(home.lat, home.lon);
-      }
-
-      this.updateHUD(new Date()); // Immediate visual feedback for icon change
-      await this.onLocationSelected();
+      await this.handleHomeAction();
     });
 
     this.btnMode?.addEventListener('click', (e) => {
@@ -188,6 +241,12 @@ export class UIController {
       e.preventDefault();
       this.state.renderMode = this.state.renderMode === '3D' ? '2D' : '3D';
       this.onLocationSelected();
+    });
+
+    this.btnSearch?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      this.showSearch();
     });
   }
 
@@ -208,21 +267,19 @@ export class UIController {
           query
         )}&limit=5`
       );
-      const data = await resp.json();
+      this.currentSearchData = await resp.json();
+      this.selectedSearchIndex = -1;
 
       const resultsContainer = this.searchResults;
       if (resultsContainer) {
         resultsContainer.innerHTML = '';
-        data.forEach((item: any) => {
+        this.currentSearchData.forEach((item: any) => {
           const div = document.createElement('div');
           div.className = 'search-item';
           div.textContent = item.display_name;
-          div.onpointerdown = async (e) => {
+          div.onpointerdown = (e) => {
             e.stopPropagation();
-            this.state.setLocation(parseFloat(item.lat), parseFloat(item.lon));
-            this.state.scalingFactor = CONFIG.SEARCH_ZOOM_LEVEL;
-            this.hideSearch();
-            await this.onLocationSelected();
+            this.selectItem(item);
           };
           resultsContainer.appendChild(div);
         });

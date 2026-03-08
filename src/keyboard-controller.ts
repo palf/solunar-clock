@@ -76,24 +76,8 @@ export class KeyboardController {
         await this.onRedraw();
         break;
       case 'h':
-        await this.resetToHome();
+        await this.ui.handleHomeAction();
         break;
     }
-  }
-
-  private async resetToHome(): Promise<void> {
-    const hasHome = this.state.homeLocation !== null;
-    const atHome = this.state.isAtHome();
-
-    if (!hasHome) {
-      this.state.setHome();
-    } else if (atHome) {
-      this.state.clearHome();
-    } else {
-      const home = this.state.homeLocation!;
-      this.state.setLocation(home.lat, home.lon);
-    }
-
-    await this.onRedraw();
   }
 }

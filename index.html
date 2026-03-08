@@ -167,7 +167,8 @@
   }
 
   #searchResults { margin-top: 10px; max-height: 150px; overflow-y: auto; font-size: 12px; }
-  .search-item { padding: 8px; border-bottom: 1px solid #334155; cursor: pointer; }
+  .search-item { padding: 8px; border-bottom: 1px solid #334155; cursor: pointer; transition: background 0.1s; }
+  .search-item.selected { background: var(--accent); color: var(--bg); font-weight: 700; }
 
   /* Map Visuals */
   .slice { fill: rgba(56, 189, 248, 0.03); stroke: rgba(255,255,255,0.05); }
@@ -192,8 +193,8 @@
 
       <!-- Right side: Controls -->
       <div style="display: flex; gap: 6px; align-items: center;">
-        <button id="btn-mode" class="hud-btn" title="Toggle Render Mode" type="button" style="font-size: 10px; font-weight: 900;">3D</button>
         <button id="btn-locate" class="hud-btn" title="Set/Go Home" type="button">🎯</button>
+        <button id="btn-search" class="hud-btn" title="Search Location" type="button">🔍</button>
         
         <div style="position: relative;">
           <div id="layer-trigger">
@@ -205,6 +206,8 @@
             <div class="layer-option" data-layer="STREETS">STREETS</div>
           </div>
         </div>
+
+        <button id="btn-mode" class="hud-btn" title="Toggle Render Mode" type="button" style="font-size: 10px; font-weight: 900;">3D</button>
       </div>
     </div>
 
@@ -225,7 +228,7 @@
     </div>
 
     <div id="search-overlay">
-      <input type="text" id="locationSearch" placeholder="Search city..." autocomplete="off">
+      <input type="text" id="locationSearch" placeholder="Search city or postcode..." autocomplete="off">
       <div id="searchResults"></div>
     </div>
 
