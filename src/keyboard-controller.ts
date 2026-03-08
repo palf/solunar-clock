@@ -23,23 +23,24 @@ export class KeyboardController {
     // Ignore if typing in search
     if (e.target instanceof HTMLInputElement) return;
 
-    const baseStep = e.shiftKey ? CONFIG.SHIFT_MULTIPLIER : 1;
-    const normalizedStep = baseStep / (this.state.scalingFactor / CONFIG.KEYBOARD_PAN_SENSITIVITY);
+    const baseStep = e.shiftKey ? CONFIG.INTERACTION.KEYBOARD.SHIFT_MULTIPLIER : 1;
+    const normalizedStep =
+      baseStep / (this.state.scalingFactor / CONFIG.INTERACTION.KEYBOARD.PAN_SENSITIVITY);
 
     switch (e.key) {
       case '+':
       case '=':
-        this.state.adjustZoom(CONFIG.KEYBOARD_ZOOM_FACTOR);
+        this.state.adjustZoom(CONFIG.INTERACTION.KEYBOARD.ZOOM_FACTOR);
         await this.onRedraw();
         break;
       case '-':
       case '_':
-        this.state.adjustZoom(1 / CONFIG.KEYBOARD_ZOOM_FACTOR);
+        this.state.adjustZoom(1 / CONFIG.INTERACTION.KEYBOARD.ZOOM_FACTOR);
         await this.onRedraw();
         break;
       case 'ArrowUp':
         if (e.shiftKey) {
-          this.state.adjustZoom(CONFIG.KEYBOARD_ZOOM_FACTOR);
+          this.state.adjustZoom(CONFIG.INTERACTION.KEYBOARD.ZOOM_FACTOR);
         } else {
           this.state.pan(normalizedStep, 0);
         }
@@ -47,7 +48,7 @@ export class KeyboardController {
         break;
       case 'ArrowDown':
         if (e.shiftKey) {
-          this.state.adjustZoom(1 / CONFIG.KEYBOARD_ZOOM_FACTOR);
+          this.state.adjustZoom(1 / CONFIG.INTERACTION.KEYBOARD.ZOOM_FACTOR);
         } else {
           this.state.pan(-normalizedStep, 0);
         }
@@ -79,9 +80,13 @@ export class KeyboardController {
         e.preventDefault();
         this.ui.showZoomDialog();
         break;
+      case 't':
+        e.preventDefault();
+        this.ui.showTimeDialog();
+        break;
       case '0':
-        this.state.setLocation(CONFIG.DEFAULT_LOCATION.lat, CONFIG.DEFAULT_LOCATION.lon);
-        this.state.scalingFactor = CONFIG.DEFAULT_SCALING_FACTOR;
+        this.state.setLocation(CONFIG.DATA.DEFAULT_LOCATION.lat, CONFIG.DATA.DEFAULT_LOCATION.lon);
+        this.state.scalingFactor = CONFIG.DISPLAY.DEFAULT_SCALING_FACTOR;
         await this.onRedraw();
         break;
       case 'h':

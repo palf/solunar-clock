@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
+import { loadInitialState } from './state-loader';
 import { asLatitude, asLongitude } from './types';
 import { UIController } from './ui-controller';
 
@@ -22,6 +23,8 @@ describe('UIController', () => {
       <div id="searchResults"></div>
       <div id="zoom-overlay"></div>
       <input id="zoomInput" />
+      <div id="time-overlay"></div>
+      <input id="timeInput" />
       <div id="group-zoom"></div>
       <div id="help-overlay"></div>
       <button id="btn-help"></button>
@@ -35,9 +38,9 @@ describe('UIController', () => {
       <div class="layer-option" data-layer="IMAGERY"></div>
     `;
 
-    const config = AppState.loadInitialState();
+    const config = loadInitialState();
     state = new AppState(config);
-    ui = new UIController(state, onLocationSelected);
+    ui = new UIController(state, null as any, onLocationSelected);
   });
 
   it('updates the HUD time correctly', () => {

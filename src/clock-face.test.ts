@@ -34,7 +34,7 @@ describe('ClockFace', () => {
 
   it('renders all eight compass point labels', () => {
     const clock = new ClockFace(svg, 240, 240, 200);
-    clock.drawHourLabels(group);
+    clock.drawCompassPoints(group);
 
     // Should draw 8 compass points
     expect(group.append).toHaveBeenCalledWith('text');

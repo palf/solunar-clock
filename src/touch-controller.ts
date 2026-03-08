@@ -4,12 +4,13 @@
 
 import type { AppState } from './app-state';
 import { CONFIG } from './config';
+import { asScale } from './types';
 
 export class TouchController {
   private startX = 0;
   private startY = 0;
   private startDist = 0;
-  private startScale = 0;
+  private startScale = asScale(0);
   private isPinching = false;
   private isDragging = false;
 
@@ -96,7 +97,10 @@ export class TouchController {
     if (this.isInteractive(e.target)) return;
     e.preventDefault();
 
-    const multiplier = e.deltaY > 0 ? 1 / CONFIG.WHEEL_ZOOM_FACTOR : CONFIG.WHEEL_ZOOM_FACTOR;
+    const multiplier =
+      e.deltaY > 0
+        ? 1 / CONFIG.INTERACTION.TOUCH.WHEEL_ZOOM_FACTOR
+        : CONFIG.INTERACTION.TOUCH.WHEEL_ZOOM_FACTOR;
     this.state.adjustZoom(multiplier);
     this.onUpdate();
   }
@@ -114,9 +118,11 @@ export class TouchController {
       if (this.startDist === 0) return;
       const ratio = dist / this.startDist;
 
-      this.state.scalingFactor = Math.max(
-        CONFIG.TOUCH_MIN_SCALE,
-        Math.min(CONFIG.MAX_SCALING_FACTOR, this.startScale * ratio)
+      this.state.scalingFactor = asScale(
+        Math.max(
+          CONFIG.INTERACTION.TOUCH.MIN_SCALE,
+          Math.min(CONFIG.DISPLAY.MAX_SCALING_FACTOR, this.startScale * ratio)
+        )
       );
       this.onUpdate();
     }
@@ -131,7 +137,8 @@ export class TouchController {
     this.startY = clientY;
 
     const sensitivity =
-      CONFIG.TOUCH_PAN_SENSITIVITY / (this.state.scalingFactor / CONFIG.TOUCH_PAN_DIVISOR);
+      CONFIG.INTERACTION.TOUCH.PAN_SENSITIVITY /
+      (this.state.scalingFactor / CONFIG.INTERACTION.TOUCH.PAN_DIVISOR);
     const dLon = -dx * sensitivity;
     const dLat = dy * sensitivity;
 

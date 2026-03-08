@@ -5,7 +5,7 @@
 
 import { CONFIG } from './config';
 import type { Projection } from './projection';
-import { asLatitude, asLongitude, type GeoCoordinates } from './types';
+import { asLatitude, asLongitude, type GeoCoordinates, type MapLayer } from './types';
 
 export class TileRenderer {
   // Non-configurable technical constants for the Web Mercator tile system
@@ -33,7 +33,7 @@ export class TileRenderer {
   /**
    * Get the legal attribution text for a specific layer
    */
-  static getAttribution(layer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS'): string {
+  static getAttribution(layer: MapLayer): string {
     return TileRenderer.ATTRIBUTIONS[layer] || '';
   }
 
@@ -54,12 +54,12 @@ export class TileRenderer {
     private projection: Projection
   ) {
     this.ctx2d = canvas2d.getContext('2d', { alpha: false });
-    this.backCanvas.width = CONFIG.INTERNAL_WIDTH;
-    this.backCanvas.height = CONFIG.INTERNAL_HEIGHT;
+    this.backCanvas.width = CONFIG.ENGINE.INTERNAL_WIDTH;
+    this.backCanvas.height = CONFIG.ENGINE.INTERNAL_HEIGHT;
     this.initWebGL();
   }
 
-  async render(layer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS', mode: '2D' | '3D'): Promise<void> {
+  async render(layer: MapLayer, mode: '2D' | '3D'): Promise<void> {
     if (mode === '3D' && this.gl) {
       this.canvas2d.style.display = 'none';
       this.canvas3d.style.display = 'block';
@@ -75,12 +75,12 @@ export class TileRenderer {
   // 2D RENDERING
   // ========================================================================
 
-  private async render2D(layer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS'): Promise<void> {
+  private async render2D(layer: MapLayer): Promise<void> {
     if (!this.ctx2d || !this.backCtx) return;
 
     // Clear back buffer
     this.backCtx.setTransform(1, 0, 0, 1, 0, 0);
-    this.backCtx.fillStyle = CONFIG.COLOR_MAP_BG;
+    this.backCtx.fillStyle = CONFIG.THEME.COLOR_MAP_BG;
     this.backCtx.fillRect(0, 0, this.backCanvas.width, this.backCanvas.height);
 
     const center = this.projection.getCenter();
@@ -93,7 +93,7 @@ export class TileRenderer {
     const tx = Math.floor(fTX);
     const ty = Math.floor(fTY);
 
-    const range = CONFIG.TILE_FETCH_RANGE;
+    const range = CONFIG.PERFORMANCE.TILE_FETCH_RANGE;
     const n = 2 ** z;
 
     // Fetch and draw all quads to back buffer
@@ -122,7 +122,7 @@ export class TileRenderer {
   }
 
   private renderTile2D(tx: number, ty: number, z: number, img: HTMLImageElement): void {
-    const subdivisions = CONFIG.TILE_SUBDIVISIONS_2D;
+    const subdivisions = CONFIG.PERFORMANCE.TILE_SUBDIVISIONS_2D;
     const step = 1 / subdivisions;
     const tileSize = TileRenderer.TILE_SIZE_PX;
     for (let i = 0; i < subdivisions; i++) {
@@ -181,7 +181,9 @@ export class TileRenderer {
         if (abs(c) > 0.0001) k = c / sin(c);
         float x = u_scale * k * cos(lat) * sin(dLon);
         float y = u_scale * k * (cos(lat0) * sin(lat) - sin(lat0) * cos(lat) * cos(dLon));
-        gl_Position = vec4(x / ${CONFIG.INTERNAL_CENTER_X.toFixed(1)}, y / ${CONFIG.INTERNAL_CENTER_Y.toFixed(1)}, 0, 1);
+        gl_Position = vec4(x / ${CONFIG.ENGINE.INTERNAL_CENTER_X.toFixed(
+          1
+        )}, y / ${CONFIG.ENGINE.INTERNAL_CENTER_Y.toFixed(1)}, 0, 1);
       }
     `;
 
@@ -198,7 +200,7 @@ export class TileRenderer {
     this.vertexBuffer = this.gl.createBuffer();
   }
 
-  private async render3D(layer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS'): Promise<void> {
+  private async render3D(layer: MapLayer): Promise<void> {
     const gl = this.gl;
     if (!gl || !this.program) return;
 
@@ -214,7 +216,7 @@ export class TileRenderer {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     // Empty area color
-    const color = CONFIG.COLOR_EMPTY_SPACE;
+    const color = CONFIG.THEME.COLOR_EMPTY_SPACE;
     // Simple hex to normalized rgb
     const r = parseInt(color.slice(1, 3), 16) / 255;
     const g = parseInt(color.slice(3, 5), 16) / 255;
@@ -226,7 +228,7 @@ export class TileRenderer {
     gl.uniform2f(gl.getUniformLocation(this.program, 'u_centerLonLat'), center.lon, center.lat);
     gl.uniform1f(gl.getUniformLocation(this.program, 'u_scale'), scale);
 
-    const range = CONFIG.TILE_FETCH_RANGE;
+    const range = CONFIG.PERFORMANCE.TILE_FETCH_RANGE;
     const n = 2 ** z;
 
     // Use sequential await to prevent CPU saturation on RPi Zero
@@ -246,7 +248,7 @@ export class TileRenderer {
 
   private drawTile3D(tx: number, ty: number, z: number, img: HTMLImageElement): void {
     const gl = this.gl!;
-    const subdivisions = CONFIG.TILE_SUBDIVISIONS_3D;
+    const subdivisions = CONFIG.PERFORMANCE.TILE_SUBDIVISIONS_3D;
     const step = 1 / subdivisions;
     const vertices: number[] = [];
 

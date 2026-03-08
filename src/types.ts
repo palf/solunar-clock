@@ -14,6 +14,8 @@ export type Scale = number & { readonly __brand: 'Scale' };
 export type ScreenPixel = number & { readonly __brand: 'ScreenPixel' };
 export type ZoomMultiplier = number & { readonly __brand: 'ZoomMultiplier' };
 
+export type MapLayer = 'STREETS' | 'TOPOGRAPHIC' | 'IMAGERY';
+
 /**
  * Smart constructors for branded types.
  * These validate requirements and throw errors for invalid inputs.

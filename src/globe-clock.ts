@@ -13,6 +13,7 @@ import { CONFIG } from './config';
 import { KeyboardController } from './keyboard-controller';
 import { MapRenderer } from './map-renderer';
 import { Projection } from './projection';
+import { loadInitialState } from './state-loader';
 import { TileRenderer } from './tile-renderer';
 import { TimeSimulation } from './time-simulation';
 import { TouchController } from './touch-controller';
@@ -32,7 +33,7 @@ async function bootstrap() {
   );
 
   // 1. Initialize State (The very first thing)
-  const initialConfig = AppState.loadInitialState();
+  const initialConfig = loadInitialState();
   const state = new AppState(initialConfig);
 
   // 2. Core Components
@@ -165,27 +166,27 @@ async function bootstrap() {
     .attr('y1', 0)
     .attr('x2', 0)
     .attr('y2', -state.radius)
-    .attr('stroke', CONFIG.SUN_ARM_COLOR)
-    .attr('stroke-width', CONFIG.ARM_WIDTH);
+    .attr('stroke', CONFIG.AESTHETICS.SUN.ARM_COLOR)
+    .attr('stroke-width', CONFIG.AESTHETICS.GLOBAL.ARM_WIDTH);
 
   const sunIcon = sunHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
   sunIcon
     .append('circle')
-    .attr('r', CONFIG.SUN_RADIUS)
-    .attr('fill', CONFIG.SUN_COLOR_PRIMARY)
-    .attr('stroke', CONFIG.SUN_COLOR_SECONDARY)
+    .attr('r', CONFIG.AESTHETICS.SUN.RADIUS)
+    .attr('fill', CONFIG.AESTHETICS.SUN.PRIMARY_COLOR)
+    .attr('stroke', CONFIG.AESTHETICS.SUN.SECONDARY_COLOR)
     .attr('stroke-width', 2);
   // Sun rays
-  for (let i = 0; i < CONFIG.SUN_RAY_COUNT; i++) {
+  for (let i = 0; i < CONFIG.AESTHETICS.SUN.RAY_COUNT; i++) {
     sunIcon
       .append('line')
       .attr('x1', 0)
-      .attr('y1', CONFIG.SUN_RAY_START)
+      .attr('y1', CONFIG.AESTHETICS.SUN.RAY_START)
       .attr('x2', 0)
-      .attr('y2', CONFIG.SUN_RAY_END)
-      .attr('stroke', CONFIG.SUN_COLOR_PRIMARY)
-      .attr('stroke-width', CONFIG.SUN_STROKE_WIDTH)
-      .attr('transform', `rotate(${i * (360 / CONFIG.SUN_RAY_COUNT)})`);
+      .attr('y2', CONFIG.AESTHETICS.SUN.RAY_END)
+      .attr('stroke', CONFIG.AESTHETICS.SUN.PRIMARY_COLOR)
+      .attr('stroke-width', CONFIG.AESTHETICS.SUN.STROKE_WIDTH)
+      .attr('transform', `rotate(${i * (360 / CONFIG.AESTHETICS.SUN.RAY_COUNT)})`);
   }
 
   // Create Moon Icon
@@ -198,25 +199,25 @@ async function bootstrap() {
     .attr('y1', 0)
     .attr('x2', 0)
     .attr('y2', -state.radius)
-    .attr('stroke', CONFIG.MOON_ARM_COLOR)
-    .attr('stroke-width', CONFIG.ARM_WIDTH);
+    .attr('stroke', CONFIG.AESTHETICS.MOON.ARM_COLOR)
+    .attr('stroke-width', CONFIG.AESTHETICS.GLOBAL.ARM_WIDTH);
 
   const moonIcon = moonHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
   // Crescent moon
   moonIcon
     .append('path')
-    .attr('d', CONFIG.MOON_PATH)
-    .attr('fill', CONFIG.MOON_COLOR_PRIMARY)
-    .attr('stroke', CONFIG.MOON_COLOR_SECONDARY)
-    .attr('stroke-width', CONFIG.MOON_STROKE_WIDTH);
+    .attr('d', CONFIG.AESTHETICS.MOON.PATH)
+    .attr('fill', CONFIG.AESTHETICS.MOON.PRIMARY_COLOR)
+    .attr('stroke', CONFIG.AESTHETICS.MOON.SECONDARY_COLOR)
+    .attr('stroke-width', CONFIG.AESTHETICS.MOON.STROKE_WIDTH);
 
   // 5. Initialize Controllers
-  const ui = new UIController(state, redrawMap);
+  const ui = new UIController(state, timeSim, redrawMap);
   new KeyboardController(state, ui, redrawMap);
   new TouchController(document.body, state, redrawMap);
 
   // 6. Draw Initial Static UI
-  clockFace.drawHourLabels(staticG);
+  clockFace.drawCompassPoints(staticG);
   clockFace.drawCenterMark(staticG);
 
   // 7. Bootstrap Application
@@ -230,7 +231,7 @@ async function bootstrap() {
     const now = timeSim.getSimulatedTime();
     ui.updateHUD(now, true);
     updateHands(now);
-  }, CONFIG.UPDATE_INTERVAL_MS);
+  }, CONFIG.PERFORMANCE.UPDATE_INTERVAL_MS);
 }
 
 // Start the app

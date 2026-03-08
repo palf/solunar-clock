@@ -4,6 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
 import { KeyboardController } from './keyboard-controller';
+import { loadInitialState } from './state-loader';
 import type { UIController } from './ui-controller';
 
 describe('KeyboardController', () => {
@@ -12,7 +13,7 @@ describe('KeyboardController', () => {
   let onRedraw: () => Promise<void>;
 
   beforeEach(() => {
-    state = new AppState(AppState.loadInitialState());
+    state = new AppState(loadInitialState());
     ui = {
       showSearch: vi.fn(),
       showZoomDialog: vi.fn(),

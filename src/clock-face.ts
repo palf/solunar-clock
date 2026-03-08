@@ -9,9 +9,8 @@ import { CONFIG } from './config';
 
 export class ClockFace {
   // Non-configurable structural constants
-  private static readonly COMPASS_POINTS_COUNT = 8;
-  private static readonly COMPASS_INTERVAL_DEG = 45; // 360 / 8
   private static readonly COMPASS_POINTS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  private static readonly COMPASS_INTERVAL_DEG = 360 / this.COMPASS_POINTS.length;
 
   constructor(
     _svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>,
@@ -23,12 +22,14 @@ export class ClockFace {
   /**
    * Draw compass point labels (N, NE, E, SE, S, SW, W, NW)
    */
-  drawHourLabels(labelsGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {
-    for (let i = 0; i < ClockFace.COMPASS_POINTS_COUNT; i++) {
+  drawCompassPoints(labelsGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>): void {
+    ClockFace.COMPASS_POINTS.forEach((point, i) => {
       const angDeg = i * ClockFace.COMPASS_INTERVAL_DEG;
       const theta = (angDeg * Math.PI) / 180;
-      const tx = this.centerX + (this.radius + CONFIG.LABEL_SPACING) * Math.sin(theta);
-      const ty = this.centerY - (this.radius + CONFIG.LABEL_SPACING) * Math.cos(theta);
+      const tx =
+        this.centerX + (this.radius + CONFIG.AESTHETICS.GLOBAL.LABEL_SPACING) * Math.sin(theta);
+      const ty =
+        this.centerY - (this.radius + CONFIG.AESTHETICS.GLOBAL.LABEL_SPACING) * Math.cos(theta);
 
       labelsGroup
         .append('text')
@@ -37,8 +38,8 @@ export class ClockFace {
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'central')
         .attr('class', 'label')
-        .text(ClockFace.COMPASS_POINTS[i]);
-    }
+        .text(point);
+    });
   }
 
   /**
@@ -49,7 +50,7 @@ export class ClockFace {
       .append('circle')
       .attr('cx', this.centerX)
       .attr('cy', this.centerY)
-      .attr('r', CONFIG.CENTER_MARK_RADIUS)
-      .attr('fill', CONFIG.CENTER_MARK_COLOR);
+      .attr('r', CONFIG.AESTHETICS.GLOBAL.CENTER_MARK_RADIUS)
+      .attr('fill', CONFIG.AESTHETICS.GLOBAL.CENTER_MARK_COLOR);
   }
 }

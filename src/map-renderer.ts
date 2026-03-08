@@ -27,7 +27,7 @@ export class MapRenderer {
    * Returns the loaded data or null if all sources fail
    */
   async loadMapData(): Promise<TopoJSONData | null> {
-    for (const url of CONFIG.MAP_DATA_SOURCES) {
+    for (const url of CONFIG.DATA.MAP_SOURCES) {
       try {
         console.log(`Trying map source: ${url}`);
         const data = (await d3.json(url)) as TopoJSONData;
@@ -39,7 +39,7 @@ export class MapRenderer {
         throw new Error('Invalid data structure');
       } catch (err) {
         console.warn(`Failed to load map from ${url}:`, err);
-        if (url === CONFIG.MAP_DATA_SOURCES[CONFIG.MAP_DATA_SOURCES.length - 1]) {
+        if (url === CONFIG.DATA.MAP_SOURCES[CONFIG.DATA.MAP_SOURCES.length - 1]) {
           console.error('All map sources failed to load');
           return null;
         }
@@ -109,13 +109,13 @@ export class MapRenderer {
     const fallbackPath = d3.path();
     const worldOutline: GeoCoordinates[] = [
       [asLongitude(-180), asLatitude(-60)],
-      [asLongitude(-180), asLatitude(CONFIG.MAX_LATITUDE)],
-      [asLongitude(-120), asLatitude(CONFIG.MAX_LATITUDE)],
-      [asLongitude(-60), asLatitude(CONFIG.MAX_LATITUDE)],
-      [asLongitude(0), asLatitude(CONFIG.MAX_LATITUDE)],
-      [asLongitude(60), asLatitude(CONFIG.MAX_LATITUDE)],
-      [asLongitude(120), asLatitude(CONFIG.MAX_LATITUDE)],
-      [asLongitude(180), asLatitude(CONFIG.MAX_LATITUDE)],
+      [asLongitude(-180), asLatitude(CONFIG.ENGINE.MAX_LATITUDE)],
+      [asLongitude(-120), asLatitude(CONFIG.ENGINE.MAX_LATITUDE)],
+      [asLongitude(-60), asLatitude(CONFIG.ENGINE.MAX_LATITUDE)],
+      [asLongitude(0), asLatitude(CONFIG.ENGINE.MAX_LATITUDE)],
+      [asLongitude(60), asLatitude(CONFIG.ENGINE.MAX_LATITUDE)],
+      [asLongitude(120), asLatitude(CONFIG.ENGINE.MAX_LATITUDE)],
+      [asLongitude(180), asLatitude(CONFIG.ENGINE.MAX_LATITUDE)],
       [asLongitude(180), asLatitude(60)],
       [asLongitude(180), asLatitude(0)],
       [asLongitude(180), asLatitude(-60)],

@@ -257,6 +257,12 @@
       <input type="number" id="zoomInput" placeholder="3000" step="100" min="0.5">
     </div>
 
+    <div id="time-overlay" class="overlay-dialog" style="width: 90%; max-width: 200px;">
+      <span class="hud-label" style="display: block; margin-bottom: 8px;">Set Time Ratio</span>
+      <input type="number" id="timeInput" placeholder="1" step="1" min="1" max="1000000">
+      <span style="font-size: 9px; color: var(--text-dim); margin-top: 4px; display: block;">Simulated sec / Real sec</span>
+    </div>
+
     <div id="help-overlay" class="overlay-dialog" style="width: 90%; max-width: 280px; color: #fff;">
       <span class="hud-label" style="display: block; margin-bottom: 12px; font-size: 10px;">Keyboard Shortcuts</span>
       <div class="help-list">
@@ -265,6 +271,7 @@
         <div class="help-item"><span>Search City</span> <div class="help-keys"><span class="help-key">s</span> <span class="help-key">/</span></div></div>
         <div class="help-item"><span>Set/Go Home</span> <div class="help-keys"><span class="help-key">h</span></div></div>
         <div class="help-item"><span>Manual Zoom</span> <div class="help-keys"><span class="help-key">z</span></div></div>
+        <div class="help-item"><span>Time Ratio</span> <div class="help-keys"><span class="help-key">t</span></div></div>
         <div class="help-item"><span>Cycle Layers</span> <div class="help-keys"><span class="help-key">l</span></div></div>
         <div class="help-item"><span>Reset Map</span> <div class="help-keys"><span class="help-key">0</span></div></div>
         <div class="help-item"><span>Help Dialog</span> <div class="help-keys"><span class="help-key">?</span></div></div>

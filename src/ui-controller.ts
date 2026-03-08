@@ -5,7 +5,8 @@
 import type { AppState } from './app-state';
 import { CONFIG } from './config';
 import { TileRenderer } from './tile-renderer';
-import { asLatitude, asLongitude } from './types';
+import type { TimeSimulation } from './time-simulation';
+import { asLatitude, asLongitude, asScale, asTimeMultiplier, type MapLayer } from './types';
 
 interface SearchResult {
   display_name: string;
@@ -21,6 +22,9 @@ export class UIController {
   private zoomOverlay = document.getElementById('zoom-overlay');
   private zoomInput = document.getElementById('zoomInput') as HTMLInputElement;
   private zoomGroup = document.getElementById('group-zoom');
+
+  private timeOverlay = document.getElementById('time-overlay');
+  private timeInput = document.getElementById('timeInput') as HTMLInputElement;
 
   private helpOverlay = document.getElementById('help-overlay');
   private btnHelp = document.getElementById('btn-help');
@@ -38,10 +42,12 @@ export class UIController {
 
   constructor(
     private state: AppState,
+    private timeSim: TimeSimulation,
     private onLocationSelected: () => Promise<void>
   ) {
     this.initSearch();
     this.initZoomDialog();
+    this.initTimeDialog();
     this.initLayerSwitcher();
     this.initButtons();
     this.initClickOutside();
@@ -61,9 +67,9 @@ export class UIController {
     if (modeEl) {
       modeEl.textContent = this.state.renderMode;
       modeEl.style.color =
-        this.state.renderMode === '3D' ? CONFIG.COLOR_ACTIVE : CONFIG.COLOR_TEXT_DIM;
+        this.state.renderMode === '3D' ? CONFIG.THEME.COLOR_ACTIVE : CONFIG.THEME.COLOR_TEXT_DIM;
       modeEl.style.borderColor =
-        this.state.renderMode === '3D' ? CONFIG.COLOR_ACTIVE : CONFIG.COLOR_BORDER;
+        this.state.renderMode === '3D' ? CONFIG.THEME.COLOR_ACTIVE : CONFIG.THEME.COLOR_BORDER;
     }
 
     // Combined Locate/Home button logic
@@ -73,15 +79,15 @@ export class UIController {
 
       if (!hasHome) {
         this.btnLocate.textContent = '🎯';
-        this.btnLocate.style.color = CONFIG.COLOR_ACCENT;
+        this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
         this.btnLocate.title = 'Set Current Location as Home';
       } else if (atHome) {
         this.btnLocate.textContent = '✖️'; // Clear icon
-        this.btnLocate.style.color = CONFIG.COLOR_DANGER;
+        this.btnLocate.style.color = CONFIG.THEME.COLOR_DANGER;
         this.btnLocate.title = 'Clear Saved Home';
       } else {
         this.btnLocate.textContent = '🏠'; // Go Home icon
-        this.btnLocate.style.color = CONFIG.COLOR_ACCENT;
+        this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
         this.btnLocate.title = 'Return to Stored Home';
       }
     }
@@ -97,7 +103,7 @@ export class UIController {
 
     const zoomEl = document.getElementById('display-zoom');
     if (zoomEl) {
-      zoomEl.textContent = `${(this.state.scalingFactor / CONFIG.ZOOM_DISPLAY_MULTIPLIER).toFixed(1)}x`;
+      zoomEl.textContent = `${(this.state.scalingFactor / CONFIG.DISPLAY.ZOOM_DISPLAY_MULTIPLIER).toFixed(1)}x`;
     }
 
     const attrEl = document.getElementById('display-attribution');
@@ -109,8 +115,7 @@ export class UIController {
   }
 
   showSearch(): void {
-    this.hideZoomDialog();
-    this.hideHelpDialog();
+    this.hideAllOverlays();
     if (this.searchOverlay) this.searchOverlay.style.display = 'block';
     this.searchInput?.focus();
   }
@@ -124,11 +129,12 @@ export class UIController {
   }
 
   showZoomDialog(): void {
-    this.hideSearch();
-    this.hideHelpDialog();
+    this.hideAllOverlays();
     if (this.zoomOverlay) this.zoomOverlay.style.display = 'block';
     if (this.zoomInput) {
-      this.zoomInput.value = (this.state.scalingFactor / CONFIG.ZOOM_DISPLAY_MULTIPLIER).toString();
+      this.zoomInput.value = (
+        this.state.scalingFactor / CONFIG.DISPLAY.ZOOM_DISPLAY_MULTIPLIER
+      ).toString();
       this.zoomInput.focus();
       this.zoomInput.select();
     }
@@ -139,9 +145,23 @@ export class UIController {
     this.zoomInput?.blur();
   }
 
+  showTimeDialog(): void {
+    this.hideAllOverlays();
+    if (this.timeOverlay) this.timeOverlay.style.display = 'block';
+    if (this.timeInput) {
+      this.timeInput.value = this.state.timeSpeedMultiplier.toString();
+      this.timeInput.focus();
+      this.timeInput.select();
+    }
+  }
+
+  hideTimeDialog(): void {
+    if (this.timeOverlay) this.timeOverlay.style.display = 'none';
+    this.timeInput?.blur();
+  }
+
   showHelpDialog(): void {
-    this.hideSearch();
-    this.hideZoomDialog();
+    this.hideAllOverlays();
     if (this.helpOverlay) this.helpOverlay.style.display = 'block';
   }
 
@@ -155,6 +175,13 @@ export class UIController {
     } else {
       this.showHelpDialog();
     }
+  }
+
+  private hideAllOverlays(): void {
+    this.hideSearch();
+    this.hideZoomDialog();
+    this.hideTimeDialog();
+    this.hideHelpDialog();
   }
 
   /**
@@ -180,10 +207,13 @@ export class UIController {
   private initSearch(): void {
     this.searchInput?.addEventListener('input', (e) => {
       const query = (e.target as HTMLInputElement).value;
-      if (!this.searchResults || query.length < CONFIG.SEARCH_MIN_QUERY) return;
+      if (!this.searchResults || query.length < CONFIG.INTERACTION.SEARCH.MIN_QUERY_LENGTH) return;
 
       clearTimeout(this.searchDebounce);
-      this.searchDebounce = setTimeout(() => this.performSearch(query), CONFIG.SEARCH_DEBOUNCE_MS);
+      this.searchDebounce = setTimeout(
+        () => this.performSearch(query),
+        CONFIG.INTERACTION.SEARCH.DEBOUNCE_MS
+      );
     });
 
     this.searchInput?.addEventListener('keydown', (e) => {
@@ -212,10 +242,33 @@ export class UIController {
       } else if (e.key === 'Enter') {
         e.preventDefault();
         const val = parseFloat(this.zoomInput.value);
-        if (!isNaN(val) && val >= CONFIG.MIN_ZOOM_INPUT) {
-          this.state.scalingFactor = val * CONFIG.ZOOM_DISPLAY_MULTIPLIER;
+        if (!Number.isNaN(val) && val >= CONFIG.DISPLAY.MIN_ZOOM_INPUT) {
+          this.state.scalingFactor = asScale(val * CONFIG.DISPLAY.ZOOM_DISPLAY_MULTIPLIER);
           this.hideZoomDialog();
           this.onLocationSelected();
+        }
+      }
+    });
+  }
+
+  private initTimeDialog(): void {
+    this.timeInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.hideTimeDialog();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = parseInt(this.timeInput.value, 10);
+        if (
+          !Number.isNaN(val) &&
+          val >= CONFIG.SIMULATION.MIN_TIME_RATIO &&
+          val <= CONFIG.SIMULATION.MAX_TIME_RATIO
+        ) {
+          this.state.timeSpeedMultiplier = asTimeMultiplier(val);
+          this.timeSim.setSpeedMultiplier(this.state.timeSpeedMultiplier);
+          this.hideTimeDialog();
+          // We don't necessarily need to trigger a full onLocationSelected redraw
+          // but we want the HUD to update.
+          this.updateHUD(new Date());
         }
       }
     });
@@ -243,6 +296,11 @@ export class UIController {
         this.hideZoomDialog();
       }
 
+      // Close time if clicking outside
+      if (this.timeOverlay?.style.display === 'block' && !this.timeOverlay.contains(target)) {
+        this.hideTimeDialog();
+      }
+
       // Close help if clicking outside
       if (
         this.helpOverlay?.style.display === 'block' &&
@@ -267,7 +325,8 @@ export class UIController {
   private updateResultHighlight(): void {
     if (!this.searchResults) return;
     const items = this.searchResults.querySelectorAll('.search-item');
-    items.forEach((item, idx) => {
+    for (let idx = 0; idx < items.length; idx++) {
+      const item = items[idx];
       if (idx === this.selectedSearchIndex) {
         item.classList.add('selected');
         if (typeof item.scrollIntoView === 'function') {
@@ -276,7 +335,7 @@ export class UIController {
       } else {
         item.classList.remove('selected');
       }
-    });
+    }
   }
 
   private selectItem(item: SearchResult): void {
@@ -299,10 +358,7 @@ export class UIController {
       opt.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
-        const layer = (e.currentTarget as HTMLElement).getAttribute('data-layer') as
-          | 'STREETS'
-          | 'TOPOGRAPHIC'
-          | 'IMAGERY';
+        const layer = (e.currentTarget as HTMLElement).getAttribute('data-layer') as MapLayer;
         if (layer) {
           this.state.mapLayer = layer;
           if (this.layerDropdown) this.layerDropdown.style.display = 'none';
@@ -362,9 +418,9 @@ export class UIController {
   private async performSearch(query: string): Promise<void> {
     try {
       const resp = await fetch(
-        `${CONFIG.NOMINATIM_API_URL}?format=json&q=${encodeURIComponent(
+        `${CONFIG.INTERACTION.SEARCH.NOMINATIM_URL}?format=json&q=${encodeURIComponent(
           query
-        )}&limit=${CONFIG.SEARCH_RESULT_LIMIT}`
+        )}&limit=${CONFIG.INTERACTION.SEARCH.RESULT_LIMIT}`
       );
       this.currentSearchData = await resp.json();
       this.selectedSearchIndex = -1;

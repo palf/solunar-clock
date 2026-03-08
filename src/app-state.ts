@@ -7,10 +7,10 @@ import { normalizeLongitude } from './astronomy';
 import { CONFIG } from './config';
 import {
   asLatitude,
-  asLongitude,
   asScale,
   type Latitude,
   type Longitude,
+  type MapLayer,
   type Scale,
   type TimeMultiplier,
   type TopoJSONData,
@@ -19,23 +19,24 @@ import {
 export interface AppStateConfig {
   centerLat: Latitude;
   centerLon: Longitude;
-  scalingFactor: number;
-  mapLayer: 'STREETS' | 'TOPOGRAPHIC' | 'IMAGERY';
+  scalingFactor: Scale;
+  timeSpeedMultiplier: TimeMultiplier;
+  mapLayer: MapLayer;
   homeLocation: { lat: Latitude; lon: Longitude } | null;
 }
 
 export class AppState {
   // Fixed internal coordinate system for consistent rendering math
-  readonly width = CONFIG.INTERNAL_WIDTH;
-  readonly height = CONFIG.INTERNAL_HEIGHT;
-  readonly centerX = CONFIG.INTERNAL_CENTER_X;
-  readonly centerY = CONFIG.INTERNAL_CENTER_Y;
+  readonly width = CONFIG.ENGINE.INTERNAL_WIDTH;
+  readonly height = CONFIG.ENGINE.INTERNAL_HEIGHT;
+  readonly centerX = CONFIG.ENGINE.INTERNAL_CENTER_X;
+  readonly centerY = CONFIG.ENGINE.INTERNAL_CENTER_Y;
 
   // Radius is a percentage of the internal dimension
-  readonly radius = CONFIG.INTERNAL_WIDTH * CONFIG.RADIUS_FACTOR;
+  readonly radius = CONFIG.ENGINE.INTERNAL_WIDTH * CONFIG.DISPLAY.RADIUS_FACTOR;
 
   // Zoom scale (configurable)
-  private _scalingFactor: number;
+  private _scalingFactor: Scale;
 
   // Map center position
   private _centerLat: Latitude;
@@ -43,10 +44,10 @@ export class AppState {
 
   // Time simulation
   readonly startTime: Date = new Date();
-  timeSpeedMultiplier: TimeMultiplier = CONFIG.DEFAULT_TIME_SPEED;
+  private _timeSpeedMultiplier: TimeMultiplier;
 
   // Map Layer
-  mapLayer: 'STREETS' | 'TOPOGRAPHIC' | 'IMAGERY';
+  mapLayer: MapLayer;
   renderMode: '2D' | '3D' = '3D'; // 2D = Canvas Quad Grid, 3D = WebGL Vertex Warp
 
   // Dynamic Home Location
@@ -55,77 +56,17 @@ export class AppState {
   // Map data
   mapData: TopoJSONData | null = null;
 
-  /**
-   * Load the initial state from storage or defaults.
-   */
-  static loadInitialState(): AppStateConfig {
-    const config: AppStateConfig = {
-      centerLat: CONFIG.DEFAULT_LOCATION.lat,
-      centerLon: CONFIG.DEFAULT_LOCATION.lon,
-      scalingFactor: CONFIG.DEFAULT_SCALING_FACTOR,
-      mapLayer: 'STREETS',
-      homeLocation: null,
-    };
-
-    if (typeof localStorage === 'undefined') return config;
-
-    try {
-      // 1. Load Home
-      const storedHome = localStorage.getItem('solunar-clock-home');
-      if (storedHome) {
-        const parsed = JSON.parse(storedHome);
-        if (
-          parsed &&
-          typeof parsed.lat === 'number' &&
-          typeof parsed.lon === 'number' &&
-          !Number.isNaN(parsed.lat) &&
-          !Number.isNaN(parsed.lon) &&
-          Math.abs(parsed.lat) <= CONFIG.MAX_LATITUDE
-        ) {
-          config.homeLocation = {
-            lat: asLatitude(parsed.lat),
-            lon: asLongitude(parsed.lon),
-          };
-          config.centerLat = config.homeLocation.lat;
-          config.centerLon = config.homeLocation.lon;
-        }
-      }
-
-      // 2. Load Zoom
-      const storedZoom = localStorage.getItem('solunar-clock-zoom');
-      if (storedZoom) {
-        const val = parseFloat(storedZoom);
-        if (
-          !Number.isNaN(val) &&
-          val >= CONFIG.MIN_SCALING_FACTOR &&
-          val <= CONFIG.MAX_SCALING_FACTOR
-        ) {
-          config.scalingFactor = val;
-        }
-      }
-
-      // 3. Load Layer
-      const storedLayer = localStorage.getItem('solunar-clock-layer');
-      if (storedLayer === 'STREETS' || storedLayer === 'TOPOGRAPHIC' || storedLayer === 'IMAGERY') {
-        config.mapLayer = storedLayer;
-      }
-    } catch (e) {
-      console.warn('Failed to load state from storage', e);
-    }
-
-    return config;
-  }
-
   constructor(config: AppStateConfig) {
     this._centerLat = config.centerLat;
     this._centerLon = config.centerLon;
     this._scalingFactor = config.scalingFactor;
+    this._timeSpeedMultiplier = config.timeSpeedMultiplier;
     this.mapLayer = config.mapLayer;
     this._homeLocation = config.homeLocation;
   }
 
   // Getters
-  get scalingFactor(): number {
+  get scalingFactor(): Scale {
     return this._scalingFactor;
   }
   get centerLat(): Latitude {
@@ -134,12 +75,15 @@ export class AppState {
   get centerLon(): Longitude {
     return this._centerLon;
   }
+  get timeSpeedMultiplier(): TimeMultiplier {
+    return this._timeSpeedMultiplier;
+  }
   get homeLocation() {
     return this._homeLocation;
   }
 
   // Setters with NaN guards
-  set scalingFactor(val: number) {
+  set scalingFactor(val: Scale) {
     if (Number.isFinite(val) && val > 0) {
       this._scalingFactor = val;
       this.saveState();
@@ -148,12 +92,22 @@ export class AppState {
   set centerLat(val: Latitude) {
     if (Number.isFinite(val)) {
       this._centerLat = asLatitude(
-        Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, val))
+        Math.max(-CONFIG.ENGINE.MAX_LATITUDE, Math.min(CONFIG.ENGINE.MAX_LATITUDE, val))
       );
     }
   }
   set centerLon(val: Longitude) {
     if (Number.isFinite(val)) this._centerLon = val;
+  }
+  set timeSpeedMultiplier(val: TimeMultiplier) {
+    if (
+      Number.isFinite(val) &&
+      val >= CONFIG.SIMULATION.MIN_TIME_RATIO &&
+      val <= CONFIG.SIMULATION.MAX_TIME_RATIO
+    ) {
+      this._timeSpeedMultiplier = val;
+      this.saveState();
+    }
   }
 
   // Computed scale for projection
@@ -169,6 +123,7 @@ export class AppState {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem('solunar-clock-zoom', this._scalingFactor.toString());
     localStorage.setItem('solunar-clock-layer', this.mapLayer);
+    localStorage.setItem('solunar-clock-time-ratio', this._timeSpeedMultiplier.toString());
   }
 
   setHome(): void {
@@ -188,8 +143,8 @@ export class AppState {
   isAtHome(): boolean {
     if (!this._homeLocation) return false;
     return (
-      Math.abs(this._centerLat - this._homeLocation.lat) < CONFIG.HOME_TOLERANCE &&
-      Math.abs(this._centerLon - this._homeLocation.lon) < CONFIG.HOME_TOLERANCE
+      Math.abs(this._centerLat - this._homeLocation.lat) < CONFIG.ENGINE.HOME_TOLERANCE &&
+      Math.abs(this._centerLon - this._homeLocation.lon) < CONFIG.ENGINE.HOME_TOLERANCE
     );
   }
 
@@ -202,24 +157,26 @@ export class AppState {
 
   adjustZoom(multiplier: number): void {
     if (!Number.isFinite(multiplier)) return;
-    this.scalingFactor = Math.max(
-      CONFIG.MIN_SCALING_FACTOR,
-      Math.min(CONFIG.MAX_SCALING_FACTOR, this._scalingFactor * multiplier)
+    this.scalingFactor = asScale(
+      Math.max(
+        CONFIG.DISPLAY.MIN_SCALING_FACTOR,
+        Math.min(CONFIG.DISPLAY.MAX_SCALING_FACTOR, this._scalingFactor * multiplier)
+      )
     );
   }
 
   pan(dLat: number, dLon: number): void {
     if (!Number.isFinite(dLat) || !Number.isFinite(dLon)) return;
     const newLat = Math.max(
-      -CONFIG.MAX_LATITUDE,
-      Math.min(CONFIG.MAX_LATITUDE, this._centerLat + dLat)
+      -CONFIG.ENGINE.MAX_LATITUDE,
+      Math.min(CONFIG.ENGINE.MAX_LATITUDE, this._centerLat + dLat)
     );
     this.centerLat = asLatitude(newLat);
     this._centerLon = normalizeLongitude(this._centerLon + dLon);
   }
 
   cycleLayer(): void {
-    const layers: ('STREETS' | 'TOPOGRAPHIC' | 'IMAGERY')[] = ['STREETS', 'TOPOGRAPHIC', 'IMAGERY'];
+    const layers: MapLayer[] = ['STREETS', 'TOPOGRAPHIC', 'IMAGERY'];
     const idx = layers.indexOf(this.mapLayer);
     this.mapLayer = layers[(idx + 1) % layers.length];
     this.saveState();

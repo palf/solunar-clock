@@ -3,6 +3,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
+import { loadInitialState } from './state-loader';
 import { TouchController } from './touch-controller';
 
 describe('TouchController', () => {
@@ -11,7 +12,7 @@ describe('TouchController', () => {
   let onUpdate: any;
 
   beforeEach(() => {
-    state = new AppState(AppState.loadInitialState());
+    state = new AppState(loadInitialState());
     element = document.createElement('div');
     onUpdate = vi.fn().mockResolvedValue(undefined);
   });
