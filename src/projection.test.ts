@@ -8,28 +8,28 @@ describe('Projection Math', () => {
   const lon0 = -0.1;
   const scale = 100;
 
-  it('projects the center point to cx, cy', () => {
+  it('projects the center point exactly to cx, cy', () => {
     const p = new Projection(cx, cy, lat0, lon0, scale);
     const [x, y] = p.project([lon0, lat0]);
     expect(x).toBeCloseTo(cx);
     expect(y).toBeCloseTo(cy);
   });
 
-  it('projects a point to the north correctly', () => {
+  it('projects a point to the north correctly relative to the center', () => {
     const p = new Projection(cx, cy, lat0, lon0, scale);
     const [x, y] = p.project([lon0, lat0 + 1]);
     expect(x).toBeCloseTo(cx);
     expect(y).toBeLessThan(cy);
   });
 
-  it('projects a point to the east correctly', () => {
+  it('projects a point to the east correctly relative to the center', () => {
     const p = new Projection(cx, cy, lat0, lon0, scale);
     const [x, y] = p.project([lon0 + 1, lat0]);
     expect(x).toBeGreaterThan(cx);
     expect(y).toBeCloseTo(cy, 0); // AE isn't perfectly horizontal for east
   });
 
-  it('updates center and scale', () => {
+  it('correctly updates the center and scale of the projection', () => {
     const p = new Projection(cx, cy, lat0, lon0, scale);
     p.updateCenter(0, 0);
     p.updateScale(200);
@@ -40,14 +40,14 @@ describe('Projection Math', () => {
     expect(p.getScale()).toBe(200);
   });
 
-  it('returns center coordinates', () => {
+  it('returns the current center coordinates', () => {
     const p = new Projection(cx, cy, lat0, lon0, scale);
     const center = p.getCenter();
     expect(center.lat).toBe(lat0);
     expect(center.lon).toBe(lon0);
   });
 
-  it('handles longitude wrapping in project', () => {
+  it('handles longitude wrapping correctly across the dateline', () => {
     const p = new Projection(cx, cy, 0, 179, scale);
     const [x1, y1] = p.project([181, 0]); // Should wrap to -179
     const [x2, y2] = p.project([-179, 0]);
@@ -55,13 +55,13 @@ describe('Projection Math', () => {
     expect(y1).toBeCloseTo(y2);
   });
 
-  it('projects a point far away', () => {
+  it('projects points far away from the center correctly', () => {
     const p = new Projection(cx, cy, 0, 0, scale);
     const [x, _y] = p.project([90, 0]);
     expect(x).toBeGreaterThan(cx);
   });
 
-  it('handles poles', () => {
+  it('handles calculations at the poles without errors', () => {
     const p = new Projection(cx, cy, 90, 0, scale);
     const [_x, y] = p.project([0, 89]);
     expect(y).toBeGreaterThan(cy);

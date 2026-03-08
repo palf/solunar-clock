@@ -39,7 +39,7 @@ describe('UIController Button Behaviors', () => {
     ui = new UIController(state, onLocationSelected);
   });
 
-  it('updates HUD elements', () => {
+  it('updates all HUD elements with the current application state', () => {
     const now = new Date('2024-03-07T12:00:00Z');
     ui.updateHUD(now);
 
@@ -47,7 +47,7 @@ describe('UIController Button Behaviors', () => {
     expect(document.getElementById('display-pos')?.textContent).toContain('51.51° N');
   });
 
-  it('shows and hides search', () => {
+  it('correctly toggles the visibility of the search overlay', () => {
     const overlay = document.getElementById('search-overlay');
 
     ui.showSearch();
@@ -57,7 +57,7 @@ describe('UIController Button Behaviors', () => {
     expect(overlay?.style.display).toBe('none');
   });
 
-  it('toggles render mode when mode button is clicked', () => {
+  it('toggles between 2D and 3D render modes when the mode button is clicked', () => {
     const modeBtn = document.getElementById('btn-mode') as HTMLButtonElement;
     ui.updateHUD(new Date());
     
@@ -76,7 +76,7 @@ describe('UIController Button Behaviors', () => {
     expect(state.renderMode).toBe('3D');
   });
 
-  it('handles the Set Home behavior (🎯 -> ✖️)', () => {
+  it('handles the complex multi-state behavior of the locate button (Set/Go/Clear Home)', async () => {
     const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
     
     // 1. Initial State: No home set
@@ -92,7 +92,7 @@ describe('UIController Button Behaviors', () => {
     expect(locateBtn.textContent).toBe('✖️'); // Should show clear icon because we are at home
   });
 
-  it('handles the Go Home behavior (🏠 -> ✖️)', () => {
+  it('navigates back to the stored home location when the user has moved away', async () => {
     const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
     
     // 1. Setup: Stored home at 10, 20
@@ -112,7 +112,7 @@ describe('UIController Button Behaviors', () => {
     expect(locateBtn.textContent).toBe('✖️'); // Now at home, icon for "Clear"
   });
 
-  it('handles the Clear Home behavior (✖️ -> 🎯)', () => {
+  it('clears the stored home location when clicked while already at home', async () => {
     const locateBtn = document.getElementById('btn-locate') as HTMLButtonElement;
     
     // 1. Setup: At home
@@ -128,7 +128,7 @@ describe('UIController Button Behaviors', () => {
     expect(locateBtn.textContent).toBe('🎯');
   });
 
-  it('shows search when search button is clicked', () => {
+  it('launches the search overlay when the dedicated search button is clicked', () => {
     const searchBtn = document.getElementById('btn-search') as HTMLButtonElement;
     const overlay = document.getElementById('search-overlay');
     
@@ -137,21 +137,21 @@ describe('UIController Button Behaviors', () => {
     expect(overlay?.style.display).toBe('block');
   });
 
-  it('shows zoom dialog', () => {
+  it('displays the manual zoom dialog when the showZoomDialog method is called', () => {
     const overlay = document.getElementById('zoom-overlay');
     expect(overlay?.style.display).toBe('none');
     ui.showZoomDialog();
     expect(overlay?.style.display).toBe('block');
   });
 
-  it('shows help dialog', () => {
+  it('toggles the help overlay visibility when the help button is clicked', () => {
     const overlay = document.getElementById('help-overlay');
     expect(overlay?.style.display).toBe('none');
     ui.showHelpDialog();
     expect(overlay?.style.display).toBe('block');
   });
 
-  it('opens zoom dialog when zoom HUD is clicked', () => {
+  it('opens the manual zoom dialog when the zoom information in the HUD is clicked', () => {
     const zoomGroup = document.getElementById('group-zoom');
     const overlay = document.getElementById('zoom-overlay');
     

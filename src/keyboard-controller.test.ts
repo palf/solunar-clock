@@ -23,7 +23,7 @@ describe('KeyboardController', () => {
     onRedraw = vi.fn().mockResolvedValue(undefined);
   });
 
-  it('zooms in when + or = is pressed', async () => {
+  it('increases the zoom level when the + or = keys are pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     const initialScale = state.scalingFactor;
 
@@ -35,7 +35,7 @@ describe('KeyboardController', () => {
     expect(state.scalingFactor).toBeGreaterThan(midScale);
   });
 
-  it('zooms out when - or _ is pressed', async () => {
+  it('decreases the zoom level when the - or _ keys are pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     const initialScale = state.scalingFactor;
 
@@ -47,7 +47,7 @@ describe('KeyboardController', () => {
     expect(state.scalingFactor).toBeLessThan(midScale);
   });
 
-  it('pans when arrow keys are pressed', async () => {
+  it('pans the map center when arrow keys are pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     const initialLat = state.centerLat;
     const initialLon = state.centerLon;
@@ -59,7 +59,7 @@ describe('KeyboardController', () => {
     expect(state.centerLon).toBeLessThan(initialLon);
   });
 
-  it('fast-zooms with Shift + Arrows', async () => {
+  it('performs a fast-zoom when Shift and Arrow keys are combined', async () => {
     new KeyboardController(state, ui, onRedraw);
     const initialScale = state.scalingFactor;
 
@@ -67,7 +67,7 @@ describe('KeyboardController', () => {
     expect(state.scalingFactor).toBeGreaterThan(initialScale);
   });
 
-  it('cycles layers with l key', async () => {
+  it('cycles through available map layers when the l key is pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     const initialLayer = state.mapLayer;
 
@@ -77,7 +77,7 @@ describe('KeyboardController', () => {
     expect(onRedraw).toHaveBeenCalled();
   });
 
-  it('triggers search with s or /', async () => {
+  it('launches the search overlay when the s or / keys are pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 's' }));
@@ -87,19 +87,19 @@ describe('KeyboardController', () => {
     expect(ui.showSearch).toHaveBeenCalledTimes(2);
   });
 
-  it('triggers zoom dialog with z', async () => {
+  it('triggers the manual zoom dialog when the z key is pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z' }));
     expect(ui.showZoomDialog).toHaveBeenCalled();
   });
 
-  it('triggers home action with h', async () => {
+  it('triggers the combined home action when the h key is pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'h' }));
     expect(ui.handleHomeAction).toHaveBeenCalled();
   });
 
-  it('toggles help with ?', async () => {
+  it('toggles the help overlay when the ? key is pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
     expect(ui.toggleHelpDialog).toHaveBeenCalled();

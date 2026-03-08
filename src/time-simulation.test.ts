@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { TimeSimulation } from './time-simulation';
 
 describe('TimeSimulation', () => {
-  it('returns real time by default', () => {
+  it('returns the actual system time by default', () => {
     const start = new Date();
     const sim = new TimeSimulation(start, 1.0);
     const now = sim.getSimulatedTime();
@@ -10,7 +10,7 @@ describe('TimeSimulation', () => {
     expect(now.getTime()).toBeGreaterThanOrEqual(start.getTime());
   });
 
-  it('speeds up time correctly', () => {
+  it('correctly calculates simulated time when speed is increased', () => {
     const start = new Date('2024-03-07T12:00:00Z');
     const sim = new TimeSimulation(start, 60.0); // 1 minute per second
     

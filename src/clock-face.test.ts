@@ -32,21 +32,19 @@ describe('ClockFace', () => {
     });
   });
 
-  it('draws background elements', () => {
-    const clock = new ClockFace(svg, 240, 240, 200);
-    clock.drawBackground(group);
-
-    // Should append 2 circles (rim and face)
-    expect(group.append).toHaveBeenCalledWith('circle');
-    expect(group.append).toHaveBeenCalledTimes(2);
-  });
-
-  it('draws hour labels', () => {
+  it('renders all eight compass point labels', () => {
     const clock = new ClockFace(svg, 240, 240, 200);
     clock.drawHourLabels(group);
 
     // Should draw 8 compass points
     expect(group.append).toHaveBeenCalledWith('text');
     expect(group.append).toHaveBeenCalledTimes(8);
+  });
+
+  it('renders the center mark circle', () => {
+    const clock = new ClockFace(svg, 240, 240, 200);
+    const centerGroup = { append: vi.fn().mockReturnThis(), attr: vi.fn().mockReturnThis() };
+    clock.drawCenterMark(centerGroup as any);
+    expect(centerGroup.append).toHaveBeenCalledWith('circle');
   });
 });

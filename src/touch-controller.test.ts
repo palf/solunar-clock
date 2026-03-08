@@ -16,7 +16,7 @@ describe('TouchController', () => {
     onUpdate = vi.fn().mockResolvedValue(undefined);
   });
 
-  it('updates center position on single touch drag', async () => {
+  it('updates the map center coordinates during a single-touch drag', async () => {
     new TouchController(element, state, onUpdate);
     const initialLat = state.centerLat;
     const initialLon = state.centerLon;
@@ -38,19 +38,25 @@ describe('TouchController', () => {
     expect(onUpdate).toHaveBeenCalled();
   });
 
-  it('updates scaling factor on pinch', async () => {
+  it('updates the scaling factor during a multi-touch pinch gesture', async () => {
     new TouchController(element, state, onUpdate);
     const initialScale = state.scalingFactor;
 
     // Simulate pinch start (2 fingers)
     const startEvent = new TouchEvent('touchstart', {
-      touches: [{ clientX: 100, clientY: 100 } as any, { clientX: 200, clientY: 200 } as any],
+      touches: [
+        { clientX: 100, clientY: 100 } as any,
+        { clientX: 200, clientY: 200 } as any
+      ],
     });
     element.dispatchEvent(startEvent);
 
     // Simulate pinch move (fingers further apart)
     const moveEvent = new TouchEvent('touchmove', {
-      touches: [{ clientX: 50, clientY: 50 } as any, { clientX: 250, clientY: 250 } as any],
+      touches: [
+        { clientX: 50, clientY: 50 } as any,
+        { clientX: 250, clientY: 250 } as any
+      ],
     });
     element.dispatchEvent(moveEvent);
 
@@ -58,17 +64,19 @@ describe('TouchController', () => {
     expect(onUpdate).toHaveBeenCalled();
   });
 
-  it('resets pan anchors when transitioning from 2 fingers to 1 finger', async () => {
+  it('resets the internal pan anchors when transitioning from two fingers to one', async () => {
     new TouchController(element, state, onUpdate);
 
     // 1. Start with 2 fingers
     const startEvent = new TouchEvent('touchstart', {
-      touches: [{ clientX: 100, clientY: 100 } as any, { clientX: 200, clientY: 200 } as any],
+      touches: [
+        { clientX: 100, clientY: 100 } as any,
+        { clientX: 200, clientY: 200 } as any
+      ],
     });
     element.dispatchEvent(startEvent);
 
-    // 2. Remove one finger (touchend)
-    // In a real browser, the remaining finger is still in the 'touches' list of the end event
+    // 2. Remove one finger
     const endEvent = new TouchEvent('touchend', {
       touches: [{ clientX: 100, clientY: 100 } as any],
     });
@@ -81,10 +89,7 @@ describe('TouchController', () => {
     });
     element.dispatchEvent(moveEvent);
 
-    // If anchors were NOT reset, dx/dy would be (110-startX).
-    // If they WERE reset, dx/dy is (110-100) = 10px.
-    // At 1x zoom (sens 0.1), 10px move should change lat by ~1.0 degree.
-    // A jump (if startX was 0) would be 110px (~11 degrees).
+    // Verify move is relative to the new anchor (small delta) rather than world origin
     expect(Math.abs(state.centerLat - initialLat)).toBeLessThan(5);
   });
 });

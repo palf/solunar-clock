@@ -18,7 +18,7 @@ describe('TileRenderer Math', () => {
     renderer = new TileRenderer(canvas2d, canvas3d, projection);
   });
 
-  it('converts lon/lat to tile coordinates correctly', () => {
+  it('converts geographic coordinates to the correct tile indices', () => {
     // London at Z=10
     // @ts-expect-error - accessing private for test
     const [x, y] = renderer.lonLatToTile(-0.1278, 51.5074, 10);
@@ -28,7 +28,7 @@ describe('TileRenderer Math', () => {
     expect(Math.floor(y)).toBe(340);
   });
 
-  it('converts tile coordinates to lon/lat correctly', () => {
+  it('converts tile indices back to the correct geographic coordinates', () => {
     // @ts-expect-error - accessing private for test
     const [lon, lat] = renderer.tileToLonLat(511, 340, 10);
     
@@ -36,7 +36,7 @@ describe('TileRenderer Math', () => {
     expect(lat).toBeCloseTo(51.6, 1);
   });
 
-  it('handles pole clamping in lonLatToTile', () => {
+  it('clamps the latitude at the poles during tile index calculation', () => {
     // @ts-expect-error
     const [_, yNorth] = renderer.lonLatToTile(0, 90, 10);
     // @ts-expect-error

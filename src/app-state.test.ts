@@ -9,7 +9,7 @@ describe('AppState', () => {
     expect(state.centerLon).toBe(-0.1278);
   });
 
-  it('calculates scale based on scalingFactor', () => {
+  it('calculates the scale correctly based on the scalingFactor', () => {
     const config = AppState.loadInitialState();
     const state = new AppState(config);
     const initialScale = state.scale;
@@ -18,14 +18,14 @@ describe('AppState', () => {
     expect(state.scale).toBe(initialScale * 2);
   });
 
-  it('defaults to STREETS layer', () => {
+  it('defaults the map layer to STREETS', () => {
     const config = AppState.loadInitialState();
     const state = new AppState(config);
     expect(state.mapLayer).toBe('STREETS');
   });
 
   describe('NaN and Infinity guards', () => {
-    it('rejects NaN for scalingFactor', () => {
+    it('rejects NaN values for scalingFactor', () => {
       const config = AppState.loadInitialState();
       const state = new AppState(config);
       const initial = state.scalingFactor;
@@ -33,7 +33,7 @@ describe('AppState', () => {
       expect(state.scalingFactor).toBe(initial);
     });
 
-    it('rejects invalid values in pan', () => {
+    it('rejects invalid numeric values during panning', () => {
       const config = AppState.loadInitialState();
       const state = new AppState(config);
       const initialLat = state.centerLat;
@@ -41,7 +41,7 @@ describe('AppState', () => {
       expect(state.centerLat).toBe(initialLat);
     });
 
-    it('clamps latitude to MAX_LATITUDE during pan', () => {
+    it('clamps the latitude to MAX_LATITUDE during panning', () => {
       const config = AppState.loadInitialState();
       const state = new AppState(config);
       state.pan(100, 0);

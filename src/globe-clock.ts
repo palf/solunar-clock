@@ -44,7 +44,6 @@ import { UIController } from './ui-controller';
   const timeSim = new TimeSimulation(state.startTime, state.timeSpeedMultiplier);
 
   // 3. Initialize Rendering Layers
-  const bgG = svg.append<SVGGElement>('g').attr('id', 'layer-bg');
   const rotatableG = svg
     .append<SVGGElement>('g')
     .attr('id', 'layer-rotatable');
