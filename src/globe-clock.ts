@@ -16,8 +16,8 @@ import { Projection } from './projection';
 import { TileRenderer } from './tile-renderer';
 import { TimeSimulation } from './time-simulation';
 import { TouchController } from './touch-controller';
-import { UIController } from './ui-controller';
 import type { Latitude, Longitude, Scale } from './types';
+import { UIController } from './ui-controller';
 
 /**
  * Bootstrap the application within an async context to handle data loading.
@@ -58,9 +58,7 @@ async function bootstrap() {
   const handG = rotatableG.append<SVGGElement>('g').attr('id', 'layer-hands');
 
   const canvas = document.getElementById('map-canvas') as HTMLCanvasElement;
-  const webglCanvas = document.getElementById(
-    'webgl-canvas'
-  ) as HTMLCanvasElement;
+  const webglCanvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
   const mapRenderer = new MapRenderer(mapG, projection);
   const tileRenderer = new TileRenderer(canvas, webglCanvas, projection);
   const clockFace = new ClockFace(svg, state.centerX, state.centerY, state.radius);
@@ -144,10 +142,8 @@ async function bootstrap() {
     const [sunX, sunY] = projection.project(sunPos);
     const [moonX, moonY] = projection.project(moonPos);
 
-    const sunAngle =
-      Math.atan2(sunX - state.centerX, state.centerY - sunY) * (180 / Math.PI);
-    const moonAngle =
-      Math.atan2(moonX - state.centerX, state.centerY - moonY) * (180 / Math.PI);
+    const sunAngle = Math.atan2(sunX - state.centerX, state.centerY - sunY) * (180 / Math.PI);
+    const moonAngle = Math.atan2(moonX - state.centerX, state.centerY - moonY) * (180 / Math.PI);
 
     sunHandGroup.attr(
       'transform',
@@ -172,9 +168,7 @@ async function bootstrap() {
     .attr('stroke', CONFIG.SUN_ARM_COLOR)
     .attr('stroke-width', CONFIG.ARM_WIDTH);
 
-  const sunIcon = sunHandGroup
-    .append('g')
-    .attr('transform', `translate(0, ${-state.radius})`);
+  const sunIcon = sunHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
   sunIcon
     .append('circle')
     .attr('r', CONFIG.SUN_RADIUS)
@@ -207,9 +201,7 @@ async function bootstrap() {
     .attr('stroke', CONFIG.MOON_ARM_COLOR)
     .attr('stroke-width', CONFIG.ARM_WIDTH);
 
-  const moonIcon = moonHandGroup
-    .append('g')
-    .attr('transform', `translate(0, ${-state.radius})`);
+  const moonIcon = moonHandGroup.append('g').attr('transform', `translate(0, ${-state.radius})`);
   // Crescent moon
   moonIcon
     .append('path')

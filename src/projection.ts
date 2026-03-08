@@ -5,7 +5,14 @@
 /// <reference path="./types.ts" />
 
 import * as d3 from 'd3';
-import { asScreenPixel, type GeoCoordinates, type GeoRing, type Longitude, type Latitude, type Scale } from './types';
+import {
+  asScreenPixel,
+  type GeoCoordinates,
+  type GeoRing,
+  type Latitude,
+  type Longitude,
+  type Scale,
+} from './types';
 
 export class Projection {
   constructor(

@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { UIController } from './ui-controller';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
 import { asLatitude, asLongitude } from './types';
+import { UIController } from './ui-controller';
 
 describe('UIController', () => {
   let state: AppState;
@@ -59,7 +59,7 @@ describe('UIController', () => {
     ui.showSearch();
     const searchOverlay = document.getElementById('search-overlay');
     expect(searchOverlay?.style.display).toBe('block');
-    
+
     ui.hideSearch();
     expect(searchOverlay?.style.display).toBe('none');
   });
@@ -67,7 +67,7 @@ describe('UIController', () => {
   it('handles the home button logic (Set Home)', async () => {
     state.clearHome();
     state.setLocation(asLatitude(10), asLongitude(20));
-    
+
     await ui.handleHomeAction();
     expect(state.homeLocation).toEqual({ lat: asLatitude(10), lon: asLongitude(20) });
   });
@@ -75,10 +75,10 @@ describe('UIController', () => {
   it('handles the home button logic (Go Home)', async () => {
     state.setLocation(asLatitude(50), asLongitude(50));
     state.setHome();
-    
+
     state.setLocation(asLatitude(10), asLongitude(20));
     await ui.handleHomeAction();
-    
+
     expect(state.centerLat).toBe(asLatitude(50));
     expect(state.centerLon).toBe(asLongitude(50));
   });
@@ -87,18 +87,16 @@ describe('UIController', () => {
     const initialMode = state.renderMode;
     const btnMode = document.getElementById('btn-mode');
     btnMode?.click();
-    
+
     expect(state.renderMode).not.toBe(initialMode);
     expect(onLocationSelected).toHaveBeenCalled();
   });
 
   it('filters search results (mocked fetch)', async () => {
-    const mockResults = [
-      { display_name: 'Test City', lat: '10', lon: '20' }
-    ];
-    
+    const mockResults = [{ display_name: 'Test City', lat: '10', lon: '20' }];
+
     global.fetch = vi.fn().mockResolvedValue({
-      json: () => Promise.resolve(mockResults)
+      json: () => Promise.resolve(mockResults),
     });
 
     ui.showSearch();
@@ -107,8 +105,8 @@ describe('UIController', () => {
     input.dispatchEvent(new Event('input'));
 
     // Wait for debounce
-    await new Promise(r => setTimeout(r, 400));
-    
+    await new Promise((r) => setTimeout(r, 400));
+
     const results = document.getElementById('searchResults');
     expect(results?.children.length).toBe(1);
     expect(results?.children[0].textContent).toBe('Test City');
@@ -117,10 +115,10 @@ describe('UIController', () => {
   it('selects a search result', async () => {
     const item = { display_name: 'Test', lat: '10', lon: '20' };
     state.setLocation(asLatitude(0), asLongitude(0));
-    
+
     // @ts-expect-error - testing private method
     ui.selectItem(item);
-    
+
     expect(state.centerLat).toBe(asLatitude(10));
     expect(state.centerLon).toBe(asLongitude(20));
     expect(onLocationSelected).toHaveBeenCalled();

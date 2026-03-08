@@ -1,8 +1,8 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import * as d3 from 'd3';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { MapRenderer } from './map-renderer';
 import { Projection } from './projection';
 import { asLatitude, asLongitude, asScale } from './types';
-import * as d3 from 'd3';
 
 describe('MapRenderer', () => {
   let projection: Projection;
@@ -23,10 +23,18 @@ describe('MapRenderer', () => {
           type: 'Feature',
           geometry: {
             type: 'Polygon',
-            coordinates: [[[asLongitude(0), asLatitude(0)], [asLongitude(10), asLatitude(0)], [asLongitude(10), asLatitude(10)], [asLongitude(0), asLatitude(10)], [asLongitude(0), asLatitude(0)]]]
-          }
-        }
-      ]
+            coordinates: [
+              [
+                [asLongitude(0), asLatitude(0)],
+                [asLongitude(10), asLatitude(0)],
+                [asLongitude(10), asLatitude(10)],
+                [asLongitude(0), asLatitude(10)],
+                [asLongitude(0), asLatitude(0)],
+              ],
+            ],
+          },
+        },
+      ],
     };
 
     renderer.render(data as any);

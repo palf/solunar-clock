@@ -1,8 +1,8 @@
-import { asLongitude, asLatitude, asTimeMultiplier, asMilliseconds } from './types';
+import { asLatitude, asLongitude, asMilliseconds, asTimeMultiplier } from './types';
 
 /**
  * Configuration constants for the Solunar Clock application.
- * Only values that are intended to be adjusted for hardware tuning, 
+ * Only values that are intended to be adjusted for hardware tuning,
  * aesthetic preferences, or user defaults should reside here.
  */
 
@@ -14,7 +14,7 @@ export const CONFIG = {
   INTERNAL_CENTER_Y: 300,
 
   // Display & Scaling
-  RADIUS_FACTOR: 0.40, // Percentage of viewport for globe radius
+  RADIUS_FACTOR: 0.4, // Percentage of viewport for globe radius
   DEFAULT_SCALING_FACTOR: 30000, // Default zoom level multiplier
   MIN_SCALING_FACTOR: 5, // 0.5x zoom
   MAX_SCALING_FACTOR: 1000000, // 100,000x zoom

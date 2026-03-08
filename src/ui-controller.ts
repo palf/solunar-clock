@@ -15,11 +15,9 @@ interface SearchResult {
 
 export class UIController {
   private searchOverlay = document.getElementById('search-overlay');
-  private searchInput = document.getElementById(
-    'locationSearch'
-  ) as HTMLInputElement;
+  private searchInput = document.getElementById('locationSearch') as HTMLInputElement;
   private searchResults = document.getElementById('searchResults');
-  
+
   private zoomOverlay = document.getElementById('zoom-overlay');
   private zoomInput = document.getElementById('zoomInput') as HTMLInputElement;
   private zoomGroup = document.getElementById('group-zoom');
@@ -50,7 +48,7 @@ export class UIController {
   }
 
   /**
-   * Update HUD elements. 
+   * Update HUD elements.
    * onlyTime = true allows 1Hz ticks to only refresh the clock text.
    */
   updateHUD(now: Date, onlyTime = false): void {
@@ -79,7 +77,7 @@ export class UIController {
         this.btnLocate.title = 'Set Current Location as Home';
       } else if (atHome) {
         this.btnLocate.textContent = '✖️'; // Clear icon
-        this.btnLocate.style.color = CONFIG.COLOR_DANGER; 
+        this.btnLocate.style.color = CONFIG.COLOR_DANGER;
         this.btnLocate.title = 'Clear Saved Home';
       } else {
         this.btnLocate.textContent = '🏠'; // Go Home icon
@@ -92,9 +90,9 @@ export class UIController {
     if (posEl) {
       posEl.textContent = `${Math.abs(this.state.centerLat).toFixed(
         2
-      )}° ${this.state.centerLat >= 0 ? 'N' : 'S'}, ${Math.abs(
-        this.state.centerLon
-      ).toFixed(2)}° ${this.state.centerLon >= 0 ? 'E' : 'W'}`;
+      )}° ${this.state.centerLat >= 0 ? 'N' : 'S'}, ${Math.abs(this.state.centerLon).toFixed(
+        2
+      )}° ${this.state.centerLon >= 0 ? 'E' : 'W'}`;
     }
 
     const zoomEl = document.getElementById('display-zoom');
@@ -175,7 +173,7 @@ export class UIController {
       this.state.setLocation(home.lat, home.lon);
     }
 
-    this.updateHUD(new Date()); 
+    this.updateHUD(new Date());
     await this.onLocationSelected();
   }
 
@@ -185,10 +183,7 @@ export class UIController {
       if (!this.searchResults || query.length < CONFIG.SEARCH_MIN_QUERY) return;
 
       clearTimeout(this.searchDebounce);
-      this.searchDebounce = setTimeout(
-        () => this.performSearch(query),
-        CONFIG.SEARCH_DEBOUNCE_MS
-      );
+      this.searchDebounce = setTimeout(() => this.performSearch(query), CONFIG.SEARCH_DEBOUNCE_MS);
     });
 
     this.searchInput?.addEventListener('keydown', (e) => {
@@ -229,25 +224,31 @@ export class UIController {
   private initClickOutside(): void {
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
-      
+
       // Close search if clicking outside
-      if (this.searchOverlay?.style.display === 'block' && 
-          !this.searchOverlay.contains(target) && 
-          !this.btnSearch?.contains(target)) {
+      if (
+        this.searchOverlay?.style.display === 'block' &&
+        !this.searchOverlay.contains(target) &&
+        !this.btnSearch?.contains(target)
+      ) {
         this.hideSearch();
       }
 
       // Close zoom if clicking outside
-      if (this.zoomOverlay?.style.display === 'block' && 
-          !this.zoomOverlay.contains(target) && 
-          !this.zoomGroup?.contains(target)) {
+      if (
+        this.zoomOverlay?.style.display === 'block' &&
+        !this.zoomOverlay.contains(target) &&
+        !this.zoomGroup?.contains(target)
+      ) {
         this.hideZoomDialog();
       }
 
       // Close help if clicking outside
-      if (this.helpOverlay?.style.display === 'block' && 
-          !this.helpOverlay.contains(target) && 
-          !this.btnHelp?.contains(target)) {
+      if (
+        this.helpOverlay?.style.display === 'block' &&
+        !this.helpOverlay.contains(target) &&
+        !this.btnHelp?.contains(target)
+      ) {
         this.hideHelpDialog();
       }
     });
@@ -255,7 +256,7 @@ export class UIController {
 
   private navigateResults(dir: number): void {
     if (this.currentSearchData.length === 0) return;
-    
+
     this.selectedSearchIndex += dir;
     if (this.selectedSearchIndex < 0) this.selectedSearchIndex = this.currentSearchData.length - 1;
     if (this.selectedSearchIndex >= this.currentSearchData.length) this.selectedSearchIndex = 0;
@@ -298,9 +299,10 @@ export class UIController {
       opt.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
-        const layer = (e.currentTarget as HTMLElement).getAttribute(
-          'data-layer'
-        ) as 'STREETS' | 'TOPOGRAPHIC' | 'IMAGERY';
+        const layer = (e.currentTarget as HTMLElement).getAttribute('data-layer') as
+          | 'STREETS'
+          | 'TOPOGRAPHIC'
+          | 'IMAGERY';
         if (layer) {
           this.state.mapLayer = layer;
           if (this.layerDropdown) this.layerDropdown.style.display = 'none';

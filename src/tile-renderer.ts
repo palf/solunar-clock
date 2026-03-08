@@ -5,7 +5,7 @@
 
 import { CONFIG } from './config';
 import type { Projection } from './projection';
-import { asLongitude, asLatitude, type GeoCoordinates } from './types';
+import { asLatitude, asLongitude, type GeoCoordinates } from './types';
 
 export class TileRenderer {
   // Non-configurable technical constants for the Web Mercator tile system

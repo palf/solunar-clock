@@ -27,10 +27,8 @@ export class ClockFace {
     for (let i = 0; i < ClockFace.COMPASS_POINTS_COUNT; i++) {
       const angDeg = i * ClockFace.COMPASS_INTERVAL_DEG;
       const theta = (angDeg * Math.PI) / 180;
-      const tx =
-        this.centerX + (this.radius + CONFIG.LABEL_SPACING) * Math.sin(theta);
-      const ty =
-        this.centerY - (this.radius + CONFIG.LABEL_SPACING) * Math.cos(theta);
+      const tx = this.centerX + (this.radius + CONFIG.LABEL_SPACING) * Math.sin(theta);
+      const ty = this.centerY - (this.radius + CONFIG.LABEL_SPACING) * Math.cos(theta);
 
       labelsGroup
         .append('text')

@@ -130,7 +130,8 @@ export class TouchController {
     this.startX = clientX;
     this.startY = clientY;
 
-    const sensitivity = CONFIG.TOUCH_PAN_SENSITIVITY / (this.state.scalingFactor / CONFIG.TOUCH_PAN_DIVISOR);
+    const sensitivity =
+      CONFIG.TOUCH_PAN_SENSITIVITY / (this.state.scalingFactor / CONFIG.TOUCH_PAN_DIVISOR);
     const dLon = -dx * sensitivity;
     const dLat = dy * sensitivity;
 

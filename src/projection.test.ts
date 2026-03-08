@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Projection } from './projection';
-import { asLongitude, asLatitude, asScale } from './types';
 import { normalizeLongitude } from './astronomy';
+import { Projection } from './projection';
+import { asLatitude, asLongitude, asScale } from './types';
 
 describe('Projection Math', () => {
   const cx = 300;
@@ -35,7 +35,7 @@ describe('Projection Math', () => {
     const p = new Projection(cx, cy, lat0, lon0, scale);
     p.updateCenter(asLatitude(0), asLongitude(0));
     p.updateScale(asScale(200));
-    
+
     const [x, y] = p.project([asLongitude(0), asLatitude(0)]);
     expect(x).toBeCloseTo(cx);
     expect(y).toBeCloseTo(cy);

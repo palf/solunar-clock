@@ -1,18 +1,25 @@
 /**
  * Astronomical calculations for sun and moon positions.
- * 
- * The constants and algorithms below are derived from the "Low-precision series" 
+ *
+ * The constants and algorithms below are derived from the "Low-precision series"
  * for solar and lunar positions.
- * 
+ *
  * Sources:
  * - Solar: USNO "Low Precision Solar Position" (https://aa.usno.navy.mil/faq/sun_approx)
  * - Lunar: USNO "Low Precision Lunar Position" (https://aa.usno.navy.mil/faq/moon_approx)
  * - General: Jean Meeus, "Astronomical Algorithms", 2nd Ed.
- * 
+ *
  * All values are referenced against the J2000.0 Epoch (January 1, 2000, 12:00 UTC).
  */
 
-import { asLongitude, asLatitude, asDegrees, type GeoCoordinates, type Longitude, type Degrees } from './types';
+import {
+  asDegrees,
+  asLatitude,
+  asLongitude,
+  type Degrees,
+  type GeoCoordinates,
+  type Longitude,
+} from './types';
 
 /**
  * Astronomy-internal branded types to prevent mixing units or coordinate systems.
@@ -108,7 +115,7 @@ const ASTRONOMY_CONSTANTS = {
    * Ref: USNO (D = 297.850 + 445267.111 * T)
    * VERIFIED
    */
-  MOON_MEAN_ELON_BASE: 297.850,
+  MOON_MEAN_ELON_BASE: 297.85,
   MOON_MEAN_ELON_RATE_CY: 445267.111,
 
   /**
@@ -174,8 +181,7 @@ function daysSinceJ2000(date: Date): JulianDays {
  * Calculate the current obliquity of the ecliptic.
  */
 function getEclipticObliquity(n: JulianDays): Radians {
-  const { ECLIPTIC_OBLIQUITY_BASE, ECLIPTIC_OBLIQUITY_RATE } =
-    ASTRONOMY_CONSTANTS;
+  const { ECLIPTIC_OBLIQUITY_BASE, ECLIPTIC_OBLIQUITY_RATE } = ASTRONOMY_CONSTANTS;
   return toRadians(asDegrees(ECLIPTIC_OBLIQUITY_BASE - ECLIPTIC_OBLIQUITY_RATE * n));
 }
 
@@ -195,9 +201,7 @@ export function calculateSunPosition(date: Date): GeoCoordinates {
   // 2. Ecliptic longitude
   const lambda = asEclipticLongitude(
     normalizeAngle(
-      q +
-      ast.SUN_ECLIPTIC_LON_C1 * Math.sin(gRad) +
-      ast.SUN_ECLIPTIC_LON_C2 * Math.sin(2 * gRad)
+      q + ast.SUN_ECLIPTIC_LON_C1 * Math.sin(gRad) + ast.SUN_ECLIPTIC_LON_C2 * Math.sin(2 * gRad)
     )
   );
   const lambdaRad = toRadians(lambda);
@@ -208,17 +212,11 @@ export function calculateSunPosition(date: Date): GeoCoordinates {
   // 4. Coordinates (Equatorial)
   const alpha = asRightAscension(
     toDegrees(
-      asRadians(
-        Math.atan2(Math.cos(epsilonRad) * Math.sin(lambdaRad), Math.cos(lambdaRad))
-      )
+      asRadians(Math.atan2(Math.cos(epsilonRad) * Math.sin(lambdaRad), Math.cos(lambdaRad)))
     )
   );
   const delta = asDeclination(
-    toDegrees(
-      asRadians(
-        Math.asin(Math.sin(epsilonRad) * Math.sin(lambdaRad))
-      )
-    )
+    toDegrees(asRadians(Math.asin(Math.sin(epsilonRad) * Math.sin(lambdaRad))))
   );
 
   // Geographic Latitude is direct declination
@@ -228,7 +226,7 @@ export function calculateSunPosition(date: Date): GeoCoordinates {
   // GHA = GMST - Right Ascension
   const gmst = normalizeAngle(ast.GMST_BASE + ast.GMST_RATE * n);
   const gha = normalizeAngle(gmst - alpha);
-  
+
   // Longitude East = -GHA (normalized)
   const sunLon = normalizeLongitude(-gha);
 
@@ -262,17 +260,17 @@ export function calculateMoonPosition(date: Date): GeoCoordinates {
 
   const lambda = normalizeAngle(
     L_prime +
-    6.289 * Math.sin(MmRad) +
-    1.274 * Math.sin(2 * DRad - MmRad) +
-    0.658 * Math.sin(2 * DRad) +
-    0.214 * Math.sin(2 * MmRad) -
-    0.186 * Math.sin(MsRad) -
-    0.114 * Math.sin(2 * FRad)
+      6.289 * Math.sin(MmRad) +
+      1.274 * Math.sin(2 * DRad - MmRad) +
+      0.658 * Math.sin(2 * DRad) +
+      0.214 * Math.sin(2 * MmRad) -
+      0.186 * Math.sin(MsRad) -
+      0.114 * Math.sin(2 * FRad)
   );
 
-  const beta = 
+  const beta =
     5.128 * Math.sin(FRad) +
-    0.280 * Math.sin(MmRad + FRad) -
+    0.28 * Math.sin(MmRad + FRad) -
     0.278 * Math.sin(FRad - MmRad) -
     0.173 * Math.sin(FRad - 2 * DRad);
 
@@ -311,7 +309,7 @@ export function calculateMoonPosition(date: Date): GeoCoordinates {
   // 5. Greenwich Hour Angle (GHA)
   const gmst = normalizeAngle(ast.GMST_BASE + ast.GMST_RATE * n);
   const gha = normalizeAngle(gmst - alphaM);
-  
+
   // Longitude East = -GHA (normalized)
   const moonLon = normalizeLongitude(-gha);
 

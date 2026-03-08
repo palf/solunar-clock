@@ -3,9 +3,18 @@
  * Internalizes fixed coordinate constants while utilizing CONFIG for user preferences.
  */
 
-import { CONFIG } from './config';
-import { asLatitude, asLongitude, asScale, type TopoJSONData, type TimeMultiplier, type Latitude, type Longitude, type Scale } from './types';
 import { normalizeLongitude } from './astronomy';
+import { CONFIG } from './config';
+import {
+  asLatitude,
+  asLongitude,
+  asScale,
+  type Latitude,
+  type Longitude,
+  type Scale,
+  type TimeMultiplier,
+  type TopoJSONData,
+} from './types';
 
 export interface AppStateConfig {
   centerLat: Latitude;
@@ -75,7 +84,7 @@ export class AppState {
         ) {
           config.homeLocation = {
             lat: asLatitude(parsed.lat),
-            lon: asLongitude(parsed.lon)
+            lon: asLongitude(parsed.lon),
           };
           config.centerLat = config.homeLocation.lat;
           config.centerLon = config.homeLocation.lon;
@@ -97,11 +106,7 @@ export class AppState {
 
       // 3. Load Layer
       const storedLayer = localStorage.getItem('solunar-clock-layer');
-      if (
-        storedLayer === 'STREETS' ||
-        storedLayer === 'TOPOGRAPHIC' ||
-        storedLayer === 'IMAGERY'
-      ) {
+      if (storedLayer === 'STREETS' || storedLayer === 'TOPOGRAPHIC' || storedLayer === 'IMAGERY') {
         config.mapLayer = storedLayer;
       }
     } catch (e) {
@@ -142,7 +147,9 @@ export class AppState {
   }
   set centerLat(val: Latitude) {
     if (Number.isFinite(val)) {
-      this._centerLat = asLatitude(Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, val)));
+      this._centerLat = asLatitude(
+        Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, val))
+      );
     }
   }
   set centerLon(val: Longitude) {
@@ -167,10 +174,7 @@ export class AppState {
   setHome(): void {
     this._homeLocation = { lat: this._centerLat, lon: this._centerLon };
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(
-        'solunar-clock-home',
-        JSON.stringify(this._homeLocation)
-      );
+      localStorage.setItem('solunar-clock-home', JSON.stringify(this._homeLocation));
     }
   }
 
@@ -206,17 +210,16 @@ export class AppState {
 
   pan(dLat: number, dLon: number): void {
     if (!Number.isFinite(dLat) || !Number.isFinite(dLon)) return;
-    const newLat = Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, this._centerLat + dLat));
+    const newLat = Math.max(
+      -CONFIG.MAX_LATITUDE,
+      Math.min(CONFIG.MAX_LATITUDE, this._centerLat + dLat)
+    );
     this.centerLat = asLatitude(newLat);
     this._centerLon = normalizeLongitude(this._centerLon + dLon);
   }
 
   cycleLayer(): void {
-    const layers: ('STREETS' | 'TOPOGRAPHIC' | 'IMAGERY')[] = [
-      'STREETS',
-      'TOPOGRAPHIC',
-      'IMAGERY',
-    ];
+    const layers: ('STREETS' | 'TOPOGRAPHIC' | 'IMAGERY')[] = ['STREETS', 'TOPOGRAPHIC', 'IMAGERY'];
     const idx = layers.indexOf(this.mapLayer);
     this.mapLayer = layers[(idx + 1) % layers.length];
     this.saveState();

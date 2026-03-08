@@ -1,6 +1,6 @@
-import { describe, expect, it, beforeEach } from 'vitest';
-import { TileRenderer } from './tile-renderer';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { Projection } from './projection';
+import { TileRenderer } from './tile-renderer';
 import { asLatitude, asLongitude, asScale } from './types';
 
 describe('TileRenderer Math', () => {
@@ -18,7 +18,7 @@ describe('TileRenderer Math', () => {
   it('converts geographic coordinates to the correct tile indices', () => {
     // @ts-expect-error - accessing private for test
     const [x, y] = renderer.lonLatToTile(-0.1, 51.5, 10);
-    
+
     // London at Z10 is roughly 511, 340
     expect(Math.floor(x)).toBe(511);
     expect(Math.floor(y)).toBe(340);
@@ -37,7 +37,7 @@ describe('TileRenderer Math', () => {
     const [_, yHigh] = renderer.lonLatToTile(0, 89, 10);
     // @ts-expect-error - accessing private for test
     const [__, yCapped] = renderer.lonLatToTile(0, 85.0511, 10);
-    
+
     // Web Mercator caps at ~85.05 degrees, so 89 should be the same as 85.0511
     expect(yHigh).toBeCloseTo(yCapped, 5);
   });

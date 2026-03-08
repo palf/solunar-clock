@@ -8,7 +8,13 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import { CONFIG } from './config';
 import type { Projection } from './projection';
-import { asLongitude, asLatitude, type GeoCoordinates, type GeoFeature, type TopoJSONData } from './types';
+import {
+  asLatitude,
+  asLongitude,
+  type GeoCoordinates,
+  type GeoFeature,
+  type TopoJSONData,
+} from './types';
 
 export class MapRenderer {
   constructor(
@@ -129,10 +135,7 @@ export class MapRenderer {
         fallbackPath.lineTo(x, y);
       }
     });
-    this.mapGroup
-      .append('path')
-      .attr('d', fallbackPath.toString())
-      .attr('class', 'land');
+    this.mapGroup.append('path').attr('d', fallbackPath.toString()).attr('class', 'land');
   }
 
   /**
