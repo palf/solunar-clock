@@ -20,11 +20,11 @@ describe('UIController Button Behaviors', () => {
       <div id="display-time"></div>
       <div id="display-pos"></div>
       <div id="display-zoom"></div>
+      <button id="layer-trigger"></button>
       <div id="display-attribution"></div>
       <button id="btn-mode"></button>
       <button id="btn-locate"></button>
       <button id="btn-search"></button>
-      <button id="layer-trigger"></button>
       <div id="layer-dropdown" style="display: none;">
         <div class="layer-option" data-layer="TOPOGRAPHIC"></div>
         <div class="layer-option" data-layer="IMAGERY"></div>
@@ -138,5 +138,47 @@ describe('UIController Button Behaviors', () => {
     expect(overlay?.style.display).toBe('none');
     ui.showZoomDialog();
     expect(overlay?.style.display).toBe('block');
+  });
+
+  it('applies zoom from dialog on Enter', () => {
+    const input = document.getElementById('zoomInput') as HTMLInputElement;
+    ui.showZoomDialog();
+    
+    input.value = '500';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    
+    expect(state.scalingFactor).toBe(5000);
+    expect(document.getElementById('zoom-overlay')?.style.display).toBe('none');
+    expect(onLocationSelected).toHaveBeenCalled();
+  });
+
+  it('navigates search results with keyboard', () => {
+    // Mock some search data
+    // @ts-ignore
+    ui.currentSearchData = [
+      { display_name: 'City A', lat: '10', lon: '10' },
+      { display_name: 'City B', lat: '20', lon: '20' }
+    ];
+    
+    // Mock result elements
+    const results = document.getElementById('searchResults')!;
+    results.innerHTML = '<div class="search-item"></div><div class="search-item"></div>';
+    
+    const input = document.getElementById('locationSearch')!;
+    
+    // Navigate Down
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    // @ts-ignore
+    expect(ui.selectedSearchIndex).toBe(0);
+    
+    // Navigate Down again
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    // @ts-ignore
+    expect(ui.selectedSearchIndex).toBe(1);
+    
+    // Select with Enter
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(state.centerLat).toBe(20);
+    expect(onLocationSelected).toHaveBeenCalled();
   });
 });

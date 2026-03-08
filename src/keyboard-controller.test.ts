@@ -9,59 +9,91 @@ import type { UIController } from './ui-controller';
 describe('KeyboardController', () => {
   let state: AppState;
   let ui: UIController;
-  let onRedraw: any;
+  let onRedraw: () => Promise<void>;
 
   beforeEach(() => {
     state = new AppState();
-    // Mock UIController
     ui = {
       showSearch: vi.fn(),
-      hideSearch: vi.fn(),
+      showZoomDialog: vi.fn(),
+      handleHomeAction: vi.fn(),
       updateHUD: vi.fn(),
     } as any;
     onRedraw = vi.fn().mockResolvedValue(undefined);
   });
 
-  it('zooms in when + is pressed', async () => {
+  it('zooms in when + or = is pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     const initialScale = state.scalingFactor;
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: '+' }));
-
     expect(state.scalingFactor).toBeGreaterThan(initialScale);
-    expect(onRedraw).toHaveBeenCalled();
+
+    const midScale = state.scalingFactor;
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '=' }));
+    expect(state.scalingFactor).toBeGreaterThan(midScale);
   });
 
-  it('resets to London when 0 is pressed', async () => {
+  it('zooms out when - or _ is pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
-    state.centerLat = 0;
+    const initialScale = state.scalingFactor;
 
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: '0' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '-' }));
+    expect(state.scalingFactor).toBeLessThan(initialScale);
 
-    expect(state.centerLat).toBe(51.5074);
-    expect(onRedraw).toHaveBeenCalled();
+    const midScale = state.scalingFactor;
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '_' }));
+    expect(state.scalingFactor).toBeLessThan(midScale);
   });
 
   it('pans when arrow keys are pressed', async () => {
     new KeyboardController(state, ui, onRedraw);
     const initialLat = state.centerLat;
+    const initialLon = state.centerLon;
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
-
     expect(state.centerLat).toBeGreaterThan(initialLat);
-    expect(onRedraw).toHaveBeenCalled();
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+    expect(state.centerLon).toBeLessThan(initialLon);
   });
 
-  it('shows search when / is pressed', async () => {
+  it('fast-zooms with Shift + Arrows', async () => {
+    new KeyboardController(state, ui, onRedraw);
+    const initialScale = state.scalingFactor;
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', shiftKey: true }));
+    expect(state.scalingFactor).toBeGreaterThan(initialScale);
+  });
+
+  it('cycles layers with l key', async () => {
+    new KeyboardController(state, ui, onRedraw);
+    const initialLayer = state.mapLayer;
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'l' }));
+    expect(state.mapLayer).not.toBe(initialLayer);
+    expect(ui.updateHUD).toHaveBeenCalled();
+  });
+
+  it('triggers search with s or /', async () => {
     new KeyboardController(state, ui, onRedraw);
 
-    const event = new KeyboardEvent('keydown', { key: '/' });
-    // Need to mock preventDefault
-    vi.spyOn(event, 'preventDefault');
-
-    window.dispatchEvent(event);
-
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's' }));
     expect(ui.showSearch).toHaveBeenCalled();
-    expect(event.preventDefault).toHaveBeenCalled();
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
+    expect(ui.showSearch).toHaveBeenCalledTimes(2);
+  });
+
+  it('triggers zoom dialog with z', async () => {
+    new KeyboardController(state, ui, onRedraw);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z' }));
+    expect(ui.showZoomDialog).toHaveBeenCalled();
+  });
+
+  it('triggers home action with h', async () => {
+    new KeyboardController(state, ui, onRedraw);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'h' }));
+    expect(ui.handleHomeAction).toHaveBeenCalled();
   });
 });

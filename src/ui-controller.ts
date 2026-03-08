@@ -229,7 +229,9 @@ export class UIController {
     items.forEach((item, idx) => {
       if (idx === this.selectedSearchIndex) {
         item.classList.add('selected');
-        item.scrollIntoView({ block: 'nearest' });
+        if (typeof item.scrollIntoView === 'function') {
+          item.scrollIntoView({ block: 'nearest' });
+        }
       } else {
         item.classList.remove('selected');
       }
