@@ -43,18 +43,23 @@
     justify-content: center;
   }
 
+  /* Map Canvases fill entire window */
   #map-canvas, #webgl-canvas {
-    /* clip-path removed to fill entire pane */
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
   }
 
+  /* The 50% Opacity Mask with a clear hole in the center */
   #stage::after {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    /* Create a radial mask: transparent in center, dimmed at edges */
-    background: radial-gradient(circle at 50% 50%, transparent 38%, rgba(2, 6, 23, 0.7) 38.5%);
+    /* 50% opacity background with a sharp 0% opacity circle in center */
+    background: radial-gradient(circle 228px at 50% 50%, transparent 100%, rgba(2, 6, 23, 0.5) 100%);
     pointer-events: none;
-    z-index: 2; /* Between map and HUD */
+    z-index: 2;
   }
 
   svg {
@@ -63,7 +68,7 @@
     max-width: 95vmin;
     max-height: 95vmin;
     background: transparent;
-    z-index: 1;
+    z-index: 3; /* Above the mask */
   }
 
   /* HUD Styling */
@@ -193,8 +198,8 @@
 </head>
 <body>
   <div id="stage">
-    <canvas id="map-canvas" width="600" height="600" style="position: absolute; width: 95vmin; height: 95vmin; pointer-events: none; border-radius: 50%;"></canvas>
-    <canvas id="webgl-canvas" width="600" height="600" style="position: absolute; width: 95vmin; height: 95vmin; pointer-events: none; border-radius: 50%; display: none;"></canvas>
+    <canvas id="map-canvas" width="600" height="600" style="border-radius: 50%;"></canvas>
+    <canvas id="webgl-canvas" width="600" height="600" style="border-radius: 50%; display: none;"></canvas>
     
     <!-- Top HUD -->
     <div id="hud-top" class="hud">
