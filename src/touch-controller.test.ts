@@ -11,7 +11,7 @@ describe('TouchController', () => {
   let onUpdate: any;
 
   beforeEach(() => {
-    state = new AppState();
+    state = new AppState(AppState.loadInitialState());
     element = document.createElement('div');
     onUpdate = vi.fn().mockResolvedValue(undefined);
   });

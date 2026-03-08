@@ -12,10 +12,11 @@ describe('KeyboardController', () => {
   let onRedraw: () => Promise<void>;
 
   beforeEach(() => {
-    state = new AppState();
+    state = new AppState(AppState.loadInitialState());
     ui = {
       showSearch: vi.fn(),
       showZoomDialog: vi.fn(),
+      toggleHelpDialog: vi.fn(),
       handleHomeAction: vi.fn(),
       updateHUD: vi.fn(),
     } as any;
@@ -95,5 +96,11 @@ describe('KeyboardController', () => {
     new KeyboardController(state, ui, onRedraw);
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'h' }));
     expect(ui.handleHomeAction).toHaveBeenCalled();
+  });
+
+  it('toggles help with ?', async () => {
+    new KeyboardController(state, ui, onRedraw);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
+    expect(ui.toggleHelpDialog).toHaveBeenCalled();
   });
 });
