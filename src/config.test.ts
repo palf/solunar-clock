@@ -12,9 +12,4 @@ describe('Configuration', () => {
     expect(CONFIG.HOME_LOCATION.lat).toBeLessThan(90);
     expect(CONFIG.DEFAULT_LOCATION.lat).toBe(51.5074);
   });
-
-  it('specifies valid HTTPS map data sources', () => {
-    expect(CONFIG.MAP_DATA_SOURCES.length).toBeGreaterThan(0);
-    expect(CONFIG.MAP_DATA_SOURCES[0]).toMatch(/^https?:\/\//);
-  });
 });

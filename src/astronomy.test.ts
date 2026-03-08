@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateSunPosition, calculateMoonPosition } from './astronomy';
+import { calculateSunPosition, calculateMoonPosition, normalizeLongitude } from './astronomy';
 
 describe('Astronomy Calculations', () => {
   it('calculates the sun position correctly for a known date', () => {
@@ -52,6 +52,15 @@ describe('Astronomy Calculations', () => {
       expect(p[0]).toBeGreaterThanOrEqual(-180);
       expect(p[0]).toBeLessThanOrEqual(180);
     });
+  });
+
+  it('correctly normalizes longitude across multiple revolutions', () => {
+    expect(normalizeLongitude(1000)).toBeCloseTo(-80, 1);
+    expect(normalizeLongitude(-1000)).toBeCloseTo(80, 1);
+    // 180 and -180 are the same meridian. Our formula returns -180.
+    expect(normalizeLongitude(180)).toBe(-180);
+    expect(normalizeLongitude(-180)).toBe(-180);
+    expect(normalizeLongitude(360)).toBe(0);
   });
 
   it('calculates distinct positions for the sun and moon', () => {
