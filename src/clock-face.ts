@@ -16,19 +16,6 @@ export class ClockFace {
   ) {}
 
   /**
-   * Define a circular mask for the map
-   */
-  drawMask(defs: d3.Selection<SVGDefsElement, unknown, HTMLElement, any>): void {
-    defs
-      .append('clipPath')
-      .attr('id', 'clock-mask')
-      .append('circle')
-      .attr('cx', this.centerX)
-      .attr('cy', this.centerY)
-      .attr('r', this.radius);
-  }
-
-  /**
    * Draw the background circle and rim
    * Note: Background should be drawn first, but should not cover the map
    */
@@ -61,8 +48,10 @@ export class ClockFace {
     for (let i = 0; i < CONFIG.COMPASS_POINTS_COUNT; i++) {
       const angDeg = i * CONFIG.COMPASS_INTERVAL_DEG;
       const theta = (angDeg * Math.PI) / 180;
-      const tx = this.centerX + (this.radius + CONFIG.LABEL_SPACING) * Math.sin(theta);
-      const ty = this.centerY - (this.radius + CONFIG.LABEL_SPACING) * Math.cos(theta);
+      const tx =
+        this.centerX + (this.radius + CONFIG.LABEL_SPACING) * Math.sin(theta);
+      const ty =
+        this.centerY - (this.radius + CONFIG.LABEL_SPACING) * Math.cos(theta);
 
       labelsGroup
         .append('text')

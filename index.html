@@ -44,7 +44,17 @@
   }
 
   #map-canvas, #webgl-canvas {
-    clip-path: circle(38% at 50% 50%);
+    /* clip-path removed to fill entire pane */
+  }
+
+  #stage::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* Create a radial mask: transparent in center, dimmed at edges */
+    background: radial-gradient(circle at 50% 50%, transparent 38%, rgba(2, 6, 23, 0.7) 38.5%);
+    pointer-events: none;
+    z-index: 2; /* Between map and HUD */
   }
 
   svg {

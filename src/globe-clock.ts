@@ -64,10 +64,6 @@ import { UIController } from './ui-controller';
     state.radius
   );
 
-  const defs = svg.append<SVGDefsElement>('defs');
-  clockFace.drawMask(defs);
-  mapG.attr('clip-path', 'url(#clock-mask)');
-
   // 4. Rendering Lifecycle Management
   let isRendering = false;
   let needsRedraw = false;
