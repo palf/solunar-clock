@@ -72,7 +72,7 @@ export class KeyboardController {
         break;
       case '?':
         e.preventDefault();
-        this.ui.showHelpDialog();
+        this.ui.toggleHelpDialog();
         break;
       case 'z':
         e.preventDefault();

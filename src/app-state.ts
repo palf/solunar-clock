@@ -27,7 +27,7 @@ export class AppState {
   timeSpeedMultiplier: number = CONFIG.DEFAULT_TIME_SPEED;
 
   // Map Layer
-  mapLayer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS' = 'TOPOGRAPHIC';
+  mapLayer: 'STREETS' | 'TOPOGRAPHIC' | 'IMAGERY' = 'STREETS';
   renderMode: '2D' | '3D' = '3D'; // 2D = Canvas Quad Grid, 3D = WebGL Vertex Warp
 
   // Dynamic Home Location
@@ -68,7 +68,10 @@ export class AppState {
   }
   set centerLat(val: number) {
     if (Number.isFinite(val)) {
-      this._centerLat = Math.max(-CONFIG.MAX_LATITUDE, Math.min(CONFIG.MAX_LATITUDE, val));
+      this._centerLat = Math.max(
+        -CONFIG.MAX_LATITUDE,
+        Math.min(CONFIG.MAX_LATITUDE, val)
+      );
     }
   }
   set centerLon(val: number) {
@@ -85,7 +88,7 @@ export class AppState {
   // ========================================================================
 
   /**
-   * Load all persistent state (home and zoom)
+   * Load all persistent state (home, zoom, layer)
    */
   private loadState(): void {
     if (typeof localStorage === 'undefined') return;
@@ -108,6 +111,12 @@ export class AppState {
           this._scalingFactor = val;
         }
       }
+
+      // Load Layer
+      const storedLayer = localStorage.getItem('solunar-clock-layer');
+      if (storedLayer === 'STREETS' || storedLayer === 'TOPOGRAPHIC' || storedLayer === 'IMAGERY') {
+        this.mapLayer = storedLayer;
+      }
     } catch (e) {
       console.warn('Failed to load state from storage', e);
     }
@@ -119,12 +128,16 @@ export class AppState {
   private saveState(): void {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem('solunar-clock-zoom', this._scalingFactor.toString());
+    localStorage.setItem('solunar-clock-layer', this.mapLayer);
   }
 
   setHome(): void {
     this._homeLocation = { lat: this._centerLat, lon: this._centerLon };
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('solunar-clock-home', JSON.stringify(this._homeLocation));
+      localStorage.setItem(
+        'solunar-clock-home',
+        JSON.stringify(this._homeLocation)
+      );
     }
   }
 
@@ -161,7 +174,10 @@ export class AppState {
     if (!Number.isFinite(multiplier)) return;
     const minScale = CONFIG.MIN_SCALING_FACTOR;
     const maxScale = CONFIG.MAX_SCALING_FACTOR;
-    this.scalingFactor = Math.max(minScale, Math.min(maxScale, this._scalingFactor * multiplier));
+    this.scalingFactor = Math.max(
+      minScale,
+      Math.min(maxScale, this._scalingFactor * multiplier)
+    );
   }
 
   /**
@@ -177,8 +193,13 @@ export class AppState {
    * Cycle through map layers
    */
   cycleLayer(): void {
-    const layers: ('TOPOGRAPHIC' | 'IMAGERY' | 'STREETS')[] = ['TOPOGRAPHIC', 'IMAGERY', 'STREETS'];
+    const layers: ('STREETS' | 'TOPOGRAPHIC' | 'IMAGERY')[] = [
+      'STREETS',
+      'TOPOGRAPHIC',
+      'IMAGERY',
+    ];
     const idx = layers.indexOf(this.mapLayer);
     this.mapLayer = layers[(idx + 1) % layers.length];
+    this.saveState(); // Persist layer change
   }
 }

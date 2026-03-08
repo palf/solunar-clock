@@ -16,9 +16,9 @@ describe('AppState', () => {
     expect(state.scale).toBe(initialScale * 2);
   });
 
-  it('defaults to TOPOGRAPHIC layer', () => {
+  it('defaults to STREETS layer', () => {
     const state = new AppState();
-    expect(state.mapLayer).toBe('TOPOGRAPHIC');
+    expect(state.mapLayer).toBe('STREETS');
   });
 
   describe('NaN and Infinity guards', () => {
