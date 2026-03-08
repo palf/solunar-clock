@@ -26,6 +26,7 @@ export const CONFIG = {
   RIM_WIDTH: 8, // Width of the outer rim
   CENTER_MARK_RADIUS: 6,
   CENTER_MARK_COLOR: '#222222',
+  ARM_WIDTH: 2,
 
   // HUD Colors
   COLOR_ACTIVE: '#4ade80',
@@ -42,12 +43,14 @@ export const CONFIG = {
   SUN_RAY_COUNT: 8,
   SUN_RAY_START: -12,
   SUN_RAY_END: -16,
+  SUN_STROKE_WIDTH: 2,
 
   // Moon Aesthetics
   MOON_COLOR_PRIMARY: '#f1f5f9',
   MOON_COLOR_SECONDARY: '#38bdf8',
   MOON_ARM_COLOR: 'rgba(56, 189, 248, 0.3)',
   MOON_PATH: 'M -6 -8 A 10 10 0 1 1 -6 8 A 8 8 0 1 0 -6 -8',
+  MOON_STROKE_WIDTH: 1,
 
   // Performance
   UPDATE_INTERVAL_MS: asMilliseconds(1000), // 1Hz update for RPi Zero
@@ -73,15 +76,18 @@ export const CONFIG = {
   ZOOM_DISPLAY_MULTIPLIER: 10,
   MIN_ZOOM_INPUT: 0.05,
   HOME_TOLERANCE: 0.0001,
+  NOMINATIM_API_URL: 'https://nominatim.openstreetmap.org/search',
 
   // Keyboard Shortcuts
   KEYBOARD_ZOOM_FACTOR: 1.1,
-  KEYBOARD_PAN_SENSITIVITY: 10, // Normalization divisor for pan step
+  KEYBOARD_PAN_SENSITIVITY: 10,
+  SHIFT_MULTIPLIER: 10,
 
   // Touch & Wheel Interaction
   WHEEL_ZOOM_FACTOR: 1.1,
   TOUCH_PAN_SENSITIVITY: 0.1,
   TOUCH_PAN_DIVISOR: 10,
+  TOUCH_MIN_SCALE: 1,
 
   // Data
   MAP_DATA_SOURCES: [
@@ -90,4 +96,12 @@ export const CONFIG = {
     'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson',
     'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/world/110m.json',
   ],
+
+  // Rendering Colors
+  COLOR_MAP_BG: '#0f172a',
+  COLOR_EMPTY_SPACE: '#0d1729', // WebGL clear color
+
+  // Tile Subdivision
+  TILE_SUBDIVISIONS_2D: 4,
+  TILE_SUBDIVISIONS_3D: 8,
 };

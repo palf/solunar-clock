@@ -170,7 +170,7 @@ async function bootstrap() {
     .attr('x2', 0)
     .attr('y2', -state.radius)
     .attr('stroke', CONFIG.SUN_ARM_COLOR)
-    .attr('stroke-width', 2);
+    .attr('stroke-width', CONFIG.ARM_WIDTH);
 
   const sunIcon = sunHandGroup
     .append('g')
@@ -190,7 +190,7 @@ async function bootstrap() {
       .attr('x2', 0)
       .attr('y2', CONFIG.SUN_RAY_END)
       .attr('stroke', CONFIG.SUN_COLOR_PRIMARY)
-      .attr('stroke-width', 2)
+      .attr('stroke-width', CONFIG.SUN_STROKE_WIDTH)
       .attr('transform', `rotate(${i * (360 / CONFIG.SUN_RAY_COUNT)})`);
   }
 
@@ -205,7 +205,7 @@ async function bootstrap() {
     .attr('x2', 0)
     .attr('y2', -state.radius)
     .attr('stroke', CONFIG.MOON_ARM_COLOR)
-    .attr('stroke-width', 2);
+    .attr('stroke-width', CONFIG.ARM_WIDTH);
 
   const moonIcon = moonHandGroup
     .append('g')
@@ -216,7 +216,7 @@ async function bootstrap() {
     .attr('d', CONFIG.MOON_PATH)
     .attr('fill', CONFIG.MOON_COLOR_PRIMARY)
     .attr('stroke', CONFIG.MOON_COLOR_SECONDARY)
-    .attr('stroke-width', 1);
+    .attr('stroke-width', CONFIG.MOON_STROKE_WIDTH);
 
   // 5. Initialize Controllers
   const ui = new UIController(state, redrawMap);

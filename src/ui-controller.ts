@@ -360,7 +360,7 @@ export class UIController {
   private async performSearch(query: string): Promise<void> {
     try {
       const resp = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        `${CONFIG.NOMINATIM_API_URL}?format=json&q=${encodeURIComponent(
           query
         )}&limit=${CONFIG.SEARCH_RESULT_LIMIT}`
       );

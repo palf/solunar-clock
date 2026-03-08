@@ -54,9 +54,8 @@ export class TileRenderer {
     private projection: Projection
   ) {
     this.ctx2d = canvas2d.getContext('2d', { alpha: false });
-    // Using hardcoded internal dimensions (600x600)
-    this.backCanvas.width = 600;
-    this.backCanvas.height = 600;
+    this.backCanvas.width = CONFIG.INTERNAL_WIDTH;
+    this.backCanvas.height = CONFIG.INTERNAL_HEIGHT;
     this.initWebGL();
   }
 
@@ -81,7 +80,7 @@ export class TileRenderer {
 
     // Clear back buffer
     this.backCtx.setTransform(1, 0, 0, 1, 0, 0);
-    this.backCtx.fillStyle = '#0f172a';
+    this.backCtx.fillStyle = CONFIG.COLOR_MAP_BG;
     this.backCtx.fillRect(0, 0, this.backCanvas.width, this.backCanvas.height);
 
     const center = this.projection.getCenter();
@@ -123,7 +122,7 @@ export class TileRenderer {
   }
 
   private renderTile2D(tx: number, ty: number, z: number, img: HTMLImageElement): void {
-    const subdivisions = 4;
+    const subdivisions = CONFIG.TILE_SUBDIVISIONS_2D;
     const step = 1 / subdivisions;
     const tileSize = TileRenderer.TILE_SIZE_PX;
     for (let i = 0; i < subdivisions; i++) {
@@ -182,7 +181,7 @@ export class TileRenderer {
         if (abs(c) > 0.0001) k = c / sin(c);
         float x = u_scale * k * cos(lat) * sin(dLon);
         float y = u_scale * k * (cos(lat0) * sin(lat) - sin(lat0) * cos(lat) * cos(dLon));
-        gl_Position = vec4(x / 300.0, y / 300.0, 0, 1);
+        gl_Position = vec4(x / ${CONFIG.INTERNAL_CENTER_X.toFixed(1)}, y / ${CONFIG.INTERNAL_CENTER_Y.toFixed(1)}, 0, 1);
       }
     `;
 
@@ -214,8 +213,13 @@ export class TileRenderer {
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    // Dark slate background for empty areas
-    gl.clearColor(0.05, 0.09, 0.16, 1.0);
+    // Empty area color
+    const color = CONFIG.COLOR_EMPTY_SPACE;
+    // Simple hex to normalized rgb
+    const r = parseInt(color.slice(1, 3), 16) / 255;
+    const g = parseInt(color.slice(3, 5), 16) / 255;
+    const b = parseInt(color.slice(5, 7), 16) / 255;
+    gl.clearColor(r, g, b, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.useProgram(this.program);
@@ -242,7 +246,7 @@ export class TileRenderer {
 
   private drawTile3D(tx: number, ty: number, z: number, img: HTMLImageElement): void {
     const gl = this.gl!;
-    const subdivisions = 8;
+    const subdivisions = CONFIG.TILE_SUBDIVISIONS_3D;
     const step = 1 / subdivisions;
     const vertices: number[] = [];
 

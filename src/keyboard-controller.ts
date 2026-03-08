@@ -23,7 +23,7 @@ export class KeyboardController {
     // Ignore if typing in search
     if (e.target instanceof HTMLInputElement) return;
 
-    const baseStep = e.shiftKey ? 10 : 1;
+    const baseStep = e.shiftKey ? CONFIG.SHIFT_MULTIPLIER : 1;
     const normalizedStep = baseStep / (this.state.scalingFactor / CONFIG.KEYBOARD_PAN_SENSITIVITY);
 
     switch (e.key) {
