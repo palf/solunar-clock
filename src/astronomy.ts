@@ -6,6 +6,32 @@
 import { CONFIG } from './config';
 import type { GeoCoordinates } from './types';
 
+// Non-configurable mathematical constants for astronomical series
+const ASTRONOMY_CONSTANTS = {
+  // Sun Constants
+  SUN_MEAN_LON_BASE: 280.459,
+  SUN_MEAN_LON_RATE: 0.98564736,
+  SUN_MEAN_ANOM_BASE: 357.529,
+  SUN_MEAN_ANOM_RATE: 0.98560028,
+  SUN_ECLIPTIC_LON_C1: 1.915,
+  SUN_ECLIPTIC_LON_C2: 0.02,
+
+  // Moon Constants (Simplified Series)
+  MOON_MEAN_LON_BASE: 218.316,
+  MOON_MEAN_LON_RATE: 13.176396,
+  MOON_MEAN_ANOM_BASE: 134.963,
+  MOON_MEAN_ANOM_RATE: 13.064993,
+  MOON_MEAN_ELON_BASE: 297.85,
+  MOON_MEAN_ELON_RATE: 12.190749,
+  MOON_ECLIPTIC_LON_C1: 6.289,
+  MOON_ECLIPTIC_LON_C2: 1.274,
+  MOON_ECLIPTIC_LAT_C1: 5.128,
+
+  // General Earth
+  ECLIPTIC_OBLIQUITY_BASE: 23.439,
+  ECLIPTIC_OBLIQUITY_RATE: 0.0000004,
+};
+
 /**
  * Standard angle normalization to [0, 360) range.
  */
@@ -32,7 +58,8 @@ function daysSinceJ2000(date: Date): number {
  * Calculate the current obliquity of the ecliptic.
  */
 function getEclipticObliquity(n: number): number {
-  const { ECLIPTIC_OBLIQUITY_BASE, ECLIPTIC_OBLIQUITY_RATE } = CONFIG.ASTRONOMY;
+  const { ECLIPTIC_OBLIQUITY_BASE, ECLIPTIC_OBLIQUITY_RATE } =
+    ASTRONOMY_CONSTANTS;
   return (ECLIPTIC_OBLIQUITY_BASE - ECLIPTIC_OBLIQUITY_RATE * n) * (Math.PI / 180);
 }
 
@@ -42,7 +69,7 @@ function getEclipticObliquity(n: number): number {
  */
 export function calculateSunPosition(date: Date): GeoCoordinates {
   const n = daysSinceJ2000(date);
-  const ast = CONFIG.ASTRONOMY;
+  const ast = ASTRONOMY_CONSTANTS;
 
   // 1. Mean longitude and anomaly
   const q = normalizeAngle(ast.SUN_MEAN_LON_BASE + ast.SUN_MEAN_LON_RATE * n);
@@ -50,21 +77,27 @@ export function calculateSunPosition(date: Date): GeoCoordinates {
   const gRad = g * (Math.PI / 180);
 
   // 2. Ecliptic longitude
-  const L = q + ast.SUN_ECLIPTIC_LON_C1 * Math.sin(gRad) + ast.SUN_ECLIPTIC_LON_C2 * Math.sin(2 * gRad);
+  const L =
+    q +
+    ast.SUN_ECLIPTIC_LON_C1 * Math.sin(gRad) +
+    ast.SUN_ECLIPTIC_LON_C2 * Math.sin(2 * gRad);
   const LRad = L * (Math.PI / 180);
 
   // 3. Obliquity
   const epsilonRad = getEclipticObliquity(n);
 
   // 4. Coordinates
-  const alpha = (Math.atan2(Math.cos(epsilonRad) * Math.sin(LRad), Math.cos(LRad)) * 180) / Math.PI;
+  const alpha =
+    (Math.atan2(Math.cos(epsilonRad) * Math.sin(LRad), Math.cos(LRad)) * 180) /
+    Math.PI;
   const delta = Math.asin(Math.sin(epsilonRad) * Math.sin(LRad));
 
   // Latitude is direct declination
   const sunLat = (delta * 180) / Math.PI;
 
   // 5. Longitude (Greenwich Hour Angle)
-  const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+  const utcHours =
+    date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
   const eot = q - alpha;
   const gha = normalizeAngle(15 * (utcHours - 12) + eot);
   const sunLon = normalizeLongitude(-gha);
@@ -78,18 +111,21 @@ export function calculateSunPosition(date: Date): GeoCoordinates {
  */
 export function calculateMoonPosition(date: Date): GeoCoordinates {
   const n = daysSinceJ2000(date);
-  const ast = CONFIG.ASTRONOMY;
+  const ast = ASTRONOMY_CONSTANTS;
 
   // 1. Mean lunar elements
   const Lm = normalizeAngle(ast.MOON_MEAN_LON_BASE + ast.MOON_MEAN_LON_RATE * n);
   const Mm = normalizeAngle(ast.MOON_MEAN_ANOM_BASE + ast.MOON_MEAN_ANOM_RATE * n);
   const D = normalizeAngle(ast.MOON_MEAN_ELON_BASE + ast.MOON_MEAN_ELON_RATE * n);
-  
+
   const MmRad = Mm * (Math.PI / 180);
   const DRad = D * (Math.PI / 180);
 
   // 2. Simplified Ecliptic Coordinates
-  const lambdaM = Lm + ast.MOON_ECLIPTIC_LON_C1 * Math.sin(MmRad) + ast.MOON_ECLIPTIC_LON_C2 * Math.sin(2 * DRad - MmRad);
+  const lambdaM =
+    Lm +
+    ast.MOON_ECLIPTIC_LON_C1 * Math.sin(MmRad) +
+    ast.MOON_ECLIPTIC_LON_C2 * Math.sin(2 * DRad - MmRad);
   const lambdaMRad = lambdaM * (Math.PI / 180);
 
   const betaM = ast.MOON_ECLIPTIC_LAT_C1 * Math.sin(DRad);
@@ -100,7 +136,8 @@ export function calculateMoonPosition(date: Date): GeoCoordinates {
 
   // 4. Equatorial conversion
   const alphaM = Math.atan2(
-    Math.cos(epsilonRad) * Math.sin(lambdaMRad) - Math.tan(betaMRad) * Math.sin(epsilonRad),
+    Math.cos(epsilonRad) * Math.sin(lambdaMRad) -
+      Math.tan(betaMRad) * Math.sin(epsilonRad),
     Math.cos(lambdaMRad)
   );
   const deltaM = Math.asin(
@@ -111,7 +148,8 @@ export function calculateMoonPosition(date: Date): GeoCoordinates {
   const moonLat = (deltaM * 180) / Math.PI;
 
   // 5. Longitude
-  const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+  const utcHours =
+    date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
   const gha = normalizeAngle(15 * utcHours - (alphaM * 180) / Math.PI);
   const moonLon = normalizeLongitude(-gha);
 
