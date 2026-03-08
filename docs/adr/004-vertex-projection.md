@@ -16,5 +16,6 @@ We will use **Hardware-Accelerated Vertex Projection** for all 3D rendering.
 ## Consequences
 *   **Pixel Perfection:** Curvature is smooth and mathematically exact at all zoom levels, including the 3000x neighborhood view.
 *   **Zero Artifacts:** By removing the `clip()` calls and diagonal triangle seams, the map is visually solid without any "leaking" background colors.
+*   **Reliable Initialization:** Resolved the "empty map on startup" issue by using `preserveDrawingBuffer: true` and a strictly sequential async rendering loop. This ensures WebGL content is persisted while waiting for new tile images to load from the network.
 *   **Performance:** Offloading the sines, cosines, and square roots to the GPU's vertex units significantly reduces the load on the RPi Zero's single CPU core.
 *   **Consistency:** The `3D` mode now perfectly matches the orientation and movement directions of the `2D` and SVG layers.

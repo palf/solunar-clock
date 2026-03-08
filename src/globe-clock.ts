@@ -61,6 +61,7 @@ import { UIController } from './ui-controller';
   // 3. Rendering Lifecycle Management
   let isRendering = false;
   let needsRedraw = false;
+  let isInitialRender = true;
 
   // Dirty check variables to stop 1Hz "blips"
   let lastLat = -999;
@@ -70,7 +71,9 @@ import { UIController } from './ui-controller';
   let lastMode = '';
 
   const redrawMap = async () => {
+    // Check if anything geographic actually changed
     const isDirty = 
+      isInitialRender ||
       state.centerLat !== lastLat || 
       state.centerLon !== lastLon || 
       state.scale !== lastScale || 
@@ -85,6 +88,9 @@ import { UIController } from './ui-controller';
     }
 
     isRendering = true;
+    isInitialRender = false;
+    
+    // Update trackers
     lastLat = state.centerLat;
     lastLon = state.centerLon;
     lastScale = state.scale;
@@ -175,7 +181,7 @@ import { UIController } from './ui-controller';
   // 6. Bootstrap Application
   state.mapData = await mapRenderer.loadMapData();
 
-  // Redraw once map data is in
+  // Initial draw
   await redrawMap();
 
   // 7. Start Tick Loop (1Hz for RPi Zero) - Only update time text and hands

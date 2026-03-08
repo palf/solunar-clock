@@ -22,6 +22,7 @@ export class TileRenderer {
   private program: WebGLProgram | null = null;
   private vertexBuffer: WebGLBuffer | null = null;
 
+  // Double buffering for 2D to stop flickering
   private backCanvas = document.createElement('canvas');
   private backCtx = this.backCanvas.getContext('2d', { alpha: false });
 
@@ -51,8 +52,14 @@ export class TileRenderer {
     }
   }
 
+  // ========================================================================
+  // 2D RENDERING
+  // ========================================================================
+
   private async render2D(layer: 'TOPOGRAPHIC' | 'IMAGERY' | 'STREETS'): Promise<void> {
     if (!this.ctx2d || !this.backCtx) return;
+
+    // Clear back buffer
     this.backCtx.setTransform(1, 0, 0, 1, 0, 0);
     this.backCtx.fillStyle = '#0f172a';
     this.backCtx.fillRect(0, 0, this.backCanvas.width, this.backCanvas.height);
@@ -69,15 +76,22 @@ export class TileRenderer {
     const range = CONFIG.TILE_FETCH_RANGE;
     const n = 2 ** z;
 
+    // Fetch and draw all quads to back buffer
+    const tiles: Promise<void>[] = [];
     for (let x = tx - range; x <= tx + range; x++) {
       for (let y = ty - range; y <= ty + range; y++) {
         const wx = ((x % n) + n) % n;
         if (y < 0 || y >= n) continue;
         const url = this.tileUrls[layer].replace('{z}', z.toString()).replace('{x}', wx.toString()).replace('{y}', y.toString());
-        const img = await this.getTileImage(url);
-        if (img) this.renderTile2D(wx, y, z, img);
+        tiles.push(this.getTileImage(url).then(img => {
+          if (img) this.renderTile2D(wx, y, z, img);
+        }));
       }
     }
+    
+    await Promise.all(tiles);
+
+    // Atomic Swap
     this.ctx2d.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx2d.drawImage(this.backCanvas, 0, 0);
   }
@@ -95,8 +109,16 @@ export class TileRenderer {
     }
   }
 
+  // ========================================================================
+  // 3D RENDERING
+  // ========================================================================
+
   private initWebGL(): void {
-    this.gl = this.canvas3d.getContext('webgl', { alpha: false, antialias: true });
+    this.gl = this.canvas3d.getContext('webgl', { 
+      alpha: false, 
+      antialias: true,
+      preserveDrawingBuffer: true 
+    });
     if (!this.gl) return;
 
     const vs = `
@@ -153,6 +175,9 @@ export class TileRenderer {
     const ty = Math.floor(fTY);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    
+    // WebGL Double Buffering Strategy: 
+    // We clear ONLY once we know we are about to draw the new set
     gl.clearColor(0.05, 0.09, 0.16, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -163,6 +188,7 @@ export class TileRenderer {
     const range = CONFIG.TILE_FETCH_RANGE;
     const n = 2 ** z;
 
+    // Use sequential await to prevent CPU saturation on RPi
     for (let x = tx - range; x <= tx + range; x++) {
       for (let y = ty - range; y <= ty + range; y++) {
         const wx = ((x % n) + n) % n;
