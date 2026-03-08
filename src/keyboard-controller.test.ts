@@ -74,6 +74,7 @@ describe('KeyboardController', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'l' }));
     expect(state.mapLayer).not.toBe(initialLayer);
     expect(ui.updateHUD).toHaveBeenCalled();
+    expect(onRedraw).toHaveBeenCalled();
   });
 
   it('triggers search with s or /', async () => {

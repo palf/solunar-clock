@@ -64,6 +64,7 @@ export class KeyboardController {
       case 'l':
         this.state.cycleLayer();
         this.ui.updateHUD(new Date()); // Immediate HUD refresh for layer
+        await this.onRedraw();
         break;
       case '/':
       case 's':
