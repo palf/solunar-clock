@@ -31,6 +31,11 @@ export const CONFIG = {
     lon: -1.3451,
   },
 
+  DEFAULT_LOCATION: {
+    lat: 51.5074,
+    lon: -0.1278,
+  },
+
   // UI Behavior
   ANIMATION_DURATION_MS: 800,
   ANIMATION_STEP_MS: 50,

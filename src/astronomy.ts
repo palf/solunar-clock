@@ -2,8 +2,12 @@
  * Astronomical calculations for sun and moon positions.
  * 
  * The constants and algorithms below are derived from the "Low-precision series" 
- * for solar and lunar positions, as documented by the Astronomical Almanac 
- * and Jean Meeus's "Astronomical Algorithms".
+ * for solar and lunar positions.
+ * 
+ * Sources:
+ * - Solar: USNO "Low Precision Solar Position" (https://aa.usno.navy.mil/faq/sun_approx)
+ * - Lunar: USNO "Low Precision Lunar Position" (https://aa.usno.navy.mil/faq/moon_approx)
+ * - General: Jean Meeus, "Astronomical Algorithms", 2nd Ed.
  * 
  * All values are referenced against the J2000.0 Epoch (January 1, 2000, 12:00 UTC).
  */
@@ -14,94 +18,99 @@ import type { GeoCoordinates } from './types';
 const ASTRONOMY_CONSTANTS = {
   /**
    * J2000_EPOCH: The standard astronomical epoch (January 1, 2000, 12:00 UTC).
+   * Ref: https://en.wikipedia.org/wiki/Epoch_(astronomy)#J2000.0
    */
   J2000_EPOCH: new Date('2000-01-01T12:00:00Z'),
 
   /**
-   * SUN_MEAN_LON_BASE: The mean longitude of the Sun at the J2000.0 epoch.
-   * Value (280.459°) represents the geometric mean longitude.
+   * SUN_MEAN_LON_BASE: Geometric mean longitude of the Sun.
+   * Ref: USNO (L = 280.460 + 0.9856474 * n)
    */
   SUN_MEAN_LON_BASE: 280.459,
 
   /**
-   * SUN_MEAN_LON_RATE: The average speed of the Sun's mean longitude.
-   * Approximately 0.9856° per day (360° / 365.25 days).
+   * SUN_MEAN_LON_RATE: Mean daily movement of the Sun.
+   * Ref: USNO (0.9856474°/day)
    */
   SUN_MEAN_LON_RATE: 0.98564736,
 
   /**
-   * SUN_MEAN_ANOM_BASE: The mean anomaly of the Sun at the J2000.0 epoch.
-   * Value (357.529°) defines the Sun's position relative to its perigee.
+   * SUN_MEAN_ANOM_BASE: Mean anomaly of the Sun.
+   * Ref: USNO (g = 357.528 + 0.9856003 * n)
    */
   SUN_MEAN_ANOM_BASE: 357.529,
 
   /**
-   * SUN_MEAN_ANOM_RATE: The daily increase in the Sun's mean anomaly.
+   * SUN_MEAN_ANOM_RATE: Daily increase in mean anomaly.
+   * Ref: USNO (0.9856003°/day)
    */
   SUN_MEAN_ANOM_RATE: 0.98560028,
 
   /**
-   * SUN_ECLIPTIC_LON_C1 & C2: Coefficients for the "Equation of the Center".
-   * These correct the mean longitude to the apparent ecliptic longitude,
-   * accounting for the Earth's elliptical orbit.
+   * SUN_ECLIPTIC_LON_C1 & C2: Coefficients for the Equation of Center.
+   * Ref: USNO (lambda = L + 1.915 sin g + 0.020 sin 2g)
    */
   SUN_ECLIPTIC_LON_C1: 1.915,
   SUN_ECLIPTIC_LON_C2: 0.02,
 
   /**
-   * MOON_MEAN_LON_BASE: The mean longitude of the Moon at J2000.0.
-   * The Moon moves much faster, completing a circle in ~27.3 days.
+   * MOON_MEAN_LON_BASE: Mean longitude of the Moon.
+   * Ref: USNO (L' = 218.32 + 13.176396 * n)
    */
   MOON_MEAN_LON_BASE: 218.316,
 
   /**
-   * MOON_MEAN_LON_RATE: The average daily movement of the Moon's longitude (~13.17°).
+   * MOON_MEAN_LON_RATE: Mean daily movement of the Moon.
+   * Ref: USNO (13.176396°/day)
    */
   MOON_MEAN_LON_RATE: 13.176396,
 
   /**
-   * MOON_MEAN_ANOM_BASE: The Moon's mean anomaly at J2000.0.
+   * MOON_MEAN_ANOM_BASE: Mean anomaly of the Moon.
+   * Ref: USNO (M' = 134.96 + 13.064993 * n)
    */
   MOON_MEAN_ANOM_BASE: 134.963,
 
   /**
-   * MOON_MEAN_ANOM_RATE: The daily increase in the Moon's mean anomaly (~13.06°).
+   * MOON_MEAN_ANOM_RATE: Daily increase in mean lunar anomaly.
+   * Ref: USNO (13.064993°/day)
    */
   MOON_MEAN_ANOM_RATE: 13.064993,
 
   /**
-   * MOON_MEAN_ELON_BASE: The Moon's mean elongation at J2000.0.
-   * This is the angular distance between the Moon and the Sun.
+   * MOON_MEAN_ELON_BASE: Mean elongation of the Moon.
+   * Ref: USNO (D = 297.85 + 12.190749 * n)
    */
   MOON_MEAN_ELON_BASE: 297.85,
 
   /**
-   * MOON_MEAN_ELON_RATE: The daily change in elongation (~12.19°).
+   * MOON_MEAN_ELON_RATE: Daily change in lunar elongation.
+   * Ref: USNO (12.190749°/day)
    */
   MOON_MEAN_ELON_RATE: 12.190749,
 
   /**
-   * MOON_ECLIPTIC_LON_C1 & C2: Perturbation coefficients for the Moon's longitude.
-   * These account for the complex gravitational effects of the Sun and Earth.
+   * MOON_ECLIPTIC_LON_C1 & C2: Longitude perturbation coefficients.
+   * Ref: USNO (lambda' = L' + 6.29 sin M' + 1.27 sin(2D-M'))
    */
   MOON_ECLIPTIC_LON_C1: 6.289,
   MOON_ECLIPTIC_LON_C2: 1.274,
 
   /**
-   * MOON_ECLIPTIC_LAT_C1: Principal coefficient for the Moon's ecliptic latitude.
-   * Accounts for the ~5.1° tilt of the Moon's orbit relative to the ecliptic.
+   * MOON_ECLIPTIC_LAT_C1: Principal latitude coefficient.
+   * Ref: USNO (beta' = 5.13 sin F, F approx D)
    */
   MOON_ECLIPTIC_LAT_C1: 5.128,
 
   /**
-   * ECLIPTIC_OBLIQUITY_BASE: The tilt of the Earth's axis (obliquity) at J2000.0.
-   * Current value is approximately 23.439°.
+   * ECLIPTIC_OBLIQUITY_BASE: Mean obliquity of the ecliptic.
+   * Ref: USNO (epsilon = 23.439 - 0.0000004 * n)
    */
   ECLIPTIC_OBLIQUITY_BASE: 23.439,
 
   /**
-   * ECLIPTIC_OBLIQUITY_RATE: The very slow rate at which the Earth's tilt decreases.
-   * Approximately 0.0000004° per day.
+   * ECLIPTIC_OBLIQUITY_RATE: Daily rate of change in obliquity.
+   * Ref: USNO (0.0000004°/day)
    */
   ECLIPTIC_OBLIQUITY_RATE: 0.0000004,
 };
