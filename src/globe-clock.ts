@@ -192,7 +192,6 @@ import { UIController } from './ui-controller';
   clockFace.drawBackground(bgG);
   clockFace.drawHourLabels(staticG);
   clockFace.drawCenterMark(staticG);
-  clockFace.drawSlices(staticG);
 
   // 6. Bootstrap Application
   state.mapData = await mapRenderer.loadMapData();

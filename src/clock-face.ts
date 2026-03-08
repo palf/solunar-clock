@@ -55,38 +55,6 @@ export class ClockFace {
   }
 
   /**
-   * Draw hour slices
-   */
-  drawSlices(
-    slicesGroup: d3.Selection<SVGGElement, unknown, HTMLElement, any>
-  ): void {
-    for (let i = 0; i < CONFIG.SLICES; i++) {
-      const a1 = (i * 360) / CONFIG.SLICES - 360 / CONFIG.SLICES / 2;
-      const a2 = ((i + 1) * 360) / CONFIG.SLICES - 360 / CONFIG.SLICES / 2;
-      const p = d3.path();
-      p.moveTo(this.centerX, this.centerY);
-
-      const steps = CONFIG.SLICE_RESOLUTION;
-      for (let s = 0; s <= steps; s++) {
-        const t = a1 + (a2 - a1) * (s / steps);
-        const theta = (t * Math.PI) / 180;
-        const x = this.centerX + this.radius * Math.sin(theta);
-        const y = this.centerY - this.radius * Math.cos(theta);
-        p.lineTo(x, y);
-      }
-      p.closePath();
-
-      slicesGroup
-        .append('path')
-        .attr('d', p.toString())
-        .attr('class', `slice ${i % 2 ? 'alt' : ''}`)
-        .attr('stroke', '#000')
-        .attr('stroke-opacity', 0.06)
-        .attr('stroke-width', 1);
-    }
-  }
-
-  /**
    * Draw compass point labels (N, NE, E, SE, S, SW, W, NW)
    */
   drawHourLabels(

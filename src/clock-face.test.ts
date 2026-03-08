@@ -59,13 +59,4 @@ describe('ClockFace', () => {
     expect(group.append).toHaveBeenCalledWith('text');
     expect(group.append).toHaveBeenCalledTimes(8);
   });
-
-  it('draws hour slices', () => {
-    const clock = new ClockFace(svg, 240, 240, 200);
-    clock.drawSlices(group);
-
-    // Should draw 24 slices
-    expect(group.append).toHaveBeenCalledWith('path');
-    expect(group.append).toHaveBeenCalledTimes(24);
-  });
 });
