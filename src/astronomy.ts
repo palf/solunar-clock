@@ -13,11 +13,10 @@ function daysSinceJ2000(date: Date): number {
 }
 
 /**
- * Normalize longitude to [-180, 180] range using a mathematically robust formula
- * that handles any number of revolutions.
+ * Normalize longitude to [-180, 180] range.
  */
 export function normalizeLongitude(lon: number): number {
-  return ((((lon + 180) % 360) + 360) % 360) - 180;
+  return lon - 360 * Math.floor((lon + 180) / 360);
 }
 
 /**
