@@ -2,7 +2,16 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: solunar-clock
-  description: An Antarctic-centered globe clock with double-ended hour hand showing London time.
+  description: A high-precision solunar clock using azimuthal equidistant projection, optimized for Raspberry Pi Zero.
+  annotations:
+    github.com/project-slug: palf/solunar-clock
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - astronomy
+    - clock
+    - webgl
+    - raspberry-pi
+    - typescript
 spec:
   type: website
   lifecycle: experimental

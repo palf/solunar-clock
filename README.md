@@ -51,30 +51,3 @@ just type-check
 ## Configuration
 
 The application is highly tunable via `src/config.ts`. See [docs/CONFIG.md](./docs/CONFIG.md) for a full reference of available constants and their impact on performance/aesthetics.
-
-## Deployment on Raspberry Pi Zero
-
-**Note:** Chromium in kiosk mode is the recommended browser environment. Ensure the GL Driver (KMS or FKMS) is enabled in `raspi-config` to support WebGL hardware acceleration.
-
-### Recommended Kiosk Setup
-Use Chromium in kiosk mode with a lightweight window manager (e.g., `matchbox-window-manager`).
-
-1. **Install Dependencies:**
-   ```bash
-   sudo apt-get install chromium-browser matchbox-window-manager x11-xserver-utils
-   ```
-
-2. **Launch Script (`kiosk.sh`):**
-   ```bash
-   #!/bin/bash
-   xset -dpms
-   xset s off
-   xset s noblank
-   matchbox-window-manager -use_titlebar no &
-   # Ensure WebGL is forced on for VideoCore IV
-   chromium-browser --display=:0 --kiosk --incognito --ignore-gpu-blacklist --enable-webgl --window-position=0,0 --window-size=480,800 http://localhost:3000
-   ```
-
-## Future Roadmap
-
-As documented in **ADR 003**, the current TypeScript implementation serves as a reference engine. The final production version will be pivoted to **Rust**, targeting a standalone binary that talks directly to the DRM/KMS framebuffer, eliminating browser and X-server overhead entirely.
