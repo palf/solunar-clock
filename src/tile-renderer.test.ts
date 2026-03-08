@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Projection } from './projection';
 import { TileRenderer } from './tile-renderer';
+import { Projection } from './projection';
 
 describe('TileRenderer Math', () => {
   let canvas2d: HTMLCanvasElement;
@@ -22,7 +22,7 @@ describe('TileRenderer Math', () => {
     // London at Z=10
     // @ts-expect-error - accessing private for test
     const [x, y] = renderer.lonLatToTile(-0.1278, 51.5074, 10);
-
+    
     // Standard OSM tile for London at Z10 is 511/340
     expect(Math.floor(x)).toBe(511);
     expect(Math.floor(y)).toBe(340);
@@ -31,7 +31,7 @@ describe('TileRenderer Math', () => {
   it('converts tile coordinates to lon/lat correctly', () => {
     // @ts-expect-error - accessing private for test
     const [lon, lat] = renderer.tileToLonLat(511, 340, 10);
-
+    
     expect(lon).toBeCloseTo(-0.35, 1);
     expect(lat).toBeCloseTo(51.6, 1);
   });
@@ -41,7 +41,7 @@ describe('TileRenderer Math', () => {
     const [_, yNorth] = renderer.lonLatToTile(0, 90, 10);
     // @ts-expect-error
     const [__, ySouth] = renderer.lonLatToTile(0, -90, 10);
-
+    
     expect(yNorth).toBeGreaterThanOrEqual(0);
     expect(ySouth).toBeLessThan(1024); // 2^10
   });

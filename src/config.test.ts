@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from './config';
 
-describe('Config', () => {
-  it('has valid dimensions', () => {
+describe('Configuration', () => {
+  it('has essential display dimensions', () => {
     expect(CONFIG.WIDTH).toBeGreaterThan(0);
     expect(CONFIG.HEIGHT).toBeGreaterThan(0);
   });
 
-  it('has a valid J2000 epoch', () => {
-    expect(CONFIG.J2000_EPOCH.getUTCFullYear()).toBe(2000);
-    expect(CONFIG.J2000_EPOCH.getUTCMonth()).toBe(0); // January
-    expect(CONFIG.J2000_EPOCH.getUTCDate()).toBe(1);
+  it('defines valid location constants', () => {
+    expect(CONFIG.HOME_LOCATION.lat).toBeGreaterThan(-90);
+    expect(CONFIG.HOME_LOCATION.lat).toBeLessThan(90);
+    expect(CONFIG.DEFAULT_LOCATION.lat).toBe(51.5074);
   });
 
-  it('has valid clock face settings', () => {
-    expect(CONFIG.SLICES).toBeGreaterThan(0);
-    expect(CONFIG.HAND_LENGTH_FACTOR).toBeLessThanOrEqual(1.0);
+  it('contains valid map data sources', () => {
+    expect(CONFIG.MAP_DATA_SOURCES.length).toBeGreaterThan(0);
+    expect(CONFIG.MAP_DATA_SOURCES[0]).toMatch(/^https?:\/\//);
   });
 });

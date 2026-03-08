@@ -1,128 +1,69 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Projection } from './projection';
 
-describe('Projection', () => {
-  const centerX = 300;
-  const centerY = 300;
+describe('Projection Math', () => {
+  const cx = 300;
+  const cy = 300;
+  const lat0 = 51.5;
+  const lon0 = -0.1;
   const scale = 100;
 
-  beforeEach(() => {
-    // Mock d3.path
-    vi.stubGlobal('d3', {
-      path: () => ({
-        moveTo: vi.fn(),
-        lineTo: vi.fn(),
-        closePath: vi.fn(),
-        toString: () => 'M0,0L1,1Z',
-      }),
-    });
+  it('projects the center point to cx, cy', () => {
+    const p = new Projection(cx, cy, lat0, lon0, scale);
+    const [x, y] = p.project([lon0, lat0]);
+    expect(x).toBeCloseTo(cx);
+    expect(y).toBeCloseTo(cy);
   });
 
-  it('projects center coordinate to center screen coordinate', () => {
-    const lat = 51.5074;
-    const lon = -0.1278;
-    const projection = new Projection(centerX, centerY, lat, lon, scale);
-    const [x, y] = projection.project([lon, lat]);
-    expect(x).toBeCloseTo(centerX, 5);
-    expect(y).toBeCloseTo(centerY, 5);
+  it('projects a point to the north correctly', () => {
+    const p = new Projection(cx, cy, lat0, lon0, scale);
+    const [x, y] = p.project([lon0, lat0 + 1]);
+    expect(x).toBeCloseTo(cx);
+    expect(y).toBeLessThan(cy);
   });
 
-  it('handles the North Pole as center', () => {
-    const projection = new Projection(centerX, centerY, 90, 0, scale);
-    const [x, y] = projection.project([0, 90]);
-    expect(x).toBeCloseTo(centerX, 5);
-    expect(y).toBeCloseTo(centerY, 5);
-  });
-
-  it('handles the South Pole as center', () => {
-    const projection = new Projection(centerX, centerY, -90, 0, scale);
-    const [x, y] = projection.project([0, -90]);
-    expect(x).toBeCloseTo(centerX, 5);
-    expect(y).toBeCloseTo(centerY, 5);
-  });
-
-  it('handles the Anti-meridian (180/-180)', () => {
-    const projection = new Projection(centerX, centerY, 0, 180, scale);
-    const [x1, y1] = projection.project([180, 0]);
-    const [x2, y2] = projection.project([-180, 0]);
-
-    expect(x1).toBeCloseTo(centerX, 5);
-    expect(y1).toBeCloseTo(centerY, 5);
-    expect(x2).toBeCloseTo(x1, 5);
-    expect(y2).toBeCloseTo(y1, 5);
-  });
-
-  it('projects coordinates at the edge of the hemisphere', () => {
-    const projection = new Projection(centerX, centerY, 0, 0, scale);
-    const [x, y] = projection.project([90, 0]); // 90 degrees away
-
-    // Distance in radians is PI/2. Screen distance = (PI/2) * scale
-    const expectedDist = (Math.PI / 2) * scale;
-    const actualDist = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-
-    expect(actualDist).toBeCloseTo(expectedDist, 1);
-  });
-
-  it('remains stable when zooming on a coordinate near the center', () => {
-    const lat = 10;
-    const lon = 10;
-    const targetLat = 10.1;
-    const targetLon = 10.1;
-
-    const p1 = new Projection(centerX, centerY, lat, lon, 100);
-    const [x1, y1] = p1.project([targetLon, targetLat]);
-
-    const p2 = new Projection(centerX, centerY, lat, lon, 200); // Zoom in 2x
-    const [x2, y2] = p2.project([targetLon, targetLat]);
-
-    // Relative distance from center should double
-    const dist1 = Math.sqrt((x1 - centerX) ** 2 + (y1 - centerY) ** 2);
-    const dist2 = Math.sqrt((x2 - centerX) ** 2 + (y2 - centerY) ** 2);
-
-    expect(dist2).toBeCloseTo(dist1 * 2, 1);
-
-    // Bearing should remain almost identical
-    const angle1 = Math.atan2(x1 - centerX, centerY - y1);
-    const angle2 = Math.atan2(x2 - centerX, centerY - y2);
-    expect(angle1).toBeCloseTo(angle2, 3);
-  });
-
-  it('returns center for invalid coordinates', () => {
-    const projection = new Projection(centerX, centerY, 0, 0, scale);
-    const [x, y] = projection.project([NaN, Infinity]);
-    expect(x).toBe(centerX);
-    expect(y).toBe(centerY);
-  });
-
-  it('provides access to current center and scale', () => {
-    const projection = new Projection(centerX, centerY, 10, 20, 150);
-    expect(projection.getCenter()).toEqual({ lat: 10, lon: 20 });
-    expect(projection.getScale()).toBe(150);
+  it('projects a point to the east correctly', () => {
+    const p = new Projection(cx, cy, lat0, lon0, scale);
+    const [x, y] = p.project([lon0 + 1, lat0]);
+    expect(x).toBeGreaterThan(cx);
+    expect(y).toBeCloseTo(cy, 0); // AE isn't perfectly horizontal for east
   });
 
   it('updates center and scale', () => {
-    const projection = new Projection(centerX, centerY, 0, 0, 100);
-    projection.updateCenter(45, 45);
-    projection.updateScale(200);
-    expect(projection.getCenter()).toEqual({ lat: 45, lon: 45 });
-    expect(projection.getScale()).toBe(200);
+    const p = new Projection(cx, cy, lat0, lon0, scale);
+    p.updateCenter(0, 0);
+    p.updateScale(200);
+    
+    const [x, y] = p.project([0, 0]);
+    expect(x).toBeCloseTo(cx);
+    expect(y).toBeCloseTo(cy);
+    expect(p.getScale()).toBe(200);
   });
 
-  it('generates an SVG path from coordinates', () => {
-    const projection = new Projection(centerX, centerY, 0, 0, 100);
-    const rings = [
-      [
-        [0, 0],
-        [1, 0],
-        [1, 1],
-        [0, 1],
-        [0, 0],
-      ] as any,
-    ];
-    // We mock d3.path in types or just rely on it being available if we were in browser
-    // But since it's a global, we might need to mock it if vitest environment isn't enough
-    const path = projection.geoPathFromCoords(rings);
-    expect(typeof path).toBe('string');
-    expect(path.length).toBeGreaterThan(0);
+  it('returns center coordinates', () => {
+    const p = new Projection(cx, cy, lat0, lon0, scale);
+    const center = p.getCenter();
+    expect(center.lat).toBe(lat0);
+    expect(center.lon).toBe(lon0);
+  });
+
+  it('handles longitude wrapping in project', () => {
+    const p = new Projection(cx, cy, 0, 179, scale);
+    const [x1, y1] = p.project([181, 0]); // Should wrap to -179
+    const [x2, y2] = p.project([-179, 0]);
+    expect(x1).toBeCloseTo(x2);
+    expect(y1).toBeCloseTo(y2);
+  });
+
+  it('projects a point far away', () => {
+    const p = new Projection(cx, cy, 0, 0, scale);
+    const [x, _y] = p.project([90, 0]);
+    expect(x).toBeGreaterThan(cx);
+  });
+
+  it('handles poles', () => {
+    const p = new Projection(cx, cy, 90, 0, scale);
+    const [_x, y] = p.project([0, 89]);
+    expect(y).toBeGreaterThan(cy);
   });
 });

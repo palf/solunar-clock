@@ -46,7 +46,7 @@ export class AppState {
 
   /**
    * Load the initial state from storage or defaults.
-   * This is the intended first call of the application.
+   * Includes rigorous validation against manual tampering.
    */
   static loadInitialState(): AppStateConfig {
     const config: AppStateConfig = {
@@ -60,26 +60,38 @@ export class AppState {
     if (typeof localStorage === 'undefined') return config;
 
     try {
-      // Load Home
+      // 1. Load Home
       const storedHome = localStorage.getItem('solunar-clock-home');
       if (storedHome) {
-        config.homeLocation = JSON.parse(storedHome);
-        if (config.homeLocation) {
-          config.centerLat = config.homeLocation.lat;
-          config.centerLon = config.homeLocation.lon;
+        const parsed = JSON.parse(storedHome);
+        if (
+          parsed &&
+          typeof parsed.lat === 'number' &&
+          typeof parsed.lon === 'number' &&
+          !Number.isNaN(parsed.lat) &&
+          !Number.isNaN(parsed.lon) &&
+          Math.abs(parsed.lat) <= CONFIG.MAX_LATITUDE
+        ) {
+          config.homeLocation = parsed;
+          config.centerLat = parsed.lat;
+          config.centerLon = parsed.lon;
         }
       }
 
-      // Load Zoom
+      // 2. Load Zoom
       const storedZoom = localStorage.getItem('solunar-clock-zoom');
       if (storedZoom) {
         const val = parseFloat(storedZoom);
-        if (!Number.isNaN(val) && val > 0) {
+        if (
+          !Number.isNaN(val) &&
+          val >= CONFIG.MIN_SCALING_FACTOR &&
+          val <= CONFIG.MAX_SCALING_FACTOR
+        ) {
           config.scalingFactor = val;
         }
       }
 
-      // Load Layer
+      // 3. Load Layer
       const storedLayer = localStorage.getItem('solunar-clock-layer');
       if (
         storedLayer === 'STREETS' ||
