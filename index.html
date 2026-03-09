@@ -113,48 +113,63 @@
   }
   .hud-btn:hover { background: rgba(255,255,255,0.1); }
 
-  #layer-trigger {
-    pointer-events: auto;
-    cursor: pointer;
-    padding: 0 12px;
-    border-radius: 8px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-  }
-  #layer-trigger:hover { background: rgba(255,255,255,0.1); }
-
-  /* Layer Dropdown */
-  #layer-dropdown {
+  /* Dropdowns */
+  .hud-dropdown {
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 8px;
+    margin-top: 12px;
     background: #1e293b;
     border: 1px solid var(--accent);
-    border-radius: 8px;
+    border-radius: 10px;
     display: none;
     flex-direction: column;
-    min-width: 120px;
+    min-width: 160px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     pointer-events: auto;
+    z-index: 100;
+    padding: 4px;
   }
-  .layer-option {
-    padding: 10px 15px;
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    color: var(--text);
     font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    text-align: left;
+    gap: 8px;
+  }
+  .dropdown-item:hover { background: rgba(255,255,255,0.05); }
+  
+  .dropdown-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 8px 12px 4px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+
+  .layer-option {
+    padding: 8px 12px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--text-dim);
     cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-radius: 6px;
+    margin: 0 4px;
   }
-  .layer-option:last-child { border-bottom: none; }
   .layer-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
-  .layer-option.active { color: var(--accent); }
+  .layer-option.active { color: var(--accent); background: rgba(56, 189, 248, 0.1); }
 
   /* Search/Zoom/Help Modals */
   .overlay-dialog {
@@ -213,21 +228,32 @@
       </div>
 
       <!-- Right side: Controls -->
-      <div style="display: flex; gap: 6px; align-items: center;">
+      <div style="display: flex; gap: 6px; align-items: center; position: relative;">
         <button id="btn-help" class="hud-btn" title="Help / Shortcuts" type="button">?</button>
-        <button id="btn-locate" class="hud-btn" title="Set/Go Home" type="button">🎯</button>
-        <button id="btn-search" class="hud-btn" title="Search Location" type="button">🔍</button>
+        <button id="btn-settings" class="hud-btn" title="Settings" type="button">⚙️</button>
         
-        <div style="position: relative;">
-          <button id="layer-trigger" class="hud-btn" title="Change Map Layer" type="button">🗺️</button>
-          <div id="layer-dropdown">
+        <!-- Settings Dropdown -->
+        <div id="settings-dropdown" class="hud-dropdown">
+          <button id="btn-locate" class="dropdown-item" title="Set/Go Home" type="button">🎯 Home</button>
+          <button id="btn-search" class="dropdown-item" title="Search Location" type="button">🔍 Search</button>
+          <button id="btn-time-scale" class="dropdown-item" title="Set Time Scale" type="button">🕒 Time Scale</button>
+          
+          <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 4px 0;"></div>
+          
+          <div class="dropdown-label">Map Layer</div>
+          <div id="layer-options">
             <div class="layer-option active" data-layer="STREETS">STREETS</div>
             <div class="layer-option" data-layer="TOPOGRAPHIC">TOPOGRAPHIC</div>
             <div class="layer-option" data-layer="IMAGERY">IMAGERY</div>
           </div>
-        </div>
 
-        <button id="btn-mode" class="hud-btn" title="Toggle Render Mode" type="button" style="font-size: 10px; font-weight: 900;">3D</button>
+          <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 4px 0;"></div>
+          
+          <button id="btn-mode" class="dropdown-item" title="Toggle Render Mode" type="button">
+            <span>Render Mode</span>
+            <span id="mode-indicator" style="color: var(--accent); font-weight: 800;">3D</span>
+          </button>
+        </div>
       </div>
     </div>
 

@@ -29,11 +29,13 @@ export class UIController {
   private helpOverlay = document.getElementById('help-overlay');
   private btnHelp = document.getElementById('btn-help');
 
-  private layerTrigger = document.getElementById('layer-trigger');
-  private layerDropdown = document.getElementById('layer-dropdown');
+  private settingsTrigger = document.getElementById('btn-settings');
+  private settingsDropdown = document.getElementById('settings-dropdown');
   private btnLocate = document.getElementById('btn-locate');
   private btnMode = document.getElementById('btn-mode');
+  private modeIndicator = document.getElementById('mode-indicator');
   private btnSearch = document.getElementById('btn-search');
+  private btnTimeScale = document.getElementById('btn-time-scale');
 
   // HUD display elements
   private displayTime = document.getElementById('display-time');
@@ -55,7 +57,7 @@ export class UIController {
     this.initSearch();
     this.initZoomDialog();
     this.initTimeDialog();
-    this.initLayerSwitcher();
+    this.initSettingsMenu();
     this.initButtons();
     this.initClickOutside();
 
@@ -89,12 +91,8 @@ export class UIController {
   }
 
   private performMetadataUpdate(): void {
-    if (this.btnMode) {
-      this.btnMode.textContent = this.state.renderMode;
-      this.btnMode.style.color =
-        this.state.renderMode === '3D' ? CONFIG.THEME.COLOR_ACTIVE : CONFIG.THEME.COLOR_TEXT_DIM;
-      this.btnMode.style.borderColor =
-        this.state.renderMode === '3D' ? CONFIG.THEME.COLOR_ACTIVE : CONFIG.THEME.COLOR_BORDER;
+    if (this.modeIndicator) {
+      this.modeIndicator.textContent = this.state.renderMode;
     }
 
     // Combined Locate/Home button logic
@@ -103,17 +101,14 @@ export class UIController {
       const atHome = this.state.isAtHome();
 
       if (!hasHome) {
-        this.btnLocate.textContent = '🎯';
+        this.btnLocate.innerHTML = '🎯 Set Home';
         this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
-        this.btnLocate.title = 'Set Current Location as Home';
       } else if (atHome) {
-        this.btnLocate.textContent = '✖️'; // Clear icon
+        this.btnLocate.innerHTML = '✖️ Clear Home';
         this.btnLocate.style.color = CONFIG.THEME.COLOR_DANGER;
-        this.btnLocate.title = 'Clear Saved Home';
       } else {
-        this.btnLocate.textContent = '🏠'; // Go Home icon
+        this.btnLocate.innerHTML = '🏠 Go Home';
         this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
-        this.btnLocate.title = 'Return to Stored Home';
       }
     }
 
@@ -296,6 +291,15 @@ export class UIController {
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
 
+      // Close settings if clicking outside
+      if (
+        this.settingsDropdown?.style.display === 'flex' &&
+        !this.settingsDropdown.contains(target) &&
+        !this.settingsTrigger?.contains(target)
+      ) {
+        this.settingsDropdown.style.display = 'none';
+      }
+
       // Close search if clicking outside
       if (
         this.searchOverlay?.style.display === 'block' &&
@@ -362,13 +366,13 @@ export class UIController {
     this.onLocationSelected();
   }
 
-  private initLayerSwitcher(): void {
-    this.layerTrigger?.addEventListener('click', (e) => {
+  private initSettingsMenu(): void {
+    this.settingsTrigger?.addEventListener('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
-      if (this.layerDropdown) {
-        const isVisible = this.layerDropdown.style.display === 'flex';
-        this.layerDropdown.style.display = isVisible ? 'none' : 'flex';
+      if (this.settingsDropdown) {
+        const isVisible = this.settingsDropdown.style.display === 'flex';
+        this.settingsDropdown.style.display = isVisible ? 'none' : 'flex';
       }
     });
 
@@ -379,14 +383,10 @@ export class UIController {
         const layer = (e.currentTarget as HTMLElement).getAttribute('data-layer') as MapLayer;
         if (layer) {
           this.state.mapLayer = layer;
-          if (this.layerDropdown) this.layerDropdown.style.display = 'none';
+          if (this.settingsDropdown) this.settingsDropdown.style.display = 'none';
           this.onLocationSelected();
         }
       });
-    });
-
-    document.addEventListener('click', () => {
-      if (this.layerDropdown) this.layerDropdown.style.display = 'none';
     });
   }
 
@@ -394,6 +394,7 @@ export class UIController {
     this.btnLocate?.addEventListener('click', async (e) => {
       e.stopPropagation();
       e.preventDefault();
+      if (this.settingsDropdown) this.settingsDropdown.style.display = 'none';
       await this.handleHomeAction();
     });
 
@@ -401,6 +402,7 @@ export class UIController {
       e.stopPropagation();
       e.preventDefault();
       this.state.renderMode = this.state.renderMode === '3D' ? '2D' : '3D';
+      if (this.settingsDropdown) this.settingsDropdown.style.display = 'none';
       this.onLocationSelected();
     });
 
@@ -408,6 +410,14 @@ export class UIController {
       e.stopPropagation();
       e.preventDefault();
       this.showSearch();
+      if (this.settingsDropdown) this.settingsDropdown.style.display = 'none';
+    });
+
+    this.btnTimeScale?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      this.showTimeDialog();
+      if (this.settingsDropdown) this.settingsDropdown.style.display = 'none';
     });
 
     this.btnHelp?.addEventListener('click', (e) => {

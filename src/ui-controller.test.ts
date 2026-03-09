@@ -13,8 +13,12 @@ describe('UIController', () => {
     // Setup DOM
     document.body.innerHTML = `
       <div id="display-time"></div>
+      <div id="btn-settings"></div>
+      <div id="settings-dropdown"></div>
       <div id="btn-mode"></div>
+      <div id="mode-indicator"></div>
       <div id="btn-locate"></div>
+      <div id="btn-time-scale"></div>
       <div id="display-pos"></div>
       <div id="display-zoom"></div>
       <div id="display-attribution"></div>
@@ -28,14 +32,12 @@ describe('UIController', () => {
       <div id="group-zoom"></div>
       <div id="help-overlay"></div>
       <button id="btn-help"></button>
-      <div id="layer-trigger"></div>
-      <div id="layer-dropdown"></div>
-      <button id="btn-locate"></button>
-      <button id="btn-mode"></button>
       <button id="btn-search"></button>
-      <div class="layer-option" data-layer="STREETS"></div>
-      <div class="layer-option" data-layer="TOPOGRAPHIC"></div>
-      <div class="layer-option" data-layer="IMAGERY"></div>
+      <div id="layer-options">
+        <div class="layer-option" data-layer="STREETS"></div>
+        <div class="layer-option" data-layer="TOPOGRAPHIC"></div>
+        <div class="layer-option" data-layer="IMAGERY"></div>
+      </div>
     `;
 
     const config = loadInitialState();
