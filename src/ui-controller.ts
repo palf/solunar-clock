@@ -105,16 +105,17 @@ export class UIController {
         this.btnLocate.textContent = '🎯';
         this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
         this.btnLocate.title = 'Set Current Location as Home';
-        this.btnLocate.style.display = 'flex';
       } else if (!atHome) {
         this.btnLocate.textContent = '🏠';
         this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
         this.btnLocate.title = 'Return to Stored Home';
-        this.btnLocate.style.display = 'flex';
       } else {
-        // Hide nav button if we are already at home
-        this.btnLocate.style.display = 'none';
+        // At home: show a dimmed home icon to indicate we are already there
+        this.btnLocate.textContent = '🏠';
+        this.btnLocate.style.color = CONFIG.THEME.COLOR_ACTIVE;
+        this.btnLocate.title = 'You are at your Home Location';
       }
+      this.btnLocate.style.display = 'flex';
     }
 
     if (this.btnClearHome) {
@@ -219,7 +220,7 @@ export class UIController {
 
     if (!hasHome) {
       this.state.setHome();
-    } else if (!atHome) {
+    } else {
       const home = this.state.homeLocation!;
       this.state.setLocation(home.lat, home.lon);
     }
