@@ -216,7 +216,6 @@ export class UIController {
    */
   async handleHomeAction(): Promise<void> {
     const hasHome = this.state.homeLocation !== null;
-    const atHome = this.state.isAtHome();
 
     if (!hasHome) {
       this.state.setHome();
