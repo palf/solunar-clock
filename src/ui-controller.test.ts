@@ -18,6 +18,7 @@ describe('UIController', () => {
       <div id="btn-mode"></div>
       <div id="mode-indicator"></div>
       <div id="btn-locate"></div>
+      <div id="btn-clear-home"></div>
       <div id="btn-time-scale"></div>
       <div id="display-pos"></div>
       <div id="display-zoom"></div>

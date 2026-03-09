@@ -32,6 +32,7 @@ export class UIController {
   private settingsTrigger = document.getElementById('btn-settings');
   private settingsDropdown = document.getElementById('settings-dropdown');
   private btnLocate = document.getElementById('btn-locate');
+  private btnClearHome = document.getElementById('btn-clear-home');
   private btnMode = document.getElementById('btn-mode');
   private modeIndicator = document.getElementById('mode-indicator');
   private btnSearch = document.getElementById('btn-search');
@@ -96,20 +97,28 @@ export class UIController {
     }
 
     // Combined Locate/Home button logic
-    if (this.btnLocate) {
-      const hasHome = this.state.homeLocation !== null;
-      const atHome = this.state.isAtHome();
+    const hasHome = this.state.homeLocation !== null;
+    const atHome = this.state.isAtHome();
 
+    if (this.btnLocate) {
       if (!hasHome) {
-        this.btnLocate.innerHTML = '🎯 Set Home';
+        this.btnLocate.textContent = '🎯';
         this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
-      } else if (atHome) {
-        this.btnLocate.innerHTML = '✖️ Clear Home';
-        this.btnLocate.style.color = CONFIG.THEME.COLOR_DANGER;
+        this.btnLocate.title = 'Set Current Location as Home';
+        this.btnLocate.style.display = 'flex';
+      } else if (!atHome) {
+        this.btnLocate.textContent = '🏠';
+        this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
+        this.btnLocate.title = 'Return to Stored Home';
+        this.btnLocate.style.display = 'flex';
       } else {
-        this.btnLocate.innerHTML = '🏠 Go Home';
-        this.btnLocate.style.color = CONFIG.THEME.COLOR_ACCENT;
+        // Hide nav button if we are already at home
+        this.btnLocate.style.display = 'none';
       }
+    }
+
+    if (this.btnClearHome) {
+      this.btnClearHome.style.display = atHome ? 'flex' : 'none';
     }
 
     if (this.displayPos) {
@@ -202,7 +211,7 @@ export class UIController {
   }
 
   /**
-   * The complex Home logic (Set/Go/Clear) shared between button and hotkey
+   * Home logic (Set/Go) for the nav bar button
    */
   async handleHomeAction(): Promise<void> {
     const hasHome = this.state.homeLocation !== null;
@@ -210,9 +219,7 @@ export class UIController {
 
     if (!hasHome) {
       this.state.setHome();
-    } else if (atHome) {
-      this.state.clearHome();
-    } else {
+    } else if (!atHome) {
       const home = this.state.homeLocation!;
       this.state.setLocation(home.lat, home.lon);
     }
@@ -394,8 +401,15 @@ export class UIController {
     this.btnLocate?.addEventListener('click', async (e) => {
       e.stopPropagation();
       e.preventDefault();
-      if (this.settingsDropdown) this.settingsDropdown.style.display = 'none';
       await this.handleHomeAction();
+    });
+
+    this.btnClearHome?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      this.state.clearHome();
+      if (this.settingsDropdown) this.settingsDropdown.style.display = 'none';
+      await this.onLocationSelected();
     });
 
     this.btnMode?.addEventListener('click', (e) => {
