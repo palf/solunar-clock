@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
+import { CONFIG } from './config';
 import { loadInitialState } from './state-loader';
 import { asScale } from './types';
 
@@ -46,11 +47,11 @@ describe('AppState', () => {
     it('clamps the latitude to MAX_LATITUDE during panning', () => {
       const config = loadInitialState();
       const state = new AppState(config);
-      state.pan(100, 0);
-      expect(state.centerLat).toBeCloseTo(85.0511, 4);
+      state.pan(200, 0);
+      expect(state.centerLat).toBeCloseTo(CONFIG.ENGINE.MAX_LATITUDE, 4);
 
-      state.pan(-200, 0);
-      expect(state.centerLat).toBeCloseTo(-85.0511, 4);
+      state.pan(-400, 0);
+      expect(state.centerLat).toBeCloseTo(-CONFIG.ENGINE.MAX_LATITUDE, 4);
     });
   });
 
@@ -89,5 +90,8 @@ describe('AppState', () => {
 
     state.clearHome();
     expect(callback).toHaveBeenCalledTimes(7);
+
+    state.pan(0, 10);
+    expect(callback).toHaveBeenCalledTimes(8);
   });
 });

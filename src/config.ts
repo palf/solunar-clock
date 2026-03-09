@@ -11,7 +11,8 @@ export const CONFIG = {
     INTERNAL_HEIGHT: 600,
     INTERNAL_CENTER_X: 300,
     INTERNAL_CENTER_Y: 300,
-    MAX_LATITUDE: 85.0511, // Web Mercator limit
+    // MAX_LATITUDE: 85.0511, // Web Mercator limit
+    MAX_LATITUDE: 90,
     HOME_TOLERANCE: 0.0001,
   },
 

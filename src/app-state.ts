@@ -211,12 +211,18 @@ export class AppState {
 
   pan(dLat: number, dLon: number): void {
     if (!Number.isFinite(dLat) || !Number.isFinite(dLon)) return;
-    const newLat = Math.max(
-      -CONFIG.ENGINE.MAX_LATITUDE,
-      Math.min(CONFIG.ENGINE.MAX_LATITUDE, this._centerLat + dLat)
+    if (dLat === 0 && dLon === 0) return;
+
+    const newLat = asLatitude(
+      Math.max(-CONFIG.ENGINE.MAX_LATITUDE, Math.min(CONFIG.ENGINE.MAX_LATITUDE, this._centerLat + dLat))
     );
-    this.centerLat = asLatitude(newLat);
-    this._centerLon = normalizeLongitude(this._centerLon + dLon);
+    const newLon = normalizeLongitude(this._centerLon + dLon);
+
+    if (newLat !== this._centerLat || newLon !== this._centerLon) {
+      this._centerLat = newLat;
+      this._centerLon = newLon;
+      this.emitChange();
+    }
   }
 
   cycleLayer(): void {
