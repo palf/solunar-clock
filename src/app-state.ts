@@ -59,13 +59,28 @@ export class AppState {
   // Event Listeners
   private changeListeners: Array<() => void> = [];
 
+  // Guard to prevent save/emit during initialization
+  private isInitializing = false;
+
   constructor(config: AppStateConfig) {
+    this.isInitializing = true;
+
+    // Direct assignment for initial values to satisfy private field initialization
     this._centerLat = config.centerLat;
     this._centerLon = config.centerLon;
     this._scalingFactor = config.scalingFactor;
     this._timeSpeedMultiplier = config.timeSpeedMultiplier;
     this._mapLayer = config.mapLayer;
     this._homeLocation = config.homeLocation;
+
+    // Use setters to enforce all limits and normalization rules defensively
+    this.centerLat = config.centerLat;
+    this.centerLon = config.centerLon;
+    this.scalingFactor = config.scalingFactor;
+    this.timeSpeedMultiplier = config.timeSpeedMultiplier;
+    this.mapLayer = config.mapLayer;
+
+    this.isInitializing = false;
   }
 
   // Getters
@@ -90,27 +105,47 @@ export class AppState {
 
   // Setters with NaN guards
   set scalingFactor(val: Scale) {
-    if (Number.isFinite(val) && val > 0 && val !== this._scalingFactor) {
-      this._scalingFactor = val;
-      this.saveState();
-      this.emitChange();
+    if (Number.isFinite(val)) {
+      const clamped = asScale(
+        Math.max(
+          CONFIG.DISPLAY.MIN_SCALING_FACTOR,
+          Math.min(CONFIG.DISPLAY.MAX_SCALING_FACTOR, val)
+        )
+      );
+      if (clamped !== this._scalingFactor) {
+        this._scalingFactor = clamped;
+        if (!this.isInitializing) {
+          this.saveState();
+          this.emitChange();
+        }
+      }
     }
   }
+
   set centerLat(val: Latitude) {
     const clamped = asLatitude(
       Math.max(-CONFIG.ENGINE.MAX_LATITUDE, Math.min(CONFIG.ENGINE.MAX_LATITUDE, val))
     );
     if (Number.isFinite(val) && clamped !== this._centerLat) {
       this._centerLat = clamped;
-      this.emitChange();
+      if (!this.isInitializing) {
+        this.emitChange();
+      }
     }
   }
+
   set centerLon(val: Longitude) {
-    if (Number.isFinite(val) && val !== this._centerLon) {
-      this._centerLon = val;
-      this.emitChange();
+    if (Number.isFinite(val)) {
+      const normalized = normalizeLongitude(val);
+      if (normalized !== this._centerLon) {
+        this._centerLon = normalized;
+        if (!this.isInitializing) {
+          this.emitChange();
+        }
+      }
     }
   }
+
   set timeSpeedMultiplier(val: TimeMultiplier) {
     if (
       Number.isFinite(val) &&
@@ -119,15 +154,20 @@ export class AppState {
       val !== this._timeSpeedMultiplier
     ) {
       this._timeSpeedMultiplier = val;
-      this.saveState();
-      this.emitChange();
+      if (!this.isInitializing) {
+        this.saveState();
+        this.emitChange();
+      }
     }
   }
+
   set mapLayer(val: MapLayer) {
     if (val !== this._mapLayer) {
       this._mapLayer = val;
-      this.saveState();
-      this.emitChange();
+      if (!this.isInitializing) {
+        this.saveState();
+        this.emitChange();
+      }
     }
   }
 
@@ -201,28 +241,15 @@ export class AppState {
 
   adjustZoom(multiplier: number): void {
     if (!Number.isFinite(multiplier)) return;
-    this.scalingFactor = asScale(
-      Math.max(
-        CONFIG.DISPLAY.MIN_SCALING_FACTOR,
-        Math.min(CONFIG.DISPLAY.MAX_SCALING_FACTOR, this._scalingFactor * multiplier)
-      )
-    );
+    this.scalingFactor = asScale(this._scalingFactor * multiplier);
   }
 
   pan(dLat: number, dLon: number): void {
     if (!Number.isFinite(dLat) || !Number.isFinite(dLon)) return;
     if (dLat === 0 && dLon === 0) return;
 
-    const newLat = asLatitude(
-      Math.max(-CONFIG.ENGINE.MAX_LATITUDE, Math.min(CONFIG.ENGINE.MAX_LATITUDE, this._centerLat + dLat))
-    );
-    const newLon = normalizeLongitude(this._centerLon + dLon);
-
-    if (newLat !== this._centerLat || newLon !== this._centerLon) {
-      this._centerLat = newLat;
-      this._centerLon = newLon;
-      this.emitChange();
-    }
+    this.centerLat = (this._centerLat + dLat) as Latitude;
+    this.centerLon = (this._centerLon + dLon) as Longitude;
   }
 
   cycleLayer(): void {

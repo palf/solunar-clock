@@ -131,7 +131,7 @@ export class UIController {
     }
 
     if (this.displayZoom) {
-      this.displayZoom.textContent = `${(this.state.scalingFactor / CONFIG.DISPLAY.ZOOM_DISPLAY_MULTIPLIER).toFixed(1)}x`;
+      this.displayZoom.textContent = `${this.state.scalingFactor.toFixed(1)}x`;
     }
 
     if (this.displayAttribution) {
@@ -159,9 +159,7 @@ export class UIController {
     this.hideAllOverlays();
     if (this.zoomOverlay) this.zoomOverlay.style.display = 'block';
     if (this.zoomInput) {
-      this.zoomInput.value = (
-        this.state.scalingFactor / CONFIG.DISPLAY.ZOOM_DISPLAY_MULTIPLIER
-      ).toString();
+      this.zoomInput.value = this.state.scalingFactor.toString();
       this.zoomInput.focus();
       this.zoomInput.select();
     }
@@ -265,8 +263,8 @@ export class UIController {
       } else if (e.key === 'Enter') {
         e.preventDefault();
         const val = parseFloat(this.zoomInput.value);
-        if (!Number.isNaN(val) && val >= CONFIG.DISPLAY.MIN_ZOOM_INPUT) {
-          this.state.scalingFactor = asScale(val * CONFIG.DISPLAY.ZOOM_DISPLAY_MULTIPLIER);
+        if (!Number.isNaN(val)) {
+          this.state.scalingFactor = asScale(val);
           this.hideZoomDialog();
           this.onLocationSelected();
         }

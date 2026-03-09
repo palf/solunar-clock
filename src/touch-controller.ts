@@ -118,12 +118,7 @@ export class TouchController {
       if (this.startDist === 0) return;
       const ratio = dist / this.startDist;
 
-      this.state.scalingFactor = asScale(
-        Math.max(
-          CONFIG.INTERACTION.TOUCH.MIN_SCALE,
-          Math.min(CONFIG.DISPLAY.MAX_SCALING_FACTOR, this.startScale * ratio)
-        )
-      );
+      this.state.scalingFactor = asScale(this.startScale * ratio);
       this.onUpdate();
     }
   }

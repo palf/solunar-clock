@@ -48,27 +48,26 @@ describe('UIController', () => {
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => cb(0));
 
     ui = new UIController(state, null as any, onLocationSelected);
-    });
+  });
 
-    afterEach(() => {
+  afterEach(() => {
     vi.unstubAllGlobals();
-    });
+  });
 
-    it('updates the HUD time correctly', () => {
+  it('updates the HUD time correctly', () => {
     const now = new Date('2024-03-07T12:34:56Z');
     ui.updateTime(now);
     const timeEl = document.getElementById('display-time');
     expect(timeEl?.textContent).toBe('12:34:56');
-    });
+  });
 
-    it('updates the HUD position correctly (reactive & throttled)', async () => {
+  it('updates the HUD position correctly (reactive & throttled)', async () => {
     state.setLocation(asLatitude(10), asLongitude(20));
 
     const posEl = document.getElementById('display-pos');
     expect(posEl?.textContent).toContain('10.00° N');
     expect(posEl?.textContent).toContain('20.00° E');
-    });
-
+  });
 
   it('toggles the search overlay', () => {
     ui.showSearch();

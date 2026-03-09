@@ -19,11 +19,9 @@ export const CONFIG = {
   // Visual scaling and layout
   DISPLAY: {
     RADIUS_FACTOR: 0.4, // Percentage of internal width
-    DEFAULT_SCALING_FACTOR: asScale(30000),
+    DEFAULT_SCALING_FACTOR: asScale(3000),
     MIN_SCALING_FACTOR: asScale(5),
-    MAX_SCALING_FACTOR: asScale(1000000),
-    ZOOM_DISPLAY_MULTIPLIER: 10,
-    MIN_ZOOM_INPUT: 0.05,
+    MAX_SCALING_FACTOR: asScale(100000),
   },
 
   // Visual preferences
@@ -74,7 +72,6 @@ export const CONFIG = {
       WHEEL_ZOOM_FACTOR: 1.1,
       PAN_SENSITIVITY: 0.1,
       PAN_DIVISOR: 10,
-      MIN_SCALE: 1,
     },
     SEARCH: {
       DEBOUNCE_MS: asMilliseconds(300),

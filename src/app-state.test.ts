@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AppState } from './app-state';
 import { CONFIG } from './config';
 import { loadInitialState } from './state-loader';
-import { asScale } from './types';
+import { asLatitude, asLongitude, asScale } from './types';
 
 describe('AppState', () => {
   it('initializes with London coordinates by default', () => {
@@ -12,86 +12,158 @@ describe('AppState', () => {
     expect(state.centerLon).toBe(-0.1278);
   });
 
-  it('calculates the scale correctly based on the scalingFactor', () => {
-    const config = loadInitialState();
-    const state = new AppState(config);
-    const initialScale = state.scale;
-
-    state.scalingFactor = asScale(state.scalingFactor * 2);
-    expect(state.scale).toBe(initialScale * 2);
-  });
-
-  it('defaults the map layer to STREETS', () => {
-    const config = loadInitialState();
-    const state = new AppState(config);
-    expect(state.mapLayer).toBe('STREETS');
-  });
-
-  describe('NaN and Infinity guards', () => {
-    it('rejects NaN values for scalingFactor', () => {
+  describe('scalingFactor', () => {
+    it('calculates the scale correctly based on the scalingFactor', () => {
       const config = loadInitialState();
       const state = new AppState(config);
-      const initial = state.scalingFactor;
-      state.scalingFactor = NaN as any;
-      expect(state.scalingFactor).toBe(initial);
+      state.scalingFactor = asScale(1000);
+      const initialScale = state.scale;
+
+      state.scalingFactor = asScale(state.scalingFactor * 2);
+      expect(state.scale).toBe(initialScale * 2);
     });
 
-    it('rejects invalid numeric values during panning', () => {
+    it('clamps to MIN/MAX limits', () => {
+      const state = new AppState(loadInitialState());
+
+      state.scalingFactor = (CONFIG.DISPLAY.MIN_SCALING_FACTOR - 1) as any;
+      expect(state.scalingFactor).toBe(CONFIG.DISPLAY.MIN_SCALING_FACTOR);
+
+      state.scalingFactor = (CONFIG.DISPLAY.MAX_SCALING_FACTOR + 1) as any;
+      expect(state.scalingFactor).toBe(CONFIG.DISPLAY.MAX_SCALING_FACTOR);
+    });
+
+    it('rejects NaN values', () => {
+      const state = new AppState(loadInitialState());
+      const initialScale = state.scalingFactor;
+      state.scalingFactor = NaN as any;
+      expect(state.scalingFactor).toBe(initialScale);
+    });
+
+    it('adjusts correctly via multiplier', () => {
       const config = loadInitialState();
       const state = new AppState(config);
+      state.scalingFactor = asScale(1000);
+      const initialScale = state.scalingFactor;
+
+      state.adjustZoom(2);
+      expect(state.scalingFactor).toBe(asScale(initialScale * 2));
+    });
+  });
+
+  describe('centerLat', () => {
+    it('clamps to MAX_LATITUDE', () => {
+      const state = new AppState(loadInitialState());
+
+      state.centerLat = 100 as any;
+      expect(state.centerLat).toBe(CONFIG.ENGINE.MAX_LATITUDE);
+
+      state.centerLat = -100 as any;
+      expect(state.centerLat).toBe(-CONFIG.ENGINE.MAX_LATITUDE);
+    });
+
+    it('rejects NaN values (via types error)', () => {
+      const state = new AppState(loadInitialState());
       const initialLat = state.centerLat;
-      state.pan(NaN, 0);
+
+      expect(() => {
+        state.centerLat = NaN as any;
+      }).toThrow();
       expect(state.centerLat).toBe(initialLat);
     });
+  });
 
-    it('clamps the latitude to MAX_LATITUDE during panning', () => {
-      const config = loadInitialState();
-      const state = new AppState(config);
-      state.pan(200, 0);
-      expect(state.centerLat).toBeCloseTo(CONFIG.ENGINE.MAX_LATITUDE, 4);
+  describe('centerLon', () => {
+    it('normalizes values (wraps around -180/180)', () => {
+      const state = new AppState(loadInitialState());
 
-      state.pan(-400, 0);
-      expect(state.centerLat).toBeCloseTo(-CONFIG.ENGINE.MAX_LATITUDE, 4);
+      state.centerLon = 190 as any;
+      expect(state.centerLon).toBe(-170);
+
+      state.centerLon = -190 as any;
+      expect(state.centerLon).toBe(170);
+    });
+
+    it('rejects NaN values', () => {
+      const state = new AppState(loadInitialState());
+      const initialLon = state.centerLon;
+      state.centerLon = NaN as any;
+      expect(state.centerLon).toBe(initialLon);
     });
   });
 
-  it('adjusts zoom level correctly', () => {
-    const config = loadInitialState();
-    const state = new AppState(config);
-    const initialScale = state.scalingFactor;
+  describe('mapLayer', () => {
+    it('defaults to STREETS', () => {
+      const config = loadInitialState();
+      const state = new AppState(config);
+      expect(state.mapLayer).toBe('STREETS');
+    });
 
-    state.adjustZoom(2);
-    expect(state.scalingFactor).toBe(asScale(initialScale * 2));
+    it('updates correctly', () => {
+      const state = new AppState(loadInitialState());
+      state.mapLayer = 'IMAGERY';
+      expect(state.mapLayer).toBe('IMAGERY');
+    });
+
+    it('cycles through layers', () => {
+      const state = new AppState(loadInitialState());
+      const initial = state.mapLayer;
+      state.cycleLayer();
+      expect(state.mapLayer).not.toBe(initial);
+    });
   });
 
-  it('emits a change event when state properties are modified', () => {
-    const config = loadInitialState();
-    const state = new AppState(config);
-    const callback = vi.fn();
-    state.onChange(callback);
+  describe('pan', () => {
+    it('updates coordinates correctly by delegating to setters', () => {
+      const state = new AppState(loadInitialState());
+      state.centerLat = asLatitude(0);
+      state.centerLon = asLongitude(0);
 
-    state.centerLat = 10 as any;
-    expect(callback).toHaveBeenCalledTimes(1);
+      state.pan(10, 20);
+      expect(state.centerLat).toBe(10);
+      expect(state.centerLon).toBe(20);
 
-    state.centerLon = 20 as any;
-    expect(callback).toHaveBeenCalledTimes(2);
+      // Test clamping via pan
+      state.pan(100, 0);
+      expect(state.centerLat).toBe(CONFIG.ENGINE.MAX_LATITUDE);
 
-    state.scalingFactor = 5 as any;
-    expect(callback).toHaveBeenCalledTimes(3);
+      // Test normalization via pan
+      state.centerLon = asLongitude(170);
+      state.pan(0, 20);
+      expect(state.centerLon).toBe(-170);
+    });
+  });
 
-    state.mapLayer = 'IMAGERY';
-    expect(callback).toHaveBeenCalledTimes(4);
+  describe('events', () => {
+    it('emits a change event when state properties are modified', () => {
+      const config = loadInitialState();
+      const state = new AppState(config);
+      const callback = vi.fn();
+      state.onChange(callback);
 
-    state.renderMode = '2D';
-    expect(callback).toHaveBeenCalledTimes(5);
+      state.centerLat = (state.centerLat + 1) as any;
+      expect(callback).toHaveBeenCalledTimes(1);
 
-    state.setHome();
-    expect(callback).toHaveBeenCalledTimes(6);
+      state.centerLon = (state.centerLon + 1) as any;
+      expect(callback).toHaveBeenCalledTimes(2);
 
-    state.clearHome();
-    expect(callback).toHaveBeenCalledTimes(7);
+      state.scalingFactor = (state.scalingFactor + 10) as any;
+      expect(callback).toHaveBeenCalledTimes(3);
 
-    state.pan(0, 10);
-    expect(callback).toHaveBeenCalledTimes(8);
+      state.mapLayer = 'IMAGERY';
+      expect(callback).toHaveBeenCalledTimes(4);
+
+      state.renderMode = '2D';
+      expect(callback).toHaveBeenCalledTimes(5);
+
+      state.setHome();
+      expect(callback).toHaveBeenCalledTimes(6);
+
+      state.clearHome();
+      expect(callback).toHaveBeenCalledTimes(7);
+
+      state.pan(1, 1);
+      expect(callback).toHaveBeenCalledTimes(9); // Pan calls both lat and lon setters
+    });
   });
 });
